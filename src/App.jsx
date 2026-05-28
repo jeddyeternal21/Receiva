@@ -311,23 +311,64 @@ function LoginPage({ onLogin, onGuest }) {
 // MAIN APP
 // ═══════════════════════════════════════════════════════════════
 export default function App() {
-  const [authState, setAuthState] = useState("login"); // "login" | "guest" | "app"
-  const [user, setUser]           = useState(null);
-  const [page, setPage]           = useState("dashboard");
-  const [wallets, setWallets]     = useState([]);
-  const [activeWallet, setActiveWallet] = useState(null); // null = all
-  const [transactions, setTransactions] = useState([]);
-  const [business, setBusiness]   = useState({ name:'My Business', owner:'', phone:'', industry:'', plan:'free', logoColor:'#F97316', logoBg:'#fff4ed' });
-  const [guestCount, setGuestCount] = useState(0); // receipts generated as guest
-  const [showAddTx, setShowAddTx] = useState(false);
-  const [showReceipt, setShowReceipt] = useState(null);
-  const [showMoMo, setShowMoMo]   = useState(false);
-  const [showAddWallet, setShowAddWallet] = useState(false);
-  const [showUpgrade, setShowUpgrade] = useState(false);
-  const [dataLoading, setDataLoading] = useState(false);
-  const [dataError, setDataError]     = useState("");
-  const [businessId, setBusinessId]   = useState(null);
-  const [editingProduct, setEditingProduct] = useState(null);
+  const [authState, setAuthState]               = useState("loading");
+  const [user, setUser]                         = useState(null);
+  const [page, setPage]                         = useState("dashboard");
+  const [wallets, setWallets]                   = useState([]);
+  const [activeWallet, setActiveWallet]         = useState(null);
+  const [transactions, setTransactions]         = useState([]);
+  const [business, setBusiness]                 = useState({ name:"My Business", owner:"", phone:"", industry:"", plan:"free", logoColor:"#F97316", logoBg:"#fff4ed" });
+  const [guestCount, setGuestCount]             = useState(0);
+  const [showAddTx, setShowAddTx]               = useState(false);
+  const [showReceipt, setShowReceipt]           = useState(null);
+  const [showMoMo, setShowMoMo]                 = useState(false);
+  const [showAddWallet, setShowAddWallet]       = useState(false);
+  const [showUpgrade, setShowUpgrade]           = useState(false);
+  const [dataLoading, setDataLoading]           = useState(false);
+  const [dataError, setDataError]               = useState("");
+  const [businessId, setBusinessId]             = useState(null);
+  const [editingProduct, setEditingProduct]     = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen]     = useState(false);
+  const [productsExpanded, setProductsExpanded] = useState(false);
+  const [products, setProducts]                 = useState([]);
+  const [productCategories, setProductCategories] = useState([]);
+
+  // ── Check existing session on app open ──
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        const u = {
+          name:  session.user.user_metadata?.full_name || session.user.email.split("@")[0],
+          email: session.user.email,
+          plan:  "free",
+          id:    session.user.id,
+        };
+        setUser(u);
+        setAuthState("app");
+        loadUserData(session.user.id);
+      } else {
+        setAuthState("login");
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const u = {
+          name:  session.user.user_metadata?.full_name || session.user.email.split("@")[0],
+          email: session.user.email,
+          plan:  "free",
+          id:    session.user.id,
+        };
+        setUser(u);
+        setAuthState("app");
+      } else {
+        setUser(null);
+        setAuthState("login");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const loadUserData = async (userId) => {
     setDataLoading(true);
@@ -393,13 +434,25 @@ export default function App() {
     setShowReceipt(tx);
   };
 
-  const addTransaction = (tx) => { setTransactions(p=>[{...tx, id:genId(), receiptNo:genRNo()}, ...p]); setShowAddTx(false); };
-  const addWallet = (w) => { setWallets(p=>[...p, { ...w, id:genId(), balance:0 }]); setShowAddWallet(false); };
+  const addTransaction = async (tx) => {
+    const newReceiptNo = genRNo();
+    if (isGuest || !businessId) {
+      setTransactions(p=>[{...tx, id:genId(), receiptNo:newReceiptNo}, ...p]);
+      setShowAddTx(false); setShowMoMo(false); return;
+    }
+    const { data, error } = await supabase.from("transactions").insert({ wallet_id:tx.walletId, business_id:businessId, type:tx.type, amount:tx.amount, category:tx.category, description:tx.description, method:tx.method, date:tx.date, momo_ref:tx.momoRef||null, receipt_no:newReceiptNo }).select().single();
+    if (error) { console.error(error); alert("Could not save transaction. Please try again."); return; }
+    setTransactions(p=>[{ id:data.id, walletId:data.wallet_id, type:data.type, amount:parseFloat(data.amount), category:data.category||"", description:data.description||"", method:data.method||"", date:data.date, momoRef:data.momo_ref||"", receiptNo:data.receipt_no||newReceiptNo }, ...p]);
+    setShowAddTx(false); setShowMoMo(false);
+  };
 
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [productsExpanded, setProductsExpanded] = useState(false);
-  const [products, setProducts] = useState([]);
-  const [productCategories, setProductCategories] = useState([]);
+  const addWallet = async (w) => {
+    if (isGuest || !businessId) { setWallets(p=>[...p,{...w,id:genId(),balance:0}]); setShowAddWallet(false); return; }
+    const { data, error } = await supabase.from("wallets").insert({ business_id:businessId, preset_id:w.presetId, name:w.name, number:w.number||null }).select().single();
+    if (error) { console.error(error); alert("Could not save wallet."); return; }
+    setWallets(p=>[...p,{ id:data.id, presetId:data.preset_id, name:data.name, number:data.number||"", balance:0 }]);
+    setShowAddWallet(false);
+  };
 
   const allNav = [
     { key:"dashboard",    label:"Dashboard",   icon:IC.home    },
