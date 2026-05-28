@@ -10,3 +10,8 @@ body {
   font-family: 'Poppins', sans-serif;
   /* your other existing body styles */
 }
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Poppins', sans-serif;
+}
