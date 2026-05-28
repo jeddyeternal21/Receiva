@@ -1,6 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import { supabase } from "./supabase";
-
 // ─── CONSTANTS ────────────────────────────────────────────────
 const CATEGORIES = ["Sales","Service fee","Rent","Supplies","Transport","Salary","Utilities","MoMo transfer","Other"];
 const FREE_RECEIPT_LIMIT = 5;
@@ -32,6 +30,19 @@ const DEMO_TRANSACTIONS = [
   { id:"t4", walletId:"w2", type:"income",  amount:750,  category:"Sales",       description:"Earbuds x2",           method:"Telecel",    date:"2026-05-15", momoRef:"0000012482", receiptNo:genRNo() },
   { id:"t5", walletId:"w1", type:"expense", amount:200,  category:"Transport",   description:"Delivery costs",        method:"Cash",       date:"2026-05-14", momoRef:"",           receiptNo:""       },
   { id:"t6", walletId:"w3", type:"income",  amount:580,  category:"Sales",       description:"Phone chargers bulk",   method:"Company",    date:"2026-05-13", momoRef:"",           receiptNo:genRNo() },
+];
+const DEMO_PRODUCT_CATS = [
+  { id:"c1", name:"Electronics", color:"#2563eb" },
+  { id:"c2", name:"Accessories", color:"#16a34a" },
+  { id:"c3", name:"Services",    color:"#F97316" },
+];
+
+const DEMO_PRODUCTS = [
+  { id:"p1", name:"iPhone Case",     sku:"IC-001", categoryId:"c2", type:"product",  costPrice:15,  sellPrice:45,  taxRate:0,  trackStock:true,  stock:50,  description:"Protective case for iPhones" },
+  { id:"p2", name:"Earbuds",         sku:"EB-002", categoryId:"c1", type:"product",  costPrice:80,  sellPrice:200, taxRate:0,  trackStock:true,  stock:20,  description:"Wireless earbuds" },
+  { id:"p3", name:"Phone Charger",   sku:"PC-003", categoryId:"c1", type:"product",  costPrice:25,  sellPrice:60,  taxRate:0,  trackStock:true,  stock:35,  description:"Fast charging cable" },
+  { id:"p4", name:"Website Design",  sku:"WD-001", categoryId:"c3", type:"service",  costPrice:0,   sellPrice:800, taxRate:0,  trackStock:false, stock:0,   description:"Full website design and development" },
+  { id:"p5", name:"AI Consultation", sku:"AI-001", categoryId:"c3", type:"service",  costPrice:0,   sellPrice:300, taxRate:0,  trackStock:false, stock:0,   description:"1-hour AI automation consultation" },
 ];
 const DEMO_BUSINESS = { name:"Jed Technologies", owner:"Jedidiah", phone:"0592040012", industry:"Tech solutions", plan:"free", logoColor:"#F97316", logoBg:"#fff4ed" };
 
@@ -100,6 +111,7 @@ const IC = {
   report:  "M18 20V10M12 20V4M6 20v-6",
   eye:     "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 9a3 3 0 100 6 3 3 0 000-6z",
   momo:    "M12 2a10 10 0 100 20A10 10 0 0012 2zM12 6v6l4 2",
+  box:     "M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16zM3.27 6.96L12 12.01l8.73-5.05M12 22.08V12",
   lock:    "M19 11H5a2 2 0 00-2 2v7a2 2 0 002 2h14a2 2 0 002-2v-7a2 2 0 00-2-2zM7 11V7a5 5 0 0110 0v4",
   star:    "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z",
 };
@@ -123,11 +135,11 @@ const C = {
 // ─── SHARED UI ────────────────────────────────────────────────
 const card  = (extra={}) => ({ background:C.white, border:`1px solid ${C.border}`, borderRadius:14, padding:"20px 22px", ...extra });
 const label = { fontSize:12, color:C.muted, marginBottom:5, display:"block", letterSpacing:"0.04em", fontWeight:500 };
-const input = { background:"#f9fafb", border:`1px solid ${C.border}`, borderRadius:8, padding:"10px 14px", color:C.text, fontSize:14, fontFamily:"'Plus Jakarta Sans',sans-serif", outline:"none", width:"100%", boxSizing:"border-box", transition:"border-color 0.2s" };
+const input = { background:"#f9fafb", border:`1px solid ${C.border}`, borderRadius:8, padding:"10px 14px", color:C.text, fontSize:14, fontFamily:"'Poppins',sans-serif", outline:"none", width:"100%", boxSizing:"border-box", transition:"border-color 0.2s" };
 const formRow = { display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:12 };
 
 function Btn({ children, onClick, variant="primary", full=false, size="md", href, style={}, disabled=false }) {
-  const base = { display:"inline-flex", alignItems:"center", justifyContent:"center", gap:7, borderRadius:8, border:"none", cursor:disabled?"not-allowed":"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif", fontWeight:500, textDecoration:"none", transition:"all 0.15s", opacity: disabled ? 0.5 : 1, ...(full ? { width:"100%" } : {}), ...(size==="sm" ? { padding:"7px 14px", fontSize:12 } : { padding:"10px 20px", fontSize:14 }), ...style };
+  const base = { display:"inline-flex", alignItems:"center", justifyContent:"center", gap:7, borderRadius:8, border:"none", cursor:disabled?"not-allowed":"pointer", fontFamily:"'Poppins',sans-serif", fontWeight:500, textDecoration:"none", transition:"all 0.15s", opacity: disabled ? 0.5 : 1, ...(full ? { width:"100%" } : {}), ...(size==="sm" ? { padding:"7px 14px", fontSize:12 } : { padding:"10px 20px", fontSize:14 }), ...style };
   const variants = {
     primary: { background:C.orange, color:"#fff" },
     ghost:   { background:"transparent", color:C.muted, border:`1px solid ${C.border}` },
@@ -182,98 +194,15 @@ const NET_COLOR = { MTN:"#FFCC00", Telecel:"#E30613", Vodafone:"#E30613", Airtel
 // LOGIN PAGE
 // ═══════════════════════════════════════════════════════════════
 function LoginPage({ onLogin, onGuest }) {
-  const [tab, setTab]       = useState("login");
-  const [email, setEmail]   = useState("");
-  const [pass, setPass]     = useState("");
-  const [name, setName]     = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError]   = useState("");
-
-const handleAuth = async () => {
-    if (!email || !pass) { setError("Please enter your email and password."); return; }
-    if (pass.length < 6) { setError("Password must be at least 6 characters."); return; }
-    setLoading(true);
-    setError("");
-
-    try {
-      if (tab === "signup") {
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password: pass,
-          options: { data: { full_name: name || email.split("@")[0] } }
-        });
-
-        if (signUpError) {
-          setError(signUpError.message);
-          setLoading(false);
-          return;
-        }
-
-        // Case 1: email confirmation OFF — session exists immediately
-        if (data.session) {
-          onLogin({
-            name:  name || email.split("@")[0],
-            email,
-            plan:  "free",
-            id:    data.user.id
-          });
-          return;
-        }
-
-        // Case 2: email confirmation ON — session is null
-        if (data.user && !data.session) {
-          setError("");
-          setLoading(false);
-          // Show a message instead of trying to navigate
-          alert("Account created! Check your email and click the confirmation link, then come back and sign in.");
-          setTab("login");
-          return;
-        }
-
-      } else {
-        // SIGN IN
-        const { data, error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password: pass
-        });
-
-        if (signInError) {
-          // Give friendlier error messages
-          if (signInError.message.includes("Invalid login")) {
-            setError("Wrong email or password. Please try again.");
-          } else if (signInError.message.includes("Email not confirmed")) {
-            setError("Please confirm your email first — check your inbox for a link from Supabase.");
-          } else {
-            setError(signInError.message);
-          }
-          setLoading(false);
-          return;
-        }
-
-        if (data.user) {
-          onLogin({
-            name:  data.user.user_metadata?.full_name || email.split("@")[0],
-            email,
-            plan:  "free",
-            id:    data.user.id
-          });
-        }
-      }
-    } catch (err) {
-      setError("Something went wrong. Check your internet connection and try again.");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Allow Enter key to submit
-  const handleKey = (e) => { if (e.key === "Enter") handleAuth(); };
+  const [tab, setTab]     = useState("login");
+  const [email, setEmail] = useState("");
+  const [pass, setPass]   = useState("");
+  const [name, setName]   = useState("");
 
   return (
     <>
-      <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
-      <div style={{ minHeight:"100vh", background:"#f9fafb", fontFamily:"'Plus Jakarta Sans',sans-serif", display:"flex", flexDirection:"column" }}>
+      <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+      <div style={{ minHeight:"100vh", background:"#f9fafb", fontFamily:"'Poppins',sans-serif", display:"flex", flexDirection:"column" }}>
 
         {/* TOP NAV */}
         <div style={{ padding:"18px 40px", display:"flex", justifyContent:"space-between", alignItems:"center", background:C.white, borderBottom:`1px solid ${C.border}` }}>
@@ -295,14 +224,14 @@ const handleAuth = async () => {
                 Turn MoMo SMS and payment screenshots into professional receipts. Track income, expenses, and generate monthly reports — all in one place.
               </div>
 
-              {/* FREE TRIAL */}
+              {/* FREE TRIAL HIGHLIGHT */}
               <div style={{ background:`linear-gradient(135deg, ${C.orange}18, ${C.orange}08)`, border:`1.5px solid ${C.orange}33`, borderRadius:14, padding:"18px 20px", marginBottom:24 }}>
                 <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
                   <span style={{ fontSize:20 }}>🎁</span>
                   <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:16, color:C.text }}>Try before you sign up</div>
                 </div>
                 <div style={{ fontSize:14, color:C.muted, lineHeight:1.65, marginBottom:14 }}>
-                  Generate <strong style={{ color:C.orange }}>5 free receipts</strong> right now — no account needed.
+                  Generate <strong style={{ color:C.orange }}>5 free receipts</strong> right now — no account needed. See exactly how Receiva works before committing.
                 </div>
                 <Btn variant="outline" onClick={onGuest} full>
                   <Icon d={IC.receipt} size={15}/> Try 5 free receipts →
@@ -312,8 +241,8 @@ const handleAuth = async () => {
               {/* PLANS */}
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
                 {[
-                  { plan:"Free",  price:"GH₵ 0",     perks:["30 transactions/mo","Basic receipts","MoMo parser","SMS paste"] },
-                  { plan:"Growth",price:"GH₵ 68/mo",  perks:["4 wallets","1,000 transactions","Logo receipts","PDF export"], highlight:true },
+                  { plan:"Free", price:"GH₵ 0", perks:["30 transactions/mo","Basic receipts","MoMo parser","SMS paste"] },
+                  { plan:"Pro",  price:"GH₵ 40/mo", perks:["Unlimited transactions","Logo-branded receipts","PDF export","Multi-wallet","Priority support"], highlight:true },
                 ].map(p => (
                   <div key={p.plan} style={{ background: p.highlight ? C.orange+"10" : "#f9fafb", border:`1.5px solid ${p.highlight ? C.orange+"44" : C.border}`, borderRadius:12, padding:"14px 16px" }}>
                     <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
@@ -336,7 +265,7 @@ const handleAuth = async () => {
               {/* Tab toggle */}
               <div style={{ display:"flex", background:"#f3f4f6", borderRadius:10, padding:3, marginBottom:24 }}>
                 {["login","signup"].map(t => (
-                  <button key={t} style={{ flex:1, padding:"9px", borderRadius:8, border:"none", cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:13, fontWeight:500, background: tab===t ? C.white : "transparent", color: tab===t ? C.text : C.muted, boxShadow: tab===t ? "0 1px 4px rgba(0,0,0,0.08)" : "none", transition:"all 0.15s" }} onClick={()=>{ setTab(t); setError(""); }}>
+                  <button key={t} style={{ flex:1, padding:"9px", borderRadius:8, border:"none", cursor:"pointer", fontFamily:"'Poppins',sans-serif", fontSize:13, fontWeight:500, background: tab===t ? C.white : "transparent", color: tab===t ? C.text : C.muted, boxShadow: tab===t ? "0 1px 4px rgba(0,0,0,0.08)" : "none", transition:"all 0.15s" }} onClick={()=>setTab(t)}>
                     {t==="login" ? "Sign in" : "Create account"}
                   </button>
                 ))}
@@ -345,27 +274,19 @@ const handleAuth = async () => {
               {tab==="signup" && (
                 <div style={{ marginBottom:14 }}>
                   <label style={label}>Full name</label>
-                  <input style={input} placeholder="Jedidiah Ofori" value={name} onChange={e=>setName(e.target.value)} onKeyDown={handleKey}/>
+                  <input style={input} placeholder="Jedidiah Ofori" value={name} onChange={e=>setName(e.target.value)}/>
                 </div>
               )}
               <div style={{ marginBottom:14 }}>
                 <label style={label}>Email address</label>
-                <input style={input} type="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={handleKey}/>
+                <input style={input} type="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)}/>
               </div>
-              <div style={{ marginBottom: error ? 10 : 20 }}>
+              <div style={{ marginBottom:20 }}>
                 <label style={label}>Password</label>
-                <input style={input} type="password" placeholder="••••••••" value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={handleKey}/>
+                <input style={input} type="password" placeholder="••••••••" value={pass} onChange={e=>setPass(e.target.value)}/>
               </div>
-
-              {/* Error message */}
-              {error && (
-                <div style={{ background:"#fef2f2", border:"1px solid #fca5a5", borderRadius:8, padding:"10px 14px", marginBottom:14, fontSize:13, color:"#b91c1c" }}>
-                  {error}
-                </div>
-              )}
-
-              <Btn variant="primary" full onClick={handleAuth} disabled={loading}>
-                {loading ? "Please wait..." : tab==="login" ? "Sign in to Receiva →" : "Create my account →"}
+              <Btn variant="primary" full onClick={()=>onLogin({ name: name||"Jedidiah", email, plan:"free" })}>
+                {tab==="login" ? "Sign in to Receiva" : "Create my account"} →
               </Btn>
 
               <div style={{ textAlign:"center", margin:"16px 0", fontSize:12, color:C.muted }}>or</div>
@@ -388,44 +309,9 @@ const handleAuth = async () => {
 // MAIN APP
 // ═══════════════════════════════════════════════════════════════
 export default function App() {
-const [authState, setAuthState] = useState("loading"); // "loading" | "login" | "guest" | "app"
+  const [authState, setAuthState] = useState("login"); // "login" | "guest" | "app"
   const [user, setUser]           = useState(null);
   const [page, setPage]           = useState("dashboard");
-
-  // Check if user is already logged in when app opens
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser({
-          name: session.user.user_metadata?.full_name || session.user.email.split("@")[0],
-          email: session.user.email,
-          plan: "free",
-          id: session.user.id,
-        });
-        setAuthState("app");
-      } else {
-        setAuthState("login");
-      }
-    });
-
-    // Listen for auth changes (login / logout)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setUser({
-          name: session.user.user_metadata?.full_name || session.user.email.split("@")[0],
-          email: session.user.email,
-          plan: "free",
-          id: session.user.id,
-        });
-        setAuthState("app");
-      } else {
-        setUser(null);
-        setAuthState("login");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
   const [wallets, setWallets]     = useState(DEMO_WALLETS);
   const [activeWallet, setActiveWallet] = useState(null); // null = all
   const [transactions, setTransactions] = useState(DEMO_TRANSACTIONS);
@@ -439,141 +325,46 @@ const [authState, setAuthState] = useState("loading"); // "loading" | "login" | 
   const [dataLoading, setDataLoading] = useState(false);
   const [dataError, setDataError]     = useState("");
   const [businessId, setBusinessId]   = useState(null);
+  const [editingProduct, setEditingProduct] = useState(null);
 
-// ── Load all user data from Supabase after login ──
   const loadUserData = async (userId) => {
     setDataLoading(true);
-    setDataError("");
     try {
-      // 1. Get or create the user's business profile
-      let { data: bizData, error: bizErr } = await supabase
-        .from("businesses")
-        .select("*")
-        .eq("owner_id", userId)
-        .single();
-
+      let { data: bizData, error: bizErr } = await supabase.from("businesses").select("*").eq("owner_id", userId).single();
       if (bizErr && bizErr.code === "PGRST116") {
-        // No business yet — create one automatically
-        const { data: newBiz, error: createErr } = await supabase
-          .from("businesses")
-          .insert({
-            owner_id:      userId,
-            business_name: "My Business",
-            plan:          "free",
-            logo_color:    "#F97316",
-            logo_bg:       "#fff4ed",
-          })
-          .select()
-          .single();
+        const { data: newBiz, error: createErr } = await supabase.from("businesses").insert({ owner_id:userId, business_name:"My Business", plan:"free", logo_color:"#F97316", logo_bg:"#fff4ed" }).select().single();
         if (createErr) throw createErr;
         bizData = newBiz;
-      } else if (bizErr) {
-        throw bizErr;
-      }
-
+      } else if (bizErr) throw bizErr;
       setBusinessId(bizData.id);
-
-      // 2. Load wallets
-      const { data: walletData, error: walletErr } = await supabase
-        .from("wallets")
-        .select("*")
-        .eq("business_id", bizData.id)
-        .order("created_at", { ascending: true });
-      if (walletErr) throw walletErr;
-
-      // 3. Load transactions
-      const { data: txData, error: txErr } = await supabase
-        .from("transactions")
-        .select("*")
-        .eq("business_id", bizData.id)
-        .order("date", { ascending: false });
-      if (txErr) throw txErr;
-
-      // Map database column names to app field names
-      const mappedWallets = (walletData || []).map(w => ({
-        id:       w.id,
-        presetId: w.preset_id,
-        name:     w.name,
-        number:   w.number || "",
-        balance:  0,
-      }));
-
-      const mappedTx = (txData || []).map(t => ({
-        id:          t.id,
-        walletId:    t.wallet_id,
-        type:        t.type,
-        amount:      parseFloat(t.amount),
-        category:    t.category || "",
-        description: t.description || "",
-        method:      t.method || "",
-        date:        t.date,
-        momoRef:     t.momo_ref || "",
-        receiptNo:   t.receipt_no || genRNo(),
-      }));
-
-      // If user has no wallets yet, create default ones for them
+      const { data: walletData } = await supabase.from("wallets").select("*").eq("business_id", bizData.id).order("created_at",{ascending:true});
+      const { data: txData }     = await supabase.from("transactions").select("*").eq("business_id", bizData.id).order("date",{ascending:false});
+      const mappedWallets = (walletData||[]).map(w=>({ id:w.id, presetId:w.preset_id, name:w.name, number:w.number||"", balance:0 }));
+      const mappedTx      = (txData||[]).map(t=>({ id:t.id, walletId:t.wallet_id, type:t.type, amount:parseFloat(t.amount), category:t.category||"", description:t.description||"", method:t.method||"", date:t.date, momoRef:t.momo_ref||"", receiptNo:t.receipt_no||genRNo() }));
       if (mappedWallets.length === 0) {
-        const defaultWallets = [
-          { preset_id:"mtn",     name:"MTN MoMo",    number:"", business_id: bizData.id },
-          { preset_id:"telecel", name:"Telecel Cash", number:"", business_id: bizData.id },
-        ];
-        const { data: newWallets, error: wErr } = await supabase
-          .from("wallets")
-          .insert(defaultWallets)
-          .select();
-        if (wErr) throw wErr;
-        mappedWallets.push(...(newWallets || []).map(w => ({
-          id: w.id, presetId: w.preset_id, name: w.name, number: w.number || "", balance: 0,
-        })));
+        const defaults = [{ preset_id:"mtn", name:"MTN MoMo", number:"", business_id:bizData.id },{ preset_id:"telecel", name:"Telecel Cash", number:"", business_id:bizData.id }];
+        const { data: newW } = await supabase.from("wallets").insert(defaults).select();
+        mappedWallets.push(...(newW||[]).map(w=>({ id:w.id, presetId:w.preset_id, name:w.name, number:"", balance:0 })));
       }
-
-      setWallets(mappedWallets.length > 0 ? mappedWallets : DEMO_WALLETS);
-      setTransactions(mappedTx.length > 0 ? mappedTx : []);
-
-    } catch (err) {
-      console.error("Failed to load user data:", err);
+      setWallets(mappedWallets.length>0 ? mappedWallets : DEMO_WALLETS);
+      setTransactions(mappedTx);
+    } catch(err) {
+      console.error(err);
       setDataError("Could not load your data. Check your connection and refresh.");
     } finally {
       setDataLoading(false);
     }
   };
 
-  const handleLogin = (u) => {
-    setUser(u);
-    setAuthState("app");
-    if (u.id) loadUserData(u.id);
-  };
-
-  const handleGuest = () => {
-    setWallets(DEMO_WALLETS);
-    setTransactions(DEMO_TRANSACTIONS);
-    setAuthState("guest");
-  };
+  const handleLogin = (u) => { setUser(u); setAuthState("app"); if(u.id) loadUserData(u.id); };
+  const handleGuest = () => { setWallets(DEMO_WALLETS); setTransactions(DEMO_TRANSACTIONS); setAuthState("guest"); };
+  const handleSignOut = async () => { await supabase.auth.signOut(); setUser(null); setWallets(DEMO_WALLETS); setTransactions(DEMO_TRANSACTIONS); setBusinessId(null); setAuthState("login"); };
 
   if (authState === "loading") return (
-    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#f9fafb", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
+    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#f9fafb", fontFamily:"'Poppins',sans-serif" }}>
       <div style={{ textAlign:"center" }}>
         <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:24, color:"#111827", marginBottom:8 }}>Receiva<span style={{ color:"#F97316" }}>.</span></div>
-        <div style={{ fontSize:13, color:"#6b7280" }}>Loading your account...</div>
-      </div>
-    </div>
-  );
-
-  if (authState === "login") return <LoginPage onLogin={handleLogin} onGuest={handleGuest}/>;
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setWallets(DEMO_WALLETS);
-    setTransactions(DEMO_TRANSACTIONS);
-    setAuthState("login");
-  };
-
-  if (authState === "loading") return (
-    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#f9fafb", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
-      <div style={{ textAlign:"center" }}>
-        <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:24, color:"#111827", marginBottom:8 }}>Receiva<span style={{ color:"#F97316" }}>.</span></div>
-        <div style={{ fontSize:13, color:"#6b7280" }}>Loading your account...</div>
+        <div style={{ fontSize:13, color:"#6b7280" }}>Loading...</div>
       </div>
     </div>
   );
@@ -597,116 +388,98 @@ const [authState, setAuthState] = useState("loading"); // "loading" | "login" | 
     setShowReceipt(tx);
   };
 
-const addTransaction = async (tx) => {
-    const newReceiptNo = genRNo();
+  const addTransaction = (tx) => { setTransactions(p=>[{...tx, id:genId(), receiptNo:genRNo()}, ...p]); setShowAddTx(false); };
+  const addWallet = (w) => { setWallets(p=>[...p, { ...w, id:genId(), balance:0 }]); setShowAddWallet(false); };
 
-    if (isGuest || !businessId) {
-      // Guest mode — save to local state only
-      setTransactions(p => [{ ...tx, id:genId(), receiptNo:newReceiptNo }, ...p]);
-      setShowAddTx(false);
-      setShowMoMo(false);
-      return;
-    }
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [productsExpanded, setProductsExpanded] = useState(false);
+  const [products, setProducts] = useState(DEMO_PRODUCTS);
+  const [productCategories, setProductCategories] = useState(DEMO_PRODUCT_CATS);
 
-    // Logged-in user — save to Supabase
-    const { data, error } = await supabase
-      .from("transactions")
-      .insert({
-        wallet_id:   tx.walletId,
-        business_id: businessId,
-        type:        tx.type,
-        amount:      tx.amount,
-        category:    tx.category,
-        description: tx.description,
-        method:      tx.method,
-        date:        tx.date,
-        momo_ref:    tx.momoRef || null,
-        receipt_no:  newReceiptNo,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Failed to save transaction:", error);
-      alert("Could not save transaction. Please try again.");
-      return;
-    }
-
-    // Add to local state immediately so UI updates without a full reload
-    setTransactions(p => [{
-      id:          data.id,
-      walletId:    data.wallet_id,
-      type:        data.type,
-      amount:      parseFloat(data.amount),
-      category:    data.category || "",
-      description: data.description || "",
-      method:      data.method || "",
-      date:        data.date,
-      momoRef:     data.momo_ref || "",
-      receiptNo:   data.receipt_no || newReceiptNo,
-    }, ...p]);
-
-    setShowAddTx(false);
-    setShowMoMo(false);
-  };
-const addWallet = async (w) => {
-    if (isGuest || !businessId) {
-      // Guest mode — local only
-      setWallets(p => [...p, { ...w, id:genId(), balance:0 }]);
-      setShowAddWallet(false);
-      return;
-    }
-
-    // Logged-in user — save to Supabase
-    const { data, error } = await supabase
-      .from("wallets")
-      .insert({
-        business_id: businessId,
-        preset_id:   w.presetId,
-        name:        w.name,
-        number:      w.number || null,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Failed to save wallet:", error);
-      alert("Could not save wallet. Please try again.");
-      return;
-    }
-
-    setWallets(p => [...p, {
-      id:       data.id,
-      presetId: data.preset_id,
-      name:     data.name,
-      number:   data.number || "",
-      balance:  0,
-    }]);
-
-    setShowAddWallet(false);
-  };
-
-  const nav = [
+  const allNav = [
     { key:"dashboard",    label:"Dashboard",   icon:IC.home    },
     { key:"wallets",      label:"Wallets",      icon:IC.wallet  },
     { key:"transactions", label:"Transactions", icon:IC.tx      },
     { key:"receipts",     label:"Receipts",     icon:IC.receipt },
     { key:"reports",      label:"Reports",      icon:IC.report  },
+    { key:"products",     label:"Products",     icon:IC.box, children:[
+      { key:"product-list",    label:"Product List"    },
+      { key:"add-product",     label:"Add New Product" },
+      { key:"categories",      label:"Categories"      },
+    ]},
   ];
+
+  const isProductPage = ["products","product-list","add-product","categories"].includes(page);
+
+  const NavItem = ({ n, mobile=false, onNavigate }) => {
+    if (n.children) {
+      const childActive = n.children.some(c=>c.key===page);
+      return (
+        <div>
+          <div onClick={()=>setProductsExpanded(e=>!e)} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, padding: mobile?"14px 20px":"11px 20px", cursor:"pointer", fontSize:14, color: childActive ? C.orange : C.muted, background: childActive ? C.orange+"10" : "transparent", borderLeft: mobile?"none":`2px solid ${childActive ? C.orange : "transparent"}`, transition:"all 0.15s", fontWeight: childActive ? 500 : 400 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10 }}><Icon d={n.icon} size={16}/>{n.label}</div>
+            <span style={{ fontSize:10, transition:"transform 0.2s", transform: productsExpanded?"rotate(180deg)":"rotate(0)" }}>▼</span>
+          </div>
+          {productsExpanded && (
+            <div style={{ background:"#fafafa", borderLeft: mobile?"none":"2px solid #f0f0f0", marginLeft: mobile?0:20 }}>
+              {n.children.map(c=>(
+                <div key={c.key} onClick={()=>{ onNavigate(c.key); }} style={{ padding: mobile?"12px 20px 12px 36px":"9px 20px 9px 28px", cursor:"pointer", fontSize:13, color: page===c.key ? C.orange : C.muted, background: page===c.key ? C.orange+"08":"transparent", fontWeight: page===c.key?500:400, transition:"all 0.15s" }}>
+                  {c.label}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+    const active = page===n.key;
+    return (
+      <div onClick={()=>onNavigate(n.key)} style={{ display:"flex", alignItems:"center", gap:10, padding: mobile?"14px 20px":"11px 20px", cursor:"pointer", fontSize:14, color: active ? C.orange : C.muted, background: active ? C.orange+"10" : "transparent", borderLeft: mobile?"none":`2px solid ${active ? C.orange : "transparent"}`, transition:"all 0.15s", fontWeight: active ? 500 : 400 }}>
+        <Icon d={n.icon} size={16}/>{n.label}
+      </div>
+    );
+  };
+
+  const navigateTo = (key) => { setPage(key); setMobileMenuOpen(false); };
+
+  const currentLabel = () => {
+    for (const n of allNav) {
+      if (n.key===page) return n.label;
+      if (n.children) { const c=n.children.find(c=>c.key===page); if(c) return c.label; }
+    }
+    return "";
+  };
 
   return (
     <>
-      <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
-      <div style={{ minHeight:"100vh", background:"#f9fafb", color:C.text, fontFamily:"'Plus Jakarta Sans',sans-serif", display:"flex" }}>
+      <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+      <style>{`
+        @media(max-width:768px){
+          .desktop-sidebar{display:none!important;}
+          .mobile-topbar-title{font-size:16px!important;}
+          .wallet-pills{display:none!important;}
+          .content-pad{padding:16px!important;}
+          .stat-grid{grid-template-columns:1fr 1fr!important;}
+        }
+        @media(min-width:769px){
+          .hamburger-btn{display:none!important;}
+          .mobile-overlay{display:none!important;}
+        }
+        .mobile-overlay{position:fixed;inset:0;z-index:200;display:flex;}
+        .mobile-drawer{width:280px;background:#fff;height:100%;overflow-y:auto;box-shadow:4px 0 24px rgba(0,0,0,0.15);display:flex;flex-direction:column;}
+        .mobile-backdrop{flex:1;background:rgba(0,0,0,0.4);}
+        .nav-item-hover:hover{background:${C.orange}08;}
+      `}</style>
 
-        {/* SIDEBAR */}
-        <div style={{ width:220, background:C.white, borderRight:`1px solid ${C.sidebarBorder}`, display:"flex", flexDirection:"column", padding:"24px 0", flexShrink:0, boxShadow:"2px 0 8px rgba(0,0,0,0.04)" }}>
+      <div style={{ minHeight:"100vh", background:"#f9fafb", color:C.text, fontFamily:"'Poppins',sans-serif", display:"flex" }}>
+
+        {/* DESKTOP SIDEBAR */}
+        <div className="desktop-sidebar" style={{ width:220, background:C.white, borderRight:`1px solid ${C.sidebarBorder}`, display:"flex", flexDirection:"column", padding:"24px 0", flexShrink:0, boxShadow:"2px 0 8px rgba(0,0,0,0.04)" }}>
           <div style={{ padding:"0 20px 22px", borderBottom:`1px solid ${C.border}`, marginBottom:8 }}>
             <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:22, color:C.text }}>Receiva<span style={{ color:C.orange }}>.</span></div>
             <div style={{ fontSize:11, color:C.orange, letterSpacing:"0.1em", textTransform:"uppercase", fontStyle:"italic" }}>Financial records</div>
           </div>
 
-          {/* Guest banner */}
           {isGuest && (
             <div style={{ margin:"0 12px 12px", background:C.orange+"12", border:`1px solid ${C.orange}33`, borderRadius:10, padding:"10px 12px" }}>
               <div style={{ fontSize:12, fontWeight:600, color:C.orange, marginBottom:3 }}>Guest mode</div>
@@ -715,21 +488,20 @@ const addWallet = async (w) => {
             </div>
           )}
 
-          {nav.map(n => {
-            const active = page===n.key;
-            return (
-              <div key={n.key} onClick={()=>setPage(n.key)} style={{ display:"flex", alignItems:"center", gap:10, padding:"11px 20px", cursor:"pointer", fontSize:14, color: active ? C.orange : C.muted, background: active ? C.orange+"10" : "transparent", borderLeft:`2px solid ${active ? C.orange : "transparent"}`, transition:"all 0.15s", fontWeight: active ? 500 : 400 }}>
-                <Icon d={n.icon} size={16}/>{n.label}
-              </div>
-            );
-          })}
+          {allNav.map(n=><NavItem key={n.key} n={n} onNavigate={navigateTo}/>)}
 
-          {/* Plan + usage */}
+          {/* WhatsApp Support */}
+          <div style={{ margin:"12px 12px 0" }}>
+            <a href="https://wa.me/233205597508" target="_blank" rel="noreferrer" style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 12px", background:"#25D36614", border:"1px solid #25D36633", borderRadius:10, textDecoration:"none", color:"#166534", fontSize:12, fontWeight:500 }}>
+              <span style={{ fontSize:16 }}>💬</span> Chat with support
+            </a>
+          </div>
+
           <div style={{ marginTop:"auto", padding:"16px 18px 0" }}>
             {!isPro && (
               <div style={{ background:`linear-gradient(135deg,${C.orange}18,${C.orange}08)`, border:`1px solid ${C.orange}30`, borderRadius:10, padding:"12px 14px", marginBottom:10 }}>
                 <div style={{ fontSize:11, color:C.orange, fontWeight:600, marginBottom:2, display:"flex", alignItems:"center", gap:5 }}><Icon d={IC.star} size={11}/> Upgrade to Pro</div>
-                <div style={{ fontSize:11, color:C.muted, marginBottom:8 }}>Logo receipts · PDF · Unlimited</div>
+                <div style={{ fontSize:11, color:C.muted, marginBottom:8 }}>Logo receipts · PDF · More</div>
                 <Btn variant="primary" full size="sm" onClick={()=>setShowUpgrade(true)}>Upgrade — GH₵ 40/mo</Btn>
               </div>
             )}
@@ -744,98 +516,87 @@ const addWallet = async (w) => {
           </div>
         </div>
 
+        {/* MOBILE DRAWER OVERLAY */}
+        {mobileMenuOpen && (
+          <div className="mobile-overlay">
+            <div className="mobile-drawer">
+              <div style={{ padding:"20px 20px 16px", borderBottom:`1px solid ${C.border}`, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:20, color:C.text }}>Receiva<span style={{ color:C.orange }}>.</span></div>
+                <button onClick={()=>setMobileMenuOpen(false)} style={{ background:"transparent", border:"none", cursor:"pointer", fontSize:20, color:C.muted, padding:4 }}>✕</button>
+              </div>
+              {isGuest && (
+                <div style={{ margin:"12px 12px 0", background:C.orange+"12", border:`1px solid ${C.orange}33`, borderRadius:10, padding:"10px 12px" }}>
+                  <div style={{ fontSize:12, fontWeight:600, color:C.orange, marginBottom:3 }}>Guest mode</div>
+                  <div style={{ fontSize:11, color:C.muted, marginBottom:8 }}>{FREE_RECEIPT_LIMIT - guestCount} free receipts left</div>
+                  <Btn variant="primary" full size="sm" onClick={()=>{ setAuthState("login"); setMobileMenuOpen(false); }}>Sign up free →</Btn>
+                </div>
+              )}
+              <div style={{ flex:1, overflowY:"auto" }}>
+                {allNav.map(n=><NavItem key={n.key} n={n} mobile onNavigate={navigateTo}/>)}
+              </div>
+              <div style={{ padding:"16px 12px", borderTop:`1px solid ${C.border}` }}>
+                <a href="https://wa.me/233205597508" target="_blank" rel="noreferrer" style={{ display:"flex", alignItems:"center", gap:8, padding:"12px 14px", background:"#25D36614", border:"1px solid #25D36633", borderRadius:10, textDecoration:"none", color:"#166534", fontSize:13, fontWeight:500 }}>
+                  <span style={{ fontSize:18 }}>💬</span> Chat with support on WhatsApp
+                </a>
+              </div>
+            </div>
+            <div className="mobile-backdrop" onClick={()=>setMobileMenuOpen(false)}/>
+          </div>
+        )}
+
         {/* MAIN */}
         <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
           {/* TOPBAR */}
-          <div style={{ padding:"16px 28px", borderBottom:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"space-between", background:C.white }}>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:18, color:C.text }}>{nav.find(n=>n.key===page)?.label}</div>
+          <div style={{ padding:"14px 20px", borderBottom:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"space-between", background:C.white }}>
             <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-              {/* Wallet filter pills */}
-              <div style={{ display:"flex", gap:6, flexWrap:"nowrap", overflow:"auto" }}>
-                <div onClick={()=>setActiveWallet(null)} style={{ padding:"5px 12px", borderRadius:20, cursor:"pointer", background: activeWallet===null ? C.orange : "#f3f4f6", color: activeWallet===null ? "#fff" : C.muted, fontSize:12, fontWeight:500, border:`1.5px solid ${activeWallet===null ? C.orange : "transparent"}`, whiteSpace:"nowrap" }}>All wallets</div>
+              {/* Hamburger */}
+              <button className="hamburger-btn" onClick={()=>setMobileMenuOpen(true)} style={{ background:"transparent", border:`1px solid ${C.border}`, borderRadius:8, padding:"6px 8px", cursor:"pointer", display:"flex", flexDirection:"column", gap:4 }}>
+                <div style={{ width:18, height:2, background:C.text, borderRadius:1 }}/>
+                <div style={{ width:18, height:2, background:C.text, borderRadius:1 }}/>
+                <div style={{ width:18, height:2, background:C.text, borderRadius:1 }}/>
+              </button>
+              <div className="mobile-topbar-title" style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:18, color:C.text }}>{currentLabel()}</div>
+            </div>
+            <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+              <div className="wallet-pills" style={{ display:"flex", gap:6, flexWrap:"nowrap", overflow:"auto" }}>
+                <div onClick={()=>setActiveWallet(null)} style={{ padding:"5px 12px", borderRadius:20, cursor:"pointer", background: activeWallet===null ? C.orange : "#f3f4f6", color: activeWallet===null ? "#fff" : C.muted, fontSize:12, fontWeight:500, border:`1.5px solid ${activeWallet===null ? C.orange : "transparent"}`, whiteSpace:"nowrap" }}>All</div>
                 {wallets.map(w=><WalletPill key={w.id} wallet={w} active={activeWallet===w.id} onClick={()=>setActiveWallet(w.id===activeWallet?null:w.id)}/>)}
               </div>
+              <a href="https://wa.me/233205597508" target="_blank" rel="noreferrer" title="WhatsApp support" style={{ width:32, height:32, borderRadius:"50%", background:"#25D36618", border:"1.5px solid #25D36644", display:"flex", alignItems:"center", justifyContent:"center", fontSize:15, textDecoration:"none" }}>💬</a>
               <div style={{ width:32, height:32, borderRadius:"50%", background:C.orange+"18", border:`1.5px solid ${C.orange}44`, display:"flex", alignItems:"center", justifyContent:"center", color:C.orange, fontSize:13, fontWeight:700 }}>
                 {isGuest ? "G" : (user?.name?.[0]?.toUpperCase() || "J")}
-                {!isGuest && (
-                <button onClick={handleSignOut} style={{ fontSize:12, color:C.muted, background:"transparent", border:`1px solid ${C.border}`, borderRadius:6, padding:"5px 10px", cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
+              </div>
+              {!isGuest && (
+                <button onClick={handleSignOut} style={{ fontSize:11, color:C.muted, background:"transparent", border:`1px solid ${C.border}`, borderRadius:6, padding:"5px 8px", cursor:"pointer", fontFamily:"'Poppins',sans-serif" }}>
                   Sign out
                 </button>
               )}
-              </div>
             </div>
           </div>
+
           {/* CONTENT */}
-          <div style={{ flex:1, padding:"24px 28px", overflowY:"auto" }}>
-            {/* Data loading indicator */}
-            {dataLoading && (
-              <div style={{ textAlign:"center", padding:"40px", color:"#6b7280", fontSize:14 }}>
-                Loading your data...
-              </div>
-            )}
-            {/* Data error */}
-            {dataError && (
-              <div style={{ background:"#fef2f2", border:"1px solid #fca5a5", borderRadius:10, padding:"14px 18px", marginBottom:16, fontSize:13, color:"#b91c1c" }}>
-                {dataError} <button onClick={()=>user?.id && loadUserData(user.id)} style={{ marginLeft:8, color:"#b91c1c", background:"transparent", border:"none", cursor:"pointer", textDecoration:"underline", fontFamily:"inherit" }}>Retry</button>
-              </div>
-            )}
+          <div className="content-pad" style={{ flex:1, padding:"24px 28px", overflowY:"auto" }}>
+            {dataLoading && <div style={{ textAlign:"center", padding:"40px", color:C.muted, fontSize:14 }}>Loading your data...</div>}
+            {dataError   && <div style={{ background:"#fef2f2", border:"1px solid #fca5a5", borderRadius:10, padding:"14px 18px", marginBottom:16, fontSize:13, color:"#b91c1c" }}>{dataError}</div>}
             {page==="dashboard"    && <Dashboard transactions={txFiltered} income={income} expense={expense} balance={balance} wallets={wallets} activeWallet={activeWallet} business={business} onAdd={()=>setShowAddTx(true)} onReceipt={tryGenerateReceipt} onMoMo={()=>setShowMoMo(true)} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount}/>}
             {page==="wallets"      && <Wallets wallets={wallets} transactions={transactions} onAdd={()=>setShowAddWallet(true)} onSelect={setActiveWallet} activeWallet={activeWallet}/>}
             {page==="transactions" && <Transactions transactions={txFiltered} wallets={wallets} onAdd={()=>setShowAddTx(true)} onReceipt={tryGenerateReceipt}/>}
             {page==="receipts"     && <Receipts transactions={txFiltered} wallets={wallets} business={business} onReceipt={tryGenerateReceipt} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount}/>}
             {page==="reports"      && <Reports transactions={txFiltered} income={income} expense={expense} balance={balance} isPro={isPro} onUpgrade={()=>setShowUpgrade(true)}/>}
+            {(page==="products"||page==="product-list") && <ProductList products={products} categories={productCategories} onAdd={()=>navigateTo("add-product")} onEdit={p=>{ setEditingProduct(p); navigateTo("add-product"); }}/>}
+            {page==="add-product"  && <AddEditProduct product={editingProduct} categories={productCategories} onSave={p=>{ if(editingProduct){ setProducts(prev=>prev.map(x=>x.id===p.id?p:x)); } else { setProducts(prev=>[...prev,{...p,id:genId()}]); } setEditingProduct(null); navigateTo("product-list"); }} onCancel={()=>{ setEditingProduct(null); navigateTo("product-list"); }}/>}
+            {page==="categories"   && <ProductCategories categories={productCategories} products={products} onSave={setProductCategories}/>}
           </div>
         </div>
       </div>
 
-      {showAddTx    && <AddTxModal onClose={()=>setShowAddTx(false)}    onSave={addTransaction} wallets={wallets}/>}
+      {showAddTx    && <AddTxModal onClose={()=>setShowAddTx(false)} onSave={addTransaction} wallets={wallets} products={products}/>}
       {showReceipt  && <ReceiptModal tx={showReceipt} business={business} isPro={isPro} onClose={()=>setShowReceipt(null)}/>}
       {showMoMo     && <MoMoModal business={business} wallets={wallets} onClose={()=>setShowMoMo(false)} onSave={addTransaction}/>}
       {showAddWallet&& <AddWalletModal onClose={()=>setShowAddWallet(false)} onSave={addWallet}/>}
       {showUpgrade  && <UpgradeModal onClose={()=>setShowUpgrade(false)}/>}
     </>
   );
-  
-  // Restore session on page refresh
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        const u = {
-          name:  session.user.user_metadata?.full_name || session.user.email.split("@")[0],
-          email: session.user.email,
-          plan:  "free",
-          id:    session.user.id,
-        };
-        setUser(u);
-        setAuthState("app");
-        loadUserData(session.user.id);
-      } else {
-        setAuthState("login");
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        const u = {
-          name:  session.user.user_metadata?.full_name || session.user.email.split("@")[0],
-          email: session.user.email,
-          plan:  "free",
-          id:    session.user.id,
-        };
-        setUser(u);
-        setAuthState("app");
-        loadUserData(session.user.id);
-      } else {
-        setUser(null);
-        setWallets(DEMO_WALLETS);
-        setTransactions([]);
-        setBusinessId(null);
-        setAuthState("login");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────
@@ -886,7 +647,7 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
       {/* QUICK ACTIONS */}
       <div style={{ display:"flex", gap:10, marginBottom:22 }}>
         <Btn variant="primary" onClick={onAdd}><Icon d={IC.plus} size={15}/> Log transaction</Btn>
-        <Btn variant="teal" onClick={onMoMo}><Icon d={IC.momo} size={15}/> MoMo Beautifier</Btn>
+        <Btn variant="teal" onClick={onMoMo}><Icon d={IC.momo} size={15}/> Generate Receipt</Btn>
         {isGuest && <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:13, color:C.muted }}><Icon d={IC.receipt} size={14}/> {guestLeft} free receipts left</div>}
       </div>
 
@@ -990,7 +751,7 @@ function Transactions({ transactions, wallets, onAdd, onReceipt }) {
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:18 }}>
         <div style={{ display:"flex", gap:8 }}>
           {["all","income","expense"].map(f=>(
-            <button key={f} style={{ padding:"7px 16px", borderRadius:20, border:`1.5px solid ${filter===f ? C.orange : C.border}`, background: filter===f ? C.orange+"12" : C.white, color: filter===f ? C.orange : C.muted, fontSize:13, fontWeight:500, cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif" }} onClick={()=>setFilter(f)}>
+            <button key={f} style={{ padding:"7px 16px", borderRadius:20, border:`1.5px solid ${filter===f ? C.orange : C.border}`, background: filter===f ? C.orange+"12" : C.white, color: filter===f ? C.orange : C.muted, fontSize:13, fontWeight:500, cursor:"pointer", fontFamily:"'Poppins',sans-serif" }} onClick={()=>setFilter(f)}>
               {f.charAt(0).toUpperCase()+f.slice(1)}
             </button>
           ))}
@@ -1096,7 +857,7 @@ function AddTxModal({ onClose, onSave, wallets }) {
       <ModalHeader title="Log transaction" onClose={onClose}/>
       <div style={{ display:"flex", gap:8, marginBottom:18 }}>
         {["income","expense"].map(t=>(
-          <button key={t} style={{ flex:1, padding:"9px", borderRadius:8, border:"none", cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:14, fontWeight:500, background: form.type===t ? (t==="income"?C.income+"18":C.expense+"15") : "#f3f4f6", color: form.type===t ? (t==="income"?C.income:C.expense) : C.muted }} onClick={()=>set("type",t)}>
+          <button key={t} style={{ flex:1, padding:"9px", borderRadius:8, border:"none", cursor:"pointer", fontFamily:"'Poppins',sans-serif", fontSize:14, fontWeight:500, background: form.type===t ? (t==="income"?C.income+"18":C.expense+"15") : "#f3f4f6", color: form.type===t ? (t==="income"?C.income:C.expense) : C.muted }} onClick={()=>set("type",t)}>
             {t==="income"?"💰 Income":"📤 Expense"}
           </button>
         ))}
@@ -1293,7 +1054,7 @@ function MoMoModal({ business, wallets, onClose, onSave }) {
 
   return (
     <Modal onClose={onClose} maxWidth={680}>
-      <ModalHeader title="MoMo Bulk Importer" onClose={onClose} />
+      <ModalHeader title="Generate Receipt" onClose={onClose} />
 
       {/* STEP INDICATOR */}
       <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:20 }}>
@@ -1323,10 +1084,10 @@ function MoMoModal({ business, wallets, onClose, onSave }) {
           </div>
 
           <div style={{ display:"flex", gap:8, marginBottom:12 }}>
-            <button style={{ padding:"6px 12px", borderRadius:8, border:`1px solid rgba(255,204,0,0.4)`, background:"rgba(255,204,0,0.08)", color:"#b45309", fontSize:12, cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif" }} onClick={()=>setRaw(BULK_SAMPLE)}>
+            <button style={{ padding:"6px 12px", borderRadius:8, border:`1px solid rgba(255,204,0,0.4)`, background:"rgba(255,204,0,0.08)", color:"#b45309", fontSize:12, cursor:"pointer", fontFamily:"'Poppins',sans-serif" }} onClick={()=>setRaw(BULK_SAMPLE)}>
               Load 3-message sample
             </button>
-            <button style={{ padding:"6px 12px", borderRadius:8, border:`1px solid ${C.border}`, background:"transparent", color:C.muted, fontSize:12, cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif" }} onClick={()=>setRaw("")}>
+            <button style={{ padding:"6px 12px", borderRadius:8, border:`1px solid ${C.border}`, background:"transparent", color:C.muted, fontSize:12, cursor:"pointer", fontFamily:"'Poppins',sans-serif" }} onClick={()=>setRaw("")}>
               Clear
             </button>
           </div>
@@ -1563,5 +1324,291 @@ function UpgradeModal({ onClose }) {
       </Btn>
       <div style={{ textAlign:"center", fontSize:12, color:C.muted, marginTop:10 }}>Cancel anytime · No hidden fees</div>
     </Modal>
+  );
+}
+
+// ─── PRODUCT LIST ─────────────────────────────────────────────
+function ProductList({ products, categories, onAdd, onEdit }) {
+  const [search, setSearch]     = useState("");
+  const [catFilter, setCatFilter] = useState("all");
+
+  const filtered = products.filter(p => {
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase());
+    const matchCat    = catFilter === "all" || p.categoryId === catFilter;
+    return matchSearch && matchCat;
+  });
+
+  const margin = p => p.costPrice > 0 ? Math.round(((p.sellPrice - p.costPrice) / p.sellPrice) * 100) : null;
+
+  return (
+    <div>
+      {/* Header */}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20, flexWrap:"wrap", gap:10 }}>
+        <div>
+          <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:20, color:C.text }}>Products</div>
+          <div style={{ fontSize:13, color:C.muted }}>{products.length} products · {products.filter(p=>p.type==="service").length} services</div>
+        </div>
+        <Btn variant="primary" onClick={onAdd}><Icon d={IC.plus} size={15}/> Add product</Btn>
+      </div>
+
+      {/* Filters */}
+      <div style={{ display:"flex", gap:10, marginBottom:16, flexWrap:"wrap" }}>
+        <input style={{ ...input, maxWidth:260, fontSize:13 }} placeholder="Search by name or SKU..." value={search} onChange={e=>setSearch(e.target.value)}/>
+        <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+          <button onClick={()=>setCatFilter("all")} style={{ padding:"7px 14px", borderRadius:20, border:`1.5px solid ${catFilter==="all"?C.orange:C.border}`, background:catFilter==="all"?C.orange+"12":"transparent", color:catFilter==="all"?C.orange:C.muted, fontSize:12, cursor:"pointer", fontFamily:"'Poppins',sans-serif" }}>All</button>
+          {categories.map(c=>(
+            <button key={c.id} onClick={()=>setCatFilter(c.id)} style={{ padding:"7px 14px", borderRadius:20, border:`1.5px solid ${catFilter===c.id?c.color:C.border}`, background:catFilter===c.id?c.color+"12":"transparent", color:catFilter===c.id?c.color:C.muted, fontSize:12, cursor:"pointer", fontFamily:"'Poppins',sans-serif" }}>{c.name}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Stats row */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:20 }}>
+        {[
+          ["Total products", products.filter(p=>p.type==="product").length, C.teal],
+          ["Services",       products.filter(p=>p.type==="service").length, C.orange],
+          ["Low stock",      products.filter(p=>p.trackStock&&p.stock<10).length, "#ef4444"],
+          ["Avg margin",     products.filter(p=>p.costPrice>0).length > 0 ? Math.round(products.filter(p=>p.costPrice>0).reduce((s,p)=>s+(((p.sellPrice-p.costPrice)/p.sellPrice)*100),0)/products.filter(p=>p.costPrice>0).length)+"%":"N/A", "#2563eb"],
+        ].map(([l,v,c])=>(
+          <div key={l} style={card({ padding:"14px 16px" })}>
+            <div style={{ fontSize:11, color:C.muted, marginBottom:4 }}>{l}</div>
+            <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:22, color:c }}>{v}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Table */}
+      <div style={card({ padding:0, overflow:"hidden" })}>
+        <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr 80px", padding:"10px 16px", fontSize:11, color:C.muted, letterSpacing:"0.05em", textTransform:"uppercase", borderBottom:`1px solid ${C.border}` }}>
+          <span>Product</span><span>Category</span><span>Cost</span><span>Price</span><span>Stock</span><span>Action</span>
+        </div>
+        {filtered.length === 0 && (
+          <div style={{ textAlign:"center", padding:"40px", color:C.muted, fontSize:14 }}>No products found</div>
+        )}
+        {filtered.map(p => {
+          const cat = categories.find(c=>c.id===p.categoryId);
+          const mg  = margin(p);
+          return (
+            <div key={p.id} style={{ display:"grid", gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr 80px", padding:"12px 16px", borderBottom:`1px solid #f9fafb`, alignItems:"center", fontSize:13 }}>
+              <div>
+                <div style={{ fontWeight:500, color:C.text }}>{p.name}</div>
+                <div style={{ fontSize:11, color:C.muted, marginTop:1 }}>SKU: {p.sku} · <span style={{ color: p.type==="service"?C.orange:C.teal, fontWeight:500 }}>{p.type==="service"?"Service":"Product"}</span></div>
+              </div>
+              <div><span style={{ background:cat?cat.color+"14":"#f3f4f6", color:cat?.color||C.muted, padding:"2px 8px", borderRadius:20, fontSize:11, fontWeight:500 }}>{cat?.name||"—"}</span></div>
+              <div style={{ color:C.muted }}>{p.costPrice > 0 ? fmt(p.costPrice) : "—"}</div>
+              <div>
+                <div style={{ fontWeight:600, color:C.income }}>{fmt(p.sellPrice)}</div>
+                {mg !== null && <div style={{ fontSize:10, color:"#16a34a" }}>{mg}% margin</div>}
+              </div>
+              <div>
+                {p.trackStock ? (
+                  <span style={{ fontWeight:600, color: p.stock < 10 ? "#ef4444" : C.text }}>{p.stock} units</span>
+                ) : (
+                  <span style={{ color:C.muted, fontSize:12 }}>Service</span>
+                )}
+              </div>
+              <div>
+                <Btn variant="ghost" size="sm" onClick={()=>onEdit(p)} style={{ fontSize:11, padding:"5px 10px" }}>Edit</Btn>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* CSV note */}
+      <div style={{ marginTop:14, fontSize:12, color:C.muted, textAlign:"center" }}>
+        Bulk CSV import coming soon — you'll be able to upload a spreadsheet of all your products at once.
+      </div>
+    </div>
+  );
+}
+
+// ─── ADD/EDIT PRODUCT FORM ────────────────────────────────────
+function AddEditProduct({ product, categories, onSave, onCancel }) {
+  const isEdit = !!product;
+  const [form, setForm] = useState(product || {
+    name:"", sku:"", categoryId:"", type:"product",
+    costPrice:"", sellPrice:"", taxRate:"0",
+    trackStock:true, stock:"0", description:""
+  });
+  const set = (k,v) => setForm(f=>({...f,[k]:v}));
+  const valid = form.name && form.sellPrice && form.categoryId;
+
+  const margin = form.costPrice && form.sellPrice
+    ? Math.round(((parseFloat(form.sellPrice)-parseFloat(form.costPrice))/parseFloat(form.sellPrice))*100)
+    : null;
+
+  return (
+    <div style={{ maxWidth:640 }}>
+      <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:24 }}>
+        <button onClick={onCancel} style={{ background:"transparent", border:"none", cursor:"pointer", color:C.muted, fontSize:13, fontFamily:"'Poppins',sans-serif" }}>← Back</button>
+        <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:20, color:C.text }}>{isEdit?"Edit product":"Add new product"}</div>
+      </div>
+
+      <div style={card()}>
+        {/* Type toggle */}
+        <div style={{ marginBottom:18 }}>
+          <label style={label}>Product type</label>
+          <div style={{ display:"flex", gap:8 }}>
+            {["product","service"].map(t=>(
+              <button key={t} style={{ flex:1, padding:"10px", borderRadius:8, border:"none", cursor:"pointer", fontFamily:"'Poppins',sans-serif", fontSize:13, fontWeight:500, background: form.type===t ? C.orange+"18":C.light, color: form.type===t ? C.orange : C.muted, border:`1.5px solid ${form.type===t?C.orange+"44":C.border}` }} onClick={()=>{ set("type",t); if(t==="service") set("trackStock",false); else set("trackStock",true); }}>
+                {t==="product" ? "📦 Physical product" : "⚙️ Service"}
+              </button>
+            ))}
+          </div>
+          {form.type==="service" && <div style={{ fontSize:12, color:C.muted, marginTop:6 }}>Services don't track inventory but can be added to transactions and receipts.</div>}
+        </div>
+
+        <div style={formRow}>
+          <div>
+            <label style={label}>Product name <span style={{ color:"#ef4444" }}>*</span></label>
+            <input style={input} placeholder="e.g. iPhone Case" value={form.name} onChange={e=>set("name",e.target.value)}/>
+          </div>
+          <div>
+            <label style={label}>SKU / Code</label>
+            <input style={input} placeholder="e.g. IC-001" value={form.sku} onChange={e=>set("sku",e.target.value)}/>
+          </div>
+        </div>
+
+        <div style={{ marginBottom:14 }}>
+          <label style={label}>Category <span style={{ color:"#ef4444" }}>*</span></label>
+          <select style={input} value={form.categoryId} onChange={e=>set("categoryId",e.target.value)}>
+            <option value="">Select category</option>
+            {categories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </div>
+
+        <div style={formRow}>
+          <div>
+            <label style={label}>Cost price (GH₵)</label>
+            <input style={input} type="number" placeholder="0.00" value={form.costPrice} onChange={e=>set("costPrice",e.target.value)}/>
+            <div style={{ fontSize:11, color:C.muted, marginTop:3 }}>What you paid for it</div>
+          </div>
+          <div>
+            <label style={label}>Selling price (GH₵) <span style={{ color:"#ef4444" }}>*</span></label>
+            <input style={input} type="number" placeholder="0.00" value={form.sellPrice} onChange={e=>set("sellPrice",e.target.value)}/>
+            <div style={{ fontSize:11, color:C.muted, marginTop:3 }}>What you charge customers</div>
+          </div>
+        </div>
+
+        {/* Margin preview */}
+        {margin !== null && (
+          <div style={{ background: margin>30?"#f0fdf4":margin>10?"#fff7ed":"#fef2f2", border:`1px solid ${margin>30?"#86efac":margin>10?C.orange+"44":"#fca5a5"}`, borderRadius:8, padding:"10px 14px", marginBottom:14, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+            <span style={{ fontSize:13, color:C.text }}>Profit per unit</span>
+            <div style={{ textAlign:"right" }}>
+              <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:16, color: margin>30?"#16a34a":margin>10?C.orange:"#ef4444" }}>{fmt(parseFloat(form.sellPrice)-parseFloat(form.costPrice))}</div>
+              <div style={{ fontSize:11, color:C.muted }}>{margin}% margin</div>
+            </div>
+          </div>
+        )}
+
+        <div style={formRow}>
+          <div>
+            <label style={label}>Tax rate (%)</label>
+            <input style={input} type="number" placeholder="0" value={form.taxRate} onChange={e=>set("taxRate",e.target.value)}/>
+          </div>
+          {form.type==="product" && (
+            <div>
+              <label style={label}>Current stock</label>
+              <input style={input} type="number" placeholder="0" value={form.stock} onChange={e=>set("stock",e.target.value)} disabled={!form.trackStock}/>
+            </div>
+          )}
+        </div>
+
+        {form.type==="product" && (
+          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}>
+            <div onClick={()=>set("trackStock",!form.trackStock)} style={{ width:40, height:22, borderRadius:20, background: form.trackStock?C.orange:"#d1d5db", position:"relative", cursor:"pointer", transition:"background 0.2s" }}>
+              <div style={{ width:18, height:18, borderRadius:"50%", background:"#fff", position:"absolute", top:2, left: form.trackStock?20:2, transition:"left 0.2s", boxShadow:"0 1px 3px rgba(0,0,0,0.2)" }}/>
+            </div>
+            <span style={{ fontSize:13, color:C.text }}>Track inventory / stock levels</span>
+          </div>
+        )}
+
+        <div style={{ marginBottom:18 }}>
+          <label style={label}>Description</label>
+          <textarea style={{ ...input, minHeight:80, resize:"vertical" }} placeholder="Short description of this product or service..." value={form.description} onChange={e=>set("description",e.target.value)}/>
+        </div>
+
+        <div style={{ display:"flex", gap:10 }}>
+          <Btn variant="ghost" onClick={onCancel}>Cancel</Btn>
+          <Btn variant="primary" full disabled={!valid} onClick={()=>valid&&onSave({ ...form, costPrice:parseFloat(form.costPrice)||0, sellPrice:parseFloat(form.sellPrice)||0, taxRate:parseFloat(form.taxRate)||0, stock:parseInt(form.stock)||0 })}>
+            <Icon d={IC.check} size={15}/> {isEdit?"Save changes":"Add product"}
+          </Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── PRODUCT CATEGORIES ───────────────────────────────────────
+function ProductCategories({ categories, products, onSave }) {
+  const [cats, setCats]     = useState(categories);
+  const [newName, setNewName] = useState("");
+  const [newColor, setNewColor] = useState("#F97316");
+  const [editId, setEditId] = useState(null);
+  const [editName, setEditName] = useState("");
+
+  const addCat = () => {
+    if (!newName.trim()) return;
+    const updated = [...cats, { id:genId(), name:newName.trim(), color:newColor }];
+    setCats(updated); onSave(updated); setNewName(""); setNewColor("#F97316");
+  };
+
+  const deleteCat = (id) => {
+    const inUse = products.some(p=>p.categoryId===id);
+    if (inUse) { alert("This category is in use by one or more products. Reassign them first."); return; }
+    const updated = cats.filter(c=>c.id!==id);
+    setCats(updated); onSave(updated);
+  };
+
+  const saveEdit = (id) => {
+    const updated = cats.map(c=>c.id===id?{...c,name:editName}:c);
+    setCats(updated); onSave(updated); setEditId(null);
+  };
+
+  return (
+    <div style={{ maxWidth:520 }}>
+      <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:20, color:C.text, marginBottom:20 }}>Categories</div>
+
+      {/* Add new */}
+      <div style={card({ marginBottom:20 })}>
+        <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:600, fontSize:14, color:C.text, marginBottom:14 }}>Add new category</div>
+        <div style={{ display:"flex", gap:10, alignItems:"center" }}>
+          <input style={{ ...input, flex:1 }} placeholder="Category name" value={newName} onChange={e=>setNewName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addCat()}/>
+          <input type="color" value={newColor} onChange={e=>setNewColor(e.target.value)} style={{ width:40, height:40, border:`1px solid ${C.border}`, borderRadius:8, padding:2, cursor:"pointer" }}/>
+          <Btn variant="primary" onClick={addCat} disabled={!newName.trim()}><Icon d={IC.plus} size={15}/> Add</Btn>
+        </div>
+      </div>
+
+      {/* List */}
+      <div style={card({ padding:0, overflow:"hidden" })}>
+        {cats.map((c,i) => {
+          const count = products.filter(p=>p.categoryId===c.id).length;
+          return (
+            <div key={c.id} style={{ display:"flex", alignItems:"center", gap:12, padding:"14px 16px", borderBottom: i<cats.length-1?`1px solid ${C.border}`:"none" }}>
+              <div style={{ width:12, height:12, borderRadius:"50%", background:c.color, flexShrink:0 }}/>
+              {editId===c.id ? (
+                <input style={{ ...input, flex:1, padding:"6px 10px", fontSize:13 }} value={editName} onChange={e=>setEditName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&saveEdit(c.id)} autoFocus/>
+              ) : (
+                <div style={{ flex:1, fontSize:14, color:C.text, fontWeight:500 }}>{c.name}</div>
+              )}
+              <div style={{ fontSize:12, color:C.muted }}>{count} product{count!==1?"s":""}</div>
+              {editId===c.id ? (
+                <div style={{ display:"flex", gap:6 }}>
+                  <Btn variant="primary" size="sm" onClick={()=>saveEdit(c.id)}>Save</Btn>
+                  <Btn variant="ghost" size="sm" onClick={()=>setEditId(null)}>Cancel</Btn>
+                </div>
+              ) : (
+                <div style={{ display:"flex", gap:6 }}>
+                  <Btn variant="ghost" size="sm" onClick={()=>{ setEditId(c.id); setEditName(c.name); }}>Edit</Btn>
+                  <Btn variant="ghost" size="sm" onClick={()=>deleteCat(c.id)} style={{ color:"#ef4444", borderColor:"#fca5a5" }}>Delete</Btn>
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {cats.length === 0 && <div style={{ textAlign:"center", padding:"32px", color:C.muted, fontSize:14 }}>No categories yet</div>}
+      </div>
+    </div>
   );
 }
