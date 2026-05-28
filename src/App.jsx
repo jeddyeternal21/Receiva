@@ -309,6 +309,10 @@ function LoginPage({ onLogin, onGuest }) {
 // MAIN APP
 // ═══════════════════════════════════════════════════════════════
 export default function App() {
+const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [productsExpanded, setProductsExpanded] = useState(false);
+  const [products, setProducts] = useState(DEMO_PRODUCTS);
+  const [productCategories, setProductCategories] = useState(DEMO_PRODUCT_CATS);
   const [authState, setAuthState] = useState("login"); // "login" | "guest" | "app"
   const [user, setUser]           = useState(null);
   const [page, setPage]           = useState("dashboard");
@@ -389,12 +393,7 @@ export default function App() {
   };
 
   const addTransaction = (tx) => { setTransactions(p=>[{...tx, id:genId(), receiptNo:genRNo()}, ...p]); setShowAddTx(false); };
-  const addWallet = (w) => { setWallets(p=>[...p, { ...w, id:genId(), balance:0 }]); setShowAddWallet(false); };
-
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [productsExpanded, setProductsExpanded] = useState(false);
-  const [products, setProducts] = useState(DEMO_PRODUCTS);
-  const [productCategories, setProductCategories] = useState(DEMO_PRODUCT_CATS);
+  const addWallet = (w) => { setWallets(p=>[...p, { ...w, id:genId(), balance:0 }]); setShowAddWallet(false); };  
 
   const allNav = [
     { key:"dashboard",    label:"Dashboard",   icon:IC.home    },
