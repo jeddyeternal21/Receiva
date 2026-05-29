@@ -656,7 +656,7 @@ export default function App() {
           <div className="content-pad" style={{ flex:1, padding:"24px 28px", overflowY:"auto" }}>
             {dataLoading && <div style={{ textAlign:"center", padding:"40px", color:C.muted, fontSize:14 }}>Loading your data...</div>}
             {dataError   && <div style={{ background:"#fef2f2", border:"1px solid #fca5a5", borderRadius:10, padding:"14px 18px", marginBottom:16, fontSize:13, color:"#b91c1c" }}>{dataError}</div>}
-            {page==="dashboard"    && <Dashboard transactions={txFiltered} income={income} expense={expense} balance={balance} wallets={wallets} activeWallet={activeWallet} business={business} onAdd={()=>setShowAddTx(true)} onReceipt={tryGenerateReceipt} onMoMo={()=>setShowMoMo(true)} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount}/>}
+            {page==="dashboard"    && <Dashboard transactions={txFiltered} income={income} expense={expense} balance={balance} wallets={wallets} activeWallet={activeWallet} business={business} user={user} onAdd={()=>setShowAddTx(true)} onReceipt={tryGenerateReceipt} onMoMo={()=>setShowMoMo(true)} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount}/>}
             {page==="wallets"      && <Wallets wallets={wallets} transactions={transactions} onAdd={()=>setShowAddWallet(true)} onSelect={setActiveWallet} activeWallet={activeWallet}/>}
             {page==="transactions" && <Transactions transactions={txFiltered} wallets={wallets} onAdd={()=>setShowAddTx(true)} onReceipt={tryGenerateReceipt}/>}
             {page==="receipts"     && <Receipts transactions={txFiltered} wallets={wallets} business={business} onReceipt={tryGenerateReceipt} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount}/>}
@@ -678,7 +678,7 @@ export default function App() {
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────
-function Dashboard({ transactions, income, expense, balance, wallets, business, onAdd, onReceipt, onMoMo, isPro, isGuest, guestLeft }) {
+function Dashboard({ transactions, income, expense, balance, wallets, business, user, onAdd, onReceipt, onMoMo, isPro, isGuest, guestLeft }) {
   const recent = transactions.slice(0,5);
   const statCards = [
     { label:"Total income",   value:fmt(income),   color:C.income  },
