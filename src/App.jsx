@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { supabase } from "./supabase";
 
 // ─── CONSTANTS ────────────────────────────────────────────────
 const CATEGORIES = ["Sales","Service fee","Rent","Supplies","Transport","Salary","Utilities","MoMo transfer","Other"];
@@ -333,6 +334,39 @@ export default function App() {
   const [products, setProducts]                 = useState([]);
   const [productCategories, setProductCategories] = useState([]);
 
+  // ── Load all user data from Supabase ──
+  const loadUserData = async (userId) => {
+    setDataLoading(true);
+    try {
+      let { data: bizData, error: bizErr } = await supabase.from("businesses").select("*").eq("owner_id", userId).single();
+      if (bizErr && bizErr.code === "PGRST116") {
+        const { data: newBiz, error: createErr } = await supabase.from("businesses").insert({ owner_id:userId, business_name:"My Business", plan:"free", logo_color:"#F97316", logo_bg:"#fff4ed" }).select().single();
+        if (createErr) throw createErr;
+        bizData = newBiz;
+      } else if (bizErr) throw bizErr;
+      setBusinessId(bizData.id);
+      const { data: walletData } = await supabase.from("wallets").select("*").eq("business_id", bizData.id).order("created_at",{ascending:true});
+      const { data: txData }     = await supabase.from("transactions").select("*").eq("business_id", bizData.id).order("date",{ascending:false});
+      const mappedWallets = (walletData||[]).map(w=>({ id:w.id, presetId:w.preset_id, name:w.name, number:w.number||"", balance:0 }));
+      const mappedTx      = (txData||[]).map(t=>({ id:t.id, walletId:t.wallet_id, type:t.type, amount:parseFloat(t.amount), category:t.category||"", description:t.description||"", method:t.method||"", date:t.date, momoRef:t.momo_ref||"", receiptNo:t.receipt_no||genRNo() }));
+      if (mappedWallets.length === 0) {
+        const defaults = [{ preset_id:"mtn", name:"MTN MoMo", number:"", business_id:bizData.id },{ preset_id:"telecel", name:"Telecel Cash", number:"", business_id:bizData.id }];
+        const { data: newW } = await supabase.from("wallets").insert(defaults).select();
+        mappedWallets.push(...(newW||[]).map(w=>({ id:w.id, presetId:w.preset_id, name:w.name, number:"", balance:0 })));
+      }
+      setBusiness(b => ({ ...b, name: bizData.business_name || "My Business", logoColor: bizData.logo_color || "#F97316", logoBg: bizData.logo_bg || "#fff4ed", plan: bizData.plan || "free" }));
+      setWallets(mappedWallets);
+      setTransactions(mappedTx);
+      setProducts([]);
+      setProductCategories([{ id:"c1", name:"Products", color:"#2563eb" },{ id:"c2", name:"Services", color:"#F97316" }]);
+    } catch(err) {
+      console.error("loadUserData error:", err);
+      setDataError("Could not load your data. Check your connection and refresh.");
+    } finally {
+      setDataLoading(false);
+    }
+  };
+
   // ── Check existing session on app open ──
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -361,6 +395,7 @@ export default function App() {
         };
         setUser(u);
         setAuthState("app");
+        loadUserData(session.user.id);
       } else {
         setUser(null);
         setAuthState("login");
@@ -369,38 +404,6 @@ export default function App() {
 
     return () => subscription.unsubscribe();
   }, []);
-
-  const loadUserData = async (userId) => {
-    setDataLoading(true);
-    try {
-      let { data: bizData, error: bizErr } = await supabase.from("businesses").select("*").eq("owner_id", userId).single();
-      if (bizErr && bizErr.code === "PGRST116") {
-        const { data: newBiz, error: createErr } = await supabase.from("businesses").insert({ owner_id:userId, business_name:"My Business", plan:"free", logo_color:"#F97316", logo_bg:"#fff4ed" }).select().single();
-        if (createErr) throw createErr;
-        bizData = newBiz;
-      } else if (bizErr) throw bizErr;
-      setBusinessId(bizData.id);
-      const { data: walletData } = await supabase.from("wallets").select("*").eq("business_id", bizData.id).order("created_at",{ascending:true});
-      const { data: txData }     = await supabase.from("transactions").select("*").eq("business_id", bizData.id).order("date",{ascending:false});
-      const mappedWallets = (walletData||[]).map(w=>({ id:w.id, presetId:w.preset_id, name:w.name, number:w.number||"", balance:0 }));
-      const mappedTx      = (txData||[]).map(t=>({ id:t.id, walletId:t.wallet_id, type:t.type, amount:parseFloat(t.amount), category:t.category||"", description:t.description||"", method:t.method||"", date:t.date, momoRef:t.momo_ref||"", receiptNo:t.receipt_no||genRNo() }));
-      if (mappedWallets.length === 0) {
-        const defaults = [{ preset_id:"mtn", name:"MTN MoMo", number:"", business_id:bizData.id },{ preset_id:"telecel", name:"Telecel Cash", number:"", business_id:bizData.id }];
-        const { data: newW } = await supabase.from("wallets").insert(defaults).select();
-        mappedWallets.push(...(newW||[]).map(w=>({ id:w.id, presetId:w.preset_id, name:w.name, number:"", balance:0 })));
-      }
-      setBusiness(b => ({ ...b, name: bizData.business_name || 'My Business', logoColor: bizData.logo_color || '#F97316', logoBg: bizData.logo_bg || '#fff4ed', plan: bizData.plan || 'free' }));
-      setWallets(mappedWallets);
-      setTransactions(mappedTx);
-      setProducts([]);
-      setProductCategories([{ id:'c1', name:'Products', color:'#2563eb' },{ id:'c2', name:'Services', color:'#F97316' }]);
-    } catch(err) {
-      console.error(err);
-      setDataError("Could not load your data. Check your connection and refresh.");
-    } finally {
-      setDataLoading(false);
-    }
-  };
 
   const handleLogin = (u) => { setUser(u); setAuthState("app"); if(u.id) loadUserData(u.id); };
   const handleGuest = () => { setWallets(DEMO_WALLETS); setTransactions(DEMO_TRANSACTIONS); setAuthState("guest"); };
