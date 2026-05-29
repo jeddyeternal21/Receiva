@@ -20,34 +20,13 @@ const WALLET_PRESETS = [
 ];
 
 // ─── DEMO DATA ────────────────────────────────────────────────
-const DEMO_WALLETS = [ // kept for guest only
-  { id:"w1", presetId:"mtn",     name:"MTN MoMo",        number:"0592040012", balance:1230 },
-  { id:"w2", presetId:"telecel", name:"Telecel Cash",     number:"0201234567", balance:430  },
-  { id:"w3", presetId:"company", name:"Jed Tech Account", number:"Company",    balance:5800 },
-];
-const DEMO_TRANSACTIONS = [
-  { id:"t1", walletId:"w1", type:"income",  amount:450,  category:"Sales",       description:"iPhone case x3",       method:"MTN MoMo",  date:"2026-05-18", momoRef:"80993550724", receiptNo:genRNo() },
-  { id:"t2", walletId:"w3", type:"income",  amount:1200, category:"Service fee", description:"Website design deposit",method:"Company",    date:"2026-05-17", momoRef:"",           receiptNo:genRNo() },
-  { id:"t3", walletId:"w1", type:"expense", amount:300,  category:"Supplies",    description:"Packaging materials",   method:"MTN MoMo",  date:"2026-05-16", momoRef:"",           receiptNo:""       },
-  { id:"t4", walletId:"w2", type:"income",  amount:750,  category:"Sales",       description:"Earbuds x2",           method:"Telecel",    date:"2026-05-15", momoRef:"0000012482", receiptNo:genRNo() },
-  { id:"t5", walletId:"w1", type:"expense", amount:200,  category:"Transport",   description:"Delivery costs",        method:"Cash",       date:"2026-05-14", momoRef:"",           receiptNo:""       },
-  { id:"t6", walletId:"w3", type:"income",  amount:580,  category:"Sales",       description:"Phone chargers bulk",   method:"Company",    date:"2026-05-13", momoRef:"",           receiptNo:genRNo() },
-];
-const DEMO_PRODUCT_CATS = [
-  { id:"c1", name:"Electronics", color:"#2563eb" },
-  { id:"c2", name:"Accessories", color:"#16a34a" },
-  { id:"c3", name:"Services",    color:"#F97316" },
-];
+const DEMO_WALLETS = [];
+const DEMO_TRANSACTIONS = [];
+const DEMO_PRODUCT_CATS = [];
 
-const DEMO_PRODUCTS = [
-  { id:"p1", name:"iPhone Case",     sku:"IC-001", categoryId:"c2", type:"product",  costPrice:15,  sellPrice:45,  taxRate:0,  trackStock:true,  stock:50,  description:"Protective case for iPhones" },
-  { id:"p2", name:"Earbuds",         sku:"EB-002", categoryId:"c1", type:"product",  costPrice:80,  sellPrice:200, taxRate:0,  trackStock:true,  stock:20,  description:"Wireless earbuds" },
-  { id:"p3", name:"Phone Charger",   sku:"PC-003", categoryId:"c1", type:"product",  costPrice:25,  sellPrice:60,  taxRate:0,  trackStock:true,  stock:35,  description:"Fast charging cable" },
-  { id:"p4", name:"Website Design",  sku:"WD-001", categoryId:"c3", type:"service",  costPrice:0,   sellPrice:800, taxRate:0,  trackStock:false, stock:0,   description:"Full website design and development" },
-  { id:"p5", name:"AI Consultation", sku:"AI-001", categoryId:"c3", type:"service",  costPrice:0,   sellPrice:300, taxRate:0,  trackStock:false, stock:0,   description:"1-hour AI automation consultation" },
-];
+const DEMO_PRODUCTS = [];
 
-const DEMO_BUSINESS = { name:"Jed Technologies", owner:"Jedidiah", phone:"0592040012", industry:"Tech solutions", plan:"free", logoColor:"#F97316", logoBg:"#fff4ed" };
+const DEMO_BUSINESS = { name:"My Business", owner:"", phone:"", industry:"", plan:"free", logoColor:"#F97316", logoBg:"#fff4ed" };
 
 // ─── GHANA MOMO PARSER ────────────────────────────────────────
 function detectNetwork(text) {
@@ -406,7 +385,7 @@ export default function App() {
   }, []);
 
   const handleLogin = (u) => { setUser(u); setAuthState("app"); if(u.id) loadUserData(u.id); };
-  const handleGuest = () => { setWallets(DEMO_WALLETS); setTransactions(DEMO_TRANSACTIONS); setAuthState("guest"); };
+  const handleGuest = () => { setWallets([]); setTransactions([]); setAuthState("guest"); };
   const handleSignOut = async () => { await supabase.auth.signOut(); setUser(null); setWallets([]); setTransactions([]); setBusinessId(null); setBusiness({ name:'My Business', owner:'', phone:'', industry:'', plan:'free', logoColor:'#F97316', logoBg:'#fff4ed' }); setAuthState("login"); };
 
   if (authState === "loading") return (
