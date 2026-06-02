@@ -1,30 +1,4 @@
-import { useState, useEffect } from "react";
-import {
-  ArrowLeft,
-  ArrowRight,
-  BadgeCheck,
-  Banknote,
-  Building2,
-  CircleCheck,
-  CircleDollarSign,
-  Gift,
-  Hand,
-  Landmark,
-  Lightbulb,
-  LockKeyhole,
-  MessageCircle,
-  Package,
-  PartyPopper,
-  RadioTower,
-  Send,
-  Smartphone,
-  Sparkles,
-  Star,
-  TabletSmartphone,
-  TriangleAlert,
-  Wrench,
-  X,
-} from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 import { supabase } from "./supabase";
 
 // ─── CONSTANTS ────────────────────────────────────────────────
@@ -37,70 +11,22 @@ const fmt    = n  => `GH₵ ${Number(n).toLocaleString("en-GH",{minimumFractionD
 
 // ─── WALLET PRESETS ───────────────────────────────────────────
 const WALLET_PRESETS = [
-  { id:"mtn",     label:"MTN MoMo",       color:"#FFCC00", bg:"#fff9e6", icon:Smartphone },
-  { id:"telecel", label:"Telecel Cash",   color:"#E30613", bg:"#ffeaeb", icon:TabletSmartphone },
-  { id:"voda",    label:"Vodafone Cash",  color:"#E30613", bg:"#ffeaeb", icon:RadioTower },
-  { id:"company", label:"Company Account",color:"#F97316", bg:"#fff4ed", icon:Building2 },
-  { id:"cash",    label:"Cash",           color:"#16a34a", bg:"#f0fdf4", icon:Banknote },
-  { id:"bank",    label:"Bank Account",   color:"#2563eb", bg:"#eff6ff", icon:Landmark },
+  { id:"mtn",     label:"MTN MoMo",       color:"#FFCC00", bg:"#fff9e6", icon:"📱" },
+  { id:"telecel", label:"Telecel Cash",   color:"#E30613", bg:"#ffeaeb", icon:"📲" },
+  { id:"voda",    label:"Vodafone Cash",  color:"#E30613", bg:"#ffeaeb", icon:"📡" },
+  { id:"company", label:"Company Account",color:"#F97316", bg:"#fff4ed", icon:"🏢" },
+  { id:"cash",    label:"Cash",           color:"#16a34a", bg:"#f0fdf4", icon:"💵" },
+  { id:"bank",    label:"Bank Account",   color:"#2563eb", bg:"#eff6ff", icon:"🏦" },
 ];
 
 // ─── DEMO DATA ────────────────────────────────────────────────
-const DEFAULT_PRODUCT_CATEGORIES = [
-  { id:"c1", name:"Products", color:"#2563eb" },
-  { id:"c2", name:"Services", color:"#F97316" },
-];
+const DEMO_WALLETS = [];
+const DEMO_TRANSACTIONS = [];
+const DEMO_PRODUCT_CATS = [];
 
-const productStorageKey = (ownerKey, type) => `receiva.${ownerKey || "guest"}.${type}`;
-const readStoredJson = (key, fallback) => {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
-  } catch {
-    return fallback;
-  }
-};
-const writeStoredJson = (key, value) => {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    // Storage can fail in private browsing or when quota is full; the in-memory app still works.
-  }
-};
-const loadProductState = (ownerKey) => ({
-  products: readStoredJson(productStorageKey(ownerKey, "products"), []),
-  categories: readStoredJson(productStorageKey(ownerKey, "productCategories"), DEFAULT_PRODUCT_CATEGORIES),
-});
-const saveProductState = (ownerKey, products, categories) => {
-  writeStoredJson(productStorageKey(ownerKey, "products"), products);
-  writeStoredJson(productStorageKey(ownerKey, "productCategories"), categories);
-};
-const mapProductCategory = c => ({ id:c.id, name:c.name, color:c.color || "#F97316" });
-const mapProduct = p => ({
-  id:p.id,
-  name:p.name || "",
-  sku:p.sku || "",
-  categoryId:p.category_id || "",
-  type:p.type || "product",
-  costPrice:parseFloat(p.cost_price) || 0,
-  sellPrice:parseFloat(p.sell_price) || 0,
-  taxRate:parseFloat(p.tax_rate) || 0,
-  trackStock:p.track_stock ?? true,
-  stock:parseInt(p.stock) || 0,
-  description:p.description || "",
-});
-const productPayload = p => ({
-  name:p.name,
-  sku:p.sku || null,
-  category_id:p.categoryId || null,
-  type:p.type || "product",
-  cost_price:p.costPrice || 0,
-  sell_price:p.sellPrice || 0,
-  tax_rate:p.taxRate || 0,
-  track_stock:p.trackStock ?? true,
-  stock:p.stock || 0,
-  description:p.description || null,
-});
+const DEMO_PRODUCTS = [];
+
+const DEMO_BUSINESS = { name:"My Business", owner:"", phone:"", industry:"", plan:"free", logoColor:"#F97316", logoBg:"#fff4ed" };
 
 // ─── GHANA MOMO PARSER ────────────────────────────────────────
 function detectNetwork(text) {
@@ -127,10 +53,10 @@ function parseGhanaMoMo(text) {
   const mtnId    = raw.match(/transaction\s*id[:\s]+(\d{8,12})/i);
   const telPfx   = raw.match(/^telecel(\d{10,16})/i);
   if (mtnId) txId=mtnId[1]; else if (telPfx) txId=telPfx[1];
-  const dateMatch = raw.match(/(\d{4}-\d{2}-\d{2}|\d{1,2}[/-]\d{1,2}[/-]\d{2,4})/);
+  const dateMatch = raw.match(/(\d{4}-\d{2}-\d{2}|\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/);
   let date = dateMatch ? dateMatch[1] : today();
-  if (/^\d{1,2}[/-]\d{1,2}[/-]\d{2,4}$/.test(date)) {
-    const p=date.split(/[/-]/), yr=p[2].length===2?"20"+p[2]:p[2];
+  if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test(date)) {
+    const p=date.split(/[\/\-]/), yr=p[2].length===2?"20"+p[2]:p[2];
     date=`${yr}-${p[1].padStart(2,"0")}-${p[0].padStart(2,"0")}`;
   }
   const timeMatch = raw.match(/(\d{1,2}:\d{2}:\d{2}|\d{1,2}:\d{2}\s*[APap][Mm])/);
@@ -226,7 +152,7 @@ function Modal({ children, onClose, maxWidth=520 }) {
 function ModalHeader({ title, onClose }) {
   return (
     <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
-      <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:18, color:C.text }}>{title}</div>
+      <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:18, color:C.text }}>{title}</div>
       <Btn variant="ghost" size="sm" onClick={onClose} style={{ padding:"6px 10px" }}><Icon d={IC.x} size={14}/></Btn>
     </div>
   );
@@ -257,12 +183,12 @@ function LoginPage({ onLogin, onGuest }) {
 
   return (
     <>
-      <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
       <div style={{ minHeight:"100vh", background:"#f9fafb", fontFamily:"'Poppins',sans-serif", display:"flex", flexDirection:"column" }}>
 
         {/* TOP NAV */}
         <div style={{ padding:"18px 40px", display:"flex", justifyContent:"space-between", alignItems:"center", background:C.white, borderBottom:`1px solid ${C.border}` }}>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:22, color:C.text }}>
+          <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:22, color:C.text }}>
             Receiva<span style={{ color:C.orange }}>.</span>
           </div>
           <div style={{ fontSize:13, color:C.muted }}>Financial records for Ghana businesses</div>
@@ -273,7 +199,7 @@ function LoginPage({ onLogin, onGuest }) {
 
             {/* LEFT — VALUE PROP */}
             <div>
-              <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:36, color:C.text, lineHeight:1.1, marginBottom:16 }}>
+              <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:36, color:C.text, lineHeight:1.1, marginBottom:16 }}>
                 Your business records,<br/><span style={{ color:C.orange }}>organised.</span>
               </div>
               <div style={{ fontSize:15, color:C.muted, lineHeight:1.75, marginBottom:28 }}>
@@ -284,7 +210,7 @@ function LoginPage({ onLogin, onGuest }) {
               <div style={{ background:`linear-gradient(135deg, ${C.orange}18, ${C.orange}08)`, border:`1.5px solid ${C.orange}33`, borderRadius:14, padding:"18px 20px", marginBottom:24 }}>
                 <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
                   <span style={{ fontSize:20 }}>🎁</span>
-                  <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:16, color:C.text }}>Try before you sign up</div>
+                  <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:16, color:C.text }}>Try before you sign up</div>
                 </div>
                 <div style={{ fontSize:14, color:C.muted, lineHeight:1.65, marginBottom:14 }}>
                   Generate <strong style={{ color:C.orange }}>5 free receipts</strong> right now — no account needed. See exactly how Receiva works before committing.
@@ -305,7 +231,7 @@ function LoginPage({ onLogin, onGuest }) {
                       <span style={{ fontWeight:600, color:C.text, fontSize:14 }}>{p.plan}</span>
                       {p.highlight && <Badge color={C.orange}>Popular</Badge>}
                     </div>
-                    <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:18, color: p.highlight ? C.orange : C.text, marginBottom:8 }}>{p.price}</div>
+                    <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:18, color: p.highlight ? C.orange : C.text, marginBottom:8 }}>{p.price}</div>
                     {p.perks.map(pk => (
                       <div key={pk} style={{ fontSize:12, color:C.muted, display:"flex", alignItems:"center", gap:5, marginBottom:3 }}>
                         <span style={{ color: p.highlight ? C.orange : C.teal }}>✓</span> {pk}
@@ -400,16 +326,6 @@ export default function App() {
       setBusinessId(bizData.id);
       const { data: walletData } = await supabase.from("wallets").select("*").eq("business_id", bizData.id).order("created_at",{ascending:true});
       const { data: txData }     = await supabase.from("transactions").select("*").eq("business_id", bizData.id).order("date",{ascending:false});
-      let { data: catData, error: catErr } = await supabase.from("product_categories").select("*").eq("business_id", bizData.id).order("created_at",{ascending:true});
-      if (catErr) throw catErr;
-      if ((catData||[]).length === 0) {
-        const defaultCats = DEFAULT_PRODUCT_CATEGORIES.map(c => ({ business_id:bizData.id, name:c.name, color:c.color }));
-        const { data: newCats, error: createCatErr } = await supabase.from("product_categories").insert(defaultCats).select();
-        if (createCatErr) throw createCatErr;
-        catData = newCats || [];
-      }
-      const { data: productData, error: productErr } = await supabase.from("products").select("*").eq("business_id", bizData.id).order("created_at",{ascending:true});
-      if (productErr) throw productErr;
       const mappedWallets = (walletData||[]).map(w=>({ id:w.id, presetId:w.preset_id, name:w.name, number:w.number||"", balance:0 }));
       const mappedTx      = (txData||[]).map(t=>({ id:t.id, walletId:t.wallet_id, type:t.type, amount:parseFloat(t.amount), category:t.category||"", description:t.description||"", method:t.method||"", date:t.date, momoRef:t.momo_ref||"", receiptNo:t.receipt_no||genRNo() }));
       if (mappedWallets.length === 0) {
@@ -420,8 +336,8 @@ export default function App() {
       setBusiness(b => ({ ...b, name: bizData.business_name || "My Business", logoColor: bizData.logo_color || "#F97316", logoBg: bizData.logo_bg || "#fff4ed", plan: bizData.plan || "free" }));
       setWallets(mappedWallets);
       setTransactions(mappedTx);
-      setProductCategories((catData||[]).map(mapProductCategory));
-      setProducts((productData||[]).map(mapProduct));
+      setProducts([]);
+      setProductCategories([{ id:"c1", name:"Products", color:"#2563eb" },{ id:"c2", name:"Services", color:"#F97316" }]);
     } catch(err) {
       console.error("loadUserData error:", err);
       setDataError("Could not load your data. Check your connection and refresh.");
@@ -469,30 +385,13 @@ export default function App() {
   }, []);
 
   const handleLogin = (u) => { setUser(u); setAuthState("app"); if(u.id) loadUserData(u.id); };
-  const handleGuest = () => {
-    const productState = loadProductState("guest");
-    setWallets([]);
-    setTransactions([]);
-    setProducts(productState.products);
-    setProductCategories(productState.categories);
-    setAuthState("guest");
-  };
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setWallets([]);
-    setTransactions([]);
-    setProducts([]);
-    setProductCategories(DEFAULT_PRODUCT_CATEGORIES);
-    setBusinessId(null);
-    setBusiness({ name:'My Business', owner:'', phone:'', industry:'', plan:'free', logoColor:'#F97316', logoBg:'#fff4ed' });
-    setAuthState("login");
-  };
+  const handleGuest = () => { setWallets([]); setTransactions([]); setAuthState("guest"); };
+  const handleSignOut = async () => { await supabase.auth.signOut(); setUser(null); setWallets([]); setTransactions([]); setBusinessId(null); setBusiness({ name:'My Business', owner:'', phone:'', industry:'', plan:'free', logoColor:'#F97316', logoBg:'#fff4ed' }); setAuthState("login"); };
 
   if (authState === "loading") return (
     <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#f9fafb", fontFamily:"'Poppins',sans-serif" }}>
       <div style={{ textAlign:"center" }}>
-        <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:24, color:"#111827", marginBottom:8 }}>Receiva<span style={{ color:"#F97316" }}>.</span></div>
+        <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:24, color:"#111827", marginBottom:8 }}>Receiva<span style={{ color:"#F97316" }}>.</span></div>
         <div style={{ fontSize:13, color:"#6b7280" }}>Loading...</div>
       </div>
     </div>
@@ -508,83 +407,6 @@ export default function App() {
   const balance    = income - expense;
   const txCap      = isPro ? Infinity : 30;
   const txUsed     = transactions.length;
-  const productOwnerKey = isGuest ? "guest" : user?.id;
-
-  const persistGuestProductState = (nextProducts, nextCategories = productCategories) => {
-    setProducts(nextProducts);
-    setProductCategories(nextCategories);
-    saveProductState(productOwnerKey, nextProducts, nextCategories);
-  };
-
-  const saveProduct = async (product) => {
-    if (isGuest || !businessId) {
-      const nextProducts = editingProduct
-        ? products.map(p => p.id === product.id ? product : p)
-        : [...products, { ...product, id:genId() }];
-      persistGuestProductState(nextProducts);
-      setEditingProduct(null);
-      navigateTo("product-list");
-      return;
-    }
-
-    const payload = productPayload(product);
-    const request = editingProduct
-      ? supabase.from("products").update(payload).eq("id", product.id).eq("business_id", businessId)
-      : supabase.from("products").insert({ ...payload, business_id:businessId });
-    const { data, error } = await request.select().single();
-    if (error) { console.error(error); alert("Could not save product. Please try again."); return; }
-
-    const saved = mapProduct(data);
-    setProducts(prev => editingProduct ? prev.map(p => p.id === saved.id ? saved : p) : [...prev, saved]);
-    setEditingProduct(null);
-    navigateTo("product-list");
-  };
-
-  const saveProductCategories = async (nextCategories) => {
-    if (isGuest || !businessId) {
-      persistGuestProductState(products, nextCategories);
-      return;
-    }
-
-    const currentById = new Map(productCategories.map(c => [c.id, c]));
-    const nextById = new Map(nextCategories.map(c => [c.id, c]));
-    const removed = productCategories.filter(c => !nextById.has(c.id));
-    const added = nextCategories.filter(c => !currentById.has(c.id));
-    const changed = nextCategories.filter(c => {
-      const current = currentById.get(c.id);
-      return current && (current.name !== c.name || current.color !== c.color);
-    });
-
-    for (const c of removed) {
-      const { error } = await supabase.from("product_categories").delete().eq("id", c.id).eq("business_id", businessId);
-      if (error) { console.error(error); alert("Could not delete category."); return; }
-    }
-    for (const c of changed) {
-      const { error } = await supabase.from("product_categories").update({ name:c.name, color:c.color }).eq("id", c.id).eq("business_id", businessId);
-      if (error) { console.error(error); alert("Could not save category."); return; }
-    }
-    if (added.length > 0) {
-      const rows = added.map(c => ({ business_id:businessId, name:c.name, color:c.color }));
-      const { error } = await supabase.from("product_categories").insert(rows);
-      if (error) { console.error(error); alert("Could not add category."); return; }
-    }
-
-    const { data, error } = await supabase.from("product_categories").select("*").eq("business_id", businessId).order("created_at",{ascending:true});
-    if (error) { console.error(error); alert("Could not refresh categories."); return; }
-    setProductCategories((data||[]).map(mapProductCategory));
-  };
-
-  const deleteProduct = async (product) => {
-    const ok = window.confirm(`Delete ${product.name}?`);
-    if (!ok) return;
-    if (isGuest || !businessId) {
-      persistGuestProductState(products.filter(p => p.id !== product.id));
-      return;
-    }
-    const { error } = await supabase.from("products").delete().eq("id", product.id).eq("business_id", businessId);
-    if (error) { console.error(error); alert("Could not delete product."); return; }
-    setProducts(prev => prev.filter(p => p.id !== product.id));
-  };
 
   const tryGenerateReceipt = (tx) => {
     if (isGuest) {
@@ -627,6 +449,8 @@ export default function App() {
     ]},
   ];
 
+  const isProductPage = ["products","product-list","add-product","categories"].includes(page);
+
   const NavItem = ({ n, mobile=false, onNavigate }) => {
     if (n.children) {
       const childActive = n.children.some(c=>c.key===page);
@@ -668,7 +492,7 @@ export default function App() {
 
   return (
     <>
-      <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet"/>
       <style>{`
         body, input, button, select, textarea { font-family: 'Poppins', sans-serif; }
         @media(max-width:768px){
@@ -694,7 +518,7 @@ export default function App() {
         {/* DESKTOP SIDEBAR */}
         <div className="desktop-sidebar" style={{ width:220, background:C.white, borderRight:`1px solid ${C.sidebarBorder}`, display:"flex", flexDirection:"column", padding:"24px 0", flexShrink:0, boxShadow:"2px 0 8px rgba(0,0,0,0.04)" }}>
           <div style={{ padding:"0 20px 22px", borderBottom:`1px solid ${C.border}`, marginBottom:8 }}>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:22, color:C.text }}>Receiva<span style={{ color:C.orange }}>.</span></div>
+            <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:22, color:C.text }}>Receiva<span style={{ color:C.orange }}>.</span></div>
             <div style={{ fontSize:11, color:C.orange, letterSpacing:"0.1em", textTransform:"uppercase", fontStyle:"italic" }}>Financial records</div>
           </div>
 
@@ -739,7 +563,7 @@ export default function App() {
           <div className="mobile-overlay">
             <div className="mobile-drawer">
               <div style={{ padding:"20px 20px 16px", borderBottom:`1px solid ${C.border}`, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:20, color:C.text }}>Receiva<span style={{ color:C.orange }}>.</span></div>
+                <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:20, color:C.text }}>Receiva<span style={{ color:C.orange }}>.</span></div>
                 <button onClick={()=>setMobileMenuOpen(false)} style={{ background:"transparent", border:"none", cursor:"pointer", fontSize:20, color:C.muted, padding:4 }}>✕</button>
               </div>
               {isGuest && (
@@ -773,7 +597,7 @@ export default function App() {
                 <div style={{ width:18, height:2, background:C.text, borderRadius:1 }}/>
                 <div style={{ width:18, height:2, background:C.text, borderRadius:1 }}/>
               </button>
-              <div className="mobile-topbar-title" style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:18, color:C.text }}>{currentLabel()}</div>
+              <div className="mobile-topbar-title" style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:18, color:C.text }}>{currentLabel()}</div>
             </div>
             <div style={{ display:"flex", alignItems:"center", gap:10 }}>
               {wallets.length > 0 && (
@@ -811,14 +635,14 @@ export default function App() {
           <div className="content-pad" style={{ flex:1, padding:"24px 28px", overflowY:"auto" }}>
             {dataLoading && <div style={{ textAlign:"center", padding:"40px", color:C.muted, fontSize:14 }}>Loading your data...</div>}
             {dataError   && <div style={{ background:"#fef2f2", border:"1px solid #fca5a5", borderRadius:10, padding:"14px 18px", marginBottom:16, fontSize:13, color:"#b91c1c" }}>{dataError}</div>}
-            {page==="dashboard"    && <Dashboard transactions={txFiltered} income={income} expense={expense} balance={balance} wallets={wallets} activeWallet={activeWallet} user={user} onAdd={()=>setShowAddTx(true)} onReceipt={tryGenerateReceipt} onMoMo={()=>setShowMoMo(true)} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount}/>}
+            {page==="dashboard"    && <Dashboard transactions={txFiltered} income={income} expense={expense} balance={balance} wallets={wallets} activeWallet={activeWallet} business={business} user={user} onAdd={()=>setShowAddTx(true)} onReceipt={tryGenerateReceipt} onMoMo={()=>setShowMoMo(true)} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount}/>}
             {page==="wallets"      && <Wallets wallets={wallets} transactions={transactions} onAdd={()=>setShowAddWallet(true)} onSelect={setActiveWallet} activeWallet={activeWallet}/>}
             {page==="transactions" && <Transactions transactions={txFiltered} wallets={wallets} onAdd={()=>setShowAddTx(true)} onReceipt={tryGenerateReceipt}/>}
-            {page==="receipts"     && <Receipts transactions={txFiltered} onReceipt={tryGenerateReceipt} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount}/>}
+            {page==="receipts"     && <Receipts transactions={txFiltered} wallets={wallets} business={business} onReceipt={tryGenerateReceipt} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount}/>}
             {page==="reports"      && <Reports transactions={txFiltered} income={income} expense={expense} balance={balance} isPro={isPro} onUpgrade={()=>setShowUpgrade(true)}/>}
-            {(page==="products"||page==="product-list") && <ProductList products={products} categories={productCategories} onAdd={()=>navigateTo("add-product")} onEdit={p=>{ setEditingProduct(p); navigateTo("add-product"); }} onDelete={deleteProduct}/>}
-            {page==="add-product"  && <AddEditProduct product={editingProduct} categories={productCategories} onSave={saveProduct} onCancel={()=>{ setEditingProduct(null); navigateTo("product-list"); }}/>}
-            {page==="categories"   && <ProductCategories key={productCategories.map(c=>c.id).join("|")} categories={productCategories} products={products} onSave={saveProductCategories}/>}
+            {(page==="products"||page==="product-list") && <ProductList products={products} categories={productCategories} onAdd={()=>navigateTo("add-product")} onEdit={p=>{ setEditingProduct(p); navigateTo("add-product"); }}/>}
+            {page==="add-product"  && <AddEditProduct product={editingProduct} categories={productCategories} onSave={p=>{ if(editingProduct){ setProducts(prev=>prev.map(x=>x.id===p.id?p:x)); } else { setProducts(prev=>[...prev,{...p,id:genId()}]); } setEditingProduct(null); navigateTo("product-list"); }} onCancel={()=>{ setEditingProduct(null); navigateTo("product-list"); }}/>}
+            {page==="categories"   && <ProductCategories categories={productCategories} products={products} onSave={setProductCategories}/>}
           </div>
         </div>
       </div>
@@ -833,7 +657,7 @@ export default function App() {
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────
-function Dashboard({ transactions, income, expense, balance, wallets, user, onAdd, onReceipt, onMoMo, isGuest, guestLeft }) {
+function Dashboard({ transactions, income, expense, balance, wallets, business, user, onAdd, onReceipt, onMoMo, isPro, isGuest, guestLeft }) {
   const recent = transactions.slice(0,5);
   const statCards = [
     { label:"Total income",   value:fmt(income),   color:C.income  },
@@ -844,7 +668,7 @@ function Dashboard({ transactions, income, expense, balance, wallets, user, onAd
   return (
     <div>
       <div style={{ marginBottom:22 }}>
-        <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:24, color:C.text, marginBottom:3 }}>Good day, {user?.name?.split(' ')[0] || 'there'} 👋</div>
+        <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:24, color:C.text, marginBottom:3 }}>Good day, {user?.name?.split(' ')[0] || 'there'} 👋</div>
         <div style={{ fontSize:14, color:C.muted }}>Here's your financial snapshot for May 2026</div>
       </div>
 
@@ -853,14 +677,14 @@ function Dashboard({ transactions, income, expense, balance, wallets, user, onAd
         {statCards.map(sc=>(
           <div key={sc.label} style={card({ padding:"16px 18px" })}>
             <div style={{ fontSize:12, color:C.muted, marginBottom:6 }}>{sc.label}</div>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:22, color:sc.color }}>{sc.value}</div>
+            <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:22, color:sc.color }}>{sc.value}</div>
           </div>
         ))}
       </div>
 
       {/* WALLETS SUMMARY */}
       <div style={{ marginBottom:20 }}>
-        <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:16, color:C.text, marginBottom:12 }}>Your wallets</div>
+        <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:16, color:C.text, marginBottom:12 }}>Your wallets</div>
         <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
           {wallets.map(w=>{
             const preset = WALLET_PRESETS.find(p=>p.id===w.presetId)||WALLET_PRESETS[0];
@@ -870,7 +694,7 @@ function Dashboard({ transactions, income, expense, balance, wallets, user, onAd
               <div key={w.id} style={{ background:preset.bg, border:`1.5px solid ${preset.color}33`, borderRadius:12, padding:"14px 18px", minWidth:160 }}>
                 <div style={{ fontSize:18, marginBottom:4 }}>{preset.icon}</div>
                 <div style={{ fontSize:12, color:C.muted, marginBottom:2 }}>{w.name}</div>
-                <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:18, color:preset.color }}>{fmt(wBal)}</div>
+                <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:18, color:preset.color }}>{fmt(wBal)}</div>
               </div>
             );
           })}
@@ -888,14 +712,14 @@ function Dashboard({ transactions, income, expense, balance, wallets, user, onAd
       {wallets.length===0 && (
         <div style={{ textAlign:"center", padding:"48px 20px", background:"#fff", borderRadius:14, border:"1px solid #e5e7eb" }}>
           <div style={{ fontSize:40, marginBottom:12 }}>👋</div>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:18, color:"#111827", marginBottom:8 }}>Welcome to Receiva</div>
+          <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:18, color:"#111827", marginBottom:8 }}>Welcome to Receiva</div>
           <div style={{ fontSize:14, color:"#6b7280", marginBottom:20, maxWidth:340, margin:"0 auto 20px" }}>Start by adding your first wallet — your MTN MoMo, Telecel Cash, or any account you receive payments on.</div>
         </div>
       )}
 
       {/* RECENT */}
       <div style={card()}>
-        <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:15, color:C.text, marginBottom:14 }}>Recent transactions</div>
+        <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:15, color:C.text, marginBottom:14 }}>Recent transactions</div>
         <TxTable transactions={recent} wallets={[]} onReceipt={onReceipt} showWallet/>
       </div>
     </div>
@@ -925,7 +749,7 @@ function Wallets({ wallets, transactions, onAdd, onSelect, activeWallet }) {
               </div>
               <div style={{ fontSize:13, color:C.muted, marginBottom:2 }}>{w.name}</div>
               <div style={{ fontSize:12, color:"#9ca3af", marginBottom:10, fontFamily:"monospace" }}>{w.number}</div>
-              <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:26, color:preset.color, marginBottom:12 }}>{fmt(wBal)}</div>
+              <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:26, color:preset.color, marginBottom:12 }}>{fmt(wBal)}</div>
               <div style={{ display:"flex", gap:10 }}>
                 <div style={{ flex:1, textAlign:"center", padding:"8px", background:"#f9fafb", borderRadius:8 }}>
                   <div style={{ fontSize:10, color:C.muted, marginBottom:2 }}>Income</div>
@@ -958,6 +782,7 @@ function TxTable({ transactions, wallets, onReceipt, showWallet=false }) {
       </div>
       {transactions.map(tx=>{
         const wallet = wallets.find ? wallets.find(w=>w.id===tx.walletId) : null;
+        const preset = wallet ? WALLET_PRESETS.find(p=>p.id===wallet?.presetId) : null;
         return (
           <div key={tx.id} style={{ display:"grid", gridTemplateColumns:"1fr 1fr 100px 110px 80px", padding:"11px 14px", borderBottom:`1px solid #f9fafb`, alignItems:"center", fontSize:13 }}>
             <div>
@@ -965,7 +790,7 @@ function TxTable({ transactions, wallets, onReceipt, showWallet=false }) {
               <div style={{ color:C.muted, fontSize:11, marginTop:1 }}>{tx.date}</div>
             </div>
             <div><Badge color={tx.type==="income" ? C.income : C.expense}>{tx.category}</Badge></div>
-            <div style={{ fontSize:12, color:C.muted }}>{showWallet && wallet ? wallet.name : tx.method}</div>
+            <div style={{ fontSize:12, color:C.muted }}>{tx.method}</div>
             <div style={{ fontWeight:700, color: tx.type==="income" ? C.income : C.expense }}>
               {tx.type==="income" ? "+" : "-"}{fmt(tx.amount)}
             </div>
@@ -1007,7 +832,7 @@ function Transactions({ transactions, wallets, onAdd, onReceipt }) {
 }
 
 // ─── RECEIPTS PAGE ────────────────────────────────────────────
-function Receipts({ transactions, onReceipt, isPro, isGuest, guestLeft }) {
+function Receipts({ transactions, wallets, business, onReceipt, isPro, isGuest, guestLeft }) {
   const income = transactions.filter(t=>t.type==="income");
   return (
     <div>
@@ -1029,7 +854,7 @@ function Receipts({ transactions, onReceipt, isPro, isGuest, guestLeft }) {
               <Badge color={C.teal}>Receipt</Badge>
               <span style={{ fontSize:11, color:C.muted }}>{tx.date}</span>
             </div>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:22, color:C.income, marginBottom:4 }}>{fmt(tx.amount)}</div>
+            <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:22, color:C.income, marginBottom:4 }}>{fmt(tx.amount)}</div>
             <div style={{ fontSize:13, color:C.text, marginBottom:8 }}>{tx.description}</div>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
               <span style={{ fontSize:11, color:C.muted, fontFamily:"monospace" }}>{tx.receiptNo}</span>
@@ -1052,13 +877,13 @@ function Reports({ transactions, income, expense, balance, isPro, onUpgrade }) {
         {[[fmt(income),"Income",C.income],[fmt(expense),"Expenses",C.expense],[fmt(balance),"Net profit",balance>=0?"#2563eb":C.expense],[income>0?Math.round((balance/income)*100)+"%":"0%","Margin",C.orange]].map(([v,l,c])=>(
           <div key={l} style={card({ padding:"16px 18px" })}>
             <div style={{ fontSize:12, color:C.muted, marginBottom:5 }}>{l}</div>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:22, color:c }}>{v}</div>
+            <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:22, color:c }}>{v}</div>
           </div>
         ))}
       </div>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
         <div style={card()}>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:15, color:C.text, marginBottom:14 }}>By category</div>
+          <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:15, color:C.text, marginBottom:14 }}>By category</div>
           {Object.entries(byCat).map(([cat,vals])=>(
             <div key={cat} style={{ marginBottom:12 }}>
               <div style={{ display:"flex", justifyContent:"space-between", fontSize:13, marginBottom:5 }}>
@@ -1072,7 +897,7 @@ function Reports({ transactions, income, expense, balance, isPro, onUpgrade }) {
           ))}
         </div>
         <div style={card()}>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:15, color:C.text, marginBottom:14 }}>PDF Export & Tax Report</div>
+          <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:15, color:C.text, marginBottom:14 }}>PDF Export & Tax Report</div>
           {isPro ? (
             <div style={{ fontSize:14, color:C.muted }}>✓ Your monthly PDF report is ready to download.</div>
           ) : (
@@ -1131,7 +956,7 @@ function AddTxModal({ onClose, onSave, wallets }) {
 
 // ─── RECEIPT MODAL ────────────────────────────────────────────
 function ReceiptModal({ tx, business, isPro, onClose }) {
-  const [rNo] = useState(() => genRNo());
+  const rNo = useRef(genRNo()).current;
   const accentColor = isPro ? (business.logoColor||C.orange) : "#1B5F8C";
   const accentBg    = isPro ? (business.logoBg||"#fff4ed")   : "#f0f7ff";
   const waText = `Receipt from ${business.name}\n--------------------------\nReceipt No: ${tx.receiptNo||rNo}\nDate: ${tx.date}\nDescription: ${tx.description}\nAmount: GH₵ ${tx.amount}\nPayment: ${tx.method}${tx.momoRef?`\nMoMo Ref: ${tx.momoRef}`:""}\n--------------------------\nPowered by Receiva`;
@@ -1142,7 +967,7 @@ function ReceiptModal({ tx, business, isPro, onClose }) {
       {/* RECEIPT CARD */}
       <div style={{ background:"#fff", border:`1px solid ${C.border}`, borderRadius:14, padding:"26px 28px", marginBottom:16 }}>
         <div style={{ borderBottom:`2px solid ${accentColor}`, paddingBottom:14, marginBottom:16 }}>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:20, color:accentColor }}>{business.name}</div>
+          <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:20, color:accentColor }}>{business.name}</div>
           {isPro && <div style={{ fontSize:11, color:C.muted, marginTop:2, fontStyle:"italic" }}>Official Receipt · Pro</div>}
           {!isPro && <div style={{ fontSize:11, color:C.muted, marginTop:2 }}>Official Receipt</div>}
         </div>
@@ -1157,7 +982,7 @@ function ReceiptModal({ tx, business, isPro, onClose }) {
         </div>
         <div style={{ borderTop:`1px solid ${C.border}`, paddingTop:12, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
           <span style={{ color:C.muted, fontSize:14 }}>Total paid</span>
-          <span style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:24, color:accentColor }}>{fmt(tx.amount)}</span>
+          <span style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:24, color:accentColor }}>{fmt(tx.amount)}</span>
         </div>
         <div style={{ marginTop:16, textAlign:"center", fontSize:10, color:"#d1d5db", borderTop:`1px solid #f3f4f6`, paddingTop:10 }}>
           Thank you for your business · Powered by Receiva{isPro?" Pro":""}
@@ -1251,7 +1076,7 @@ function MoMoModal({ business, wallets, onClose, onSave }) {
       alert("No MoMo messages detected. Make sure you paste actual MoMo SMS text.");
       return;
     }
-    const parsed = chunks.map((chunk) => ({
+    const parsed = chunks.map((chunk, i) => ({
       _id: genId(),
       _raw: chunk,
       _included: true,
@@ -1365,15 +1190,15 @@ function MoMoModal({ business, wallets, onClose, onSave }) {
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10, marginBottom:16 }}>
             <div style={{ background:"#f9fafb", border:`1px solid ${C.border}`, borderRadius:10, padding:"10px 14px", textAlign:"center" }}>
               <div style={{ fontSize:11, color:C.muted, marginBottom:2 }}>Messages found</div>
-              <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:20, color:C.text }}>{items.length}</div>
+              <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:20, color:C.text }}>{items.length}</div>
             </div>
             <div style={{ background:C.income+"08", border:`1px solid ${C.income}22`, borderRadius:10, padding:"10px 14px", textAlign:"center" }}>
               <div style={{ fontSize:11, color:C.muted, marginBottom:2 }}>Total to save</div>
-              <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:20, color:C.income }}>{fmt(totalAmt)}</div>
+              <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:20, color:C.income }}>{fmt(totalAmt)}</div>
             </div>
             <div style={{ background: missingDesc > 0 ? "#fff7ed" : "#f0fdf4", border:`1px solid ${missingDesc>0?C.orange+"44":"#86efac"}`, borderRadius:10, padding:"10px 14px", textAlign:"center" }}>
               <div style={{ fontSize:11, color:C.muted, marginBottom:2 }}>Need description</div>
-              <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:20, color: missingDesc>0 ? C.orange : "#16a34a" }}>{missingDesc}</div>
+              <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:20, color: missingDesc>0 ? C.orange : "#16a34a" }}>{missingDesc}</div>
             </div>
           </div>
 
@@ -1385,10 +1210,11 @@ function MoMoModal({ business, wallets, onClose, onSave }) {
 
           {/* TRANSACTION CARDS */}
           <div style={{ maxHeight:420, overflowY:"auto", display:"flex", flexDirection:"column", gap:10, marginBottom:16, paddingRight:4 }}>
-            {items.map((it) => (
+            {items.map((it, idx) => (
               <BulkTxCard
                 key={it._id}
                 item={it}
+                index={idx}
                 onChange={(k,v) => updateItem(it._id, k, v)}
                 onToggle={() => toggleItem(it._id)}
               />
@@ -1415,7 +1241,7 @@ function MoMoModal({ business, wallets, onClose, onSave }) {
       {step === 3 && (
         <div style={{ textAlign:"center", padding:"32px 20px" }}>
           <div style={{ fontSize:52, marginBottom:16 }}>🎉</div>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:24, color:C.text, marginBottom:8 }}>
+          <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:24, color:C.text, marginBottom:8 }}>
             {savedCount} transaction{savedCount !== 1 ? "s" : ""} saved!
           </div>
           <div style={{ fontSize:14, color:C.muted, marginBottom:24 }}>
@@ -1452,7 +1278,7 @@ function MoMoModal({ business, wallets, onClose, onSave }) {
 }
 
 // ─── BULK TX CARD (individual review card) ────────────────────
-function BulkTxCard({ item, onChange, onToggle }) {
+function BulkTxCard({ item, index, onChange, onToggle }) {
   const [expanded, setExpanded] = useState(true);
   const netCol = NET_COLOR[item.network] || C.teal;
   const hasDesc = item.description.trim().length > 0;
@@ -1481,7 +1307,7 @@ function BulkTxCard({ item, onChange, onToggle }) {
         </span>
 
         {/* Amount */}
-        <span style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:16, color:C.income }}>
+        <span style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:16, color:C.income }}>
           GH₵ {item.amount || "?"}
         </span>
 
@@ -1550,7 +1376,7 @@ function UpgradeModal({ onClose }) {
       <ModalHeader title="Upgrade to Pro" onClose={onClose}/>
       <div style={{ textAlign:"center", marginBottom:20 }}>
         <div style={{ fontSize:36, marginBottom:8 }}>⭐</div>
-        <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:28, color:C.orange }}>GH₵ 40 / month</div>
+        <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:28, color:C.orange }}>GH₵ 40 / month</div>
         <div style={{ fontSize:14, color:C.muted, marginTop:4 }}>Everything you need to run a professional business</div>
       </div>
       {[["Logo-branded receipts","Your company colors on every receipt"],["Unlimited transactions","No monthly cap, ever"],["PDF export","Download receipts and reports"],["Multi-wallet","MTN, Telecel, company account — all in one"],["Tax-ready reports","GRA-friendly monthly summaries"],["Priority support","WhatsApp support within 2 hours"]].map(([t,d])=>(
@@ -1568,12 +1394,12 @@ function UpgradeModal({ onClose }) {
 }
 
 // ─── PRODUCT LIST ─────────────────────────────────────────────
-function ProductList({ products, categories, onAdd, onEdit, onDelete }) {
+function ProductList({ products, categories, onAdd, onEdit }) {
   const [search, setSearch]     = useState("");
   const [catFilter, setCatFilter] = useState("all");
 
   const filtered = products.filter(p => {
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || (p.sku || "").toLowerCase().includes(search.toLowerCase());
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase());
     const matchCat    = catFilter === "all" || p.categoryId === catFilter;
     return matchSearch && matchCat;
   });
@@ -1585,7 +1411,7 @@ function ProductList({ products, categories, onAdd, onEdit, onDelete }) {
       {/* Header */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20, flexWrap:"wrap", gap:10 }}>
         <div>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:20, color:C.text }}>Products</div>
+          <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:20, color:C.text }}>Products</div>
           <div style={{ fontSize:13, color:C.muted }}>{products.length} products · {products.filter(p=>p.type==="service").length} services</div>
         </div>
         <Btn variant="primary" onClick={onAdd}><Icon d={IC.plus} size={15}/> Add product</Btn>
@@ -1612,14 +1438,14 @@ function ProductList({ products, categories, onAdd, onEdit, onDelete }) {
         ].map(([l,v,c])=>(
           <div key={l} style={card({ padding:"14px 16px" })}>
             <div style={{ fontSize:11, color:C.muted, marginBottom:4 }}>{l}</div>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:22, color:c }}>{v}</div>
+            <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:22, color:c }}>{v}</div>
           </div>
         ))}
       </div>
 
       {/* Table */}
       <div style={card({ padding:0, overflow:"hidden" })}>
-        <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr 130px", padding:"10px 16px", fontSize:11, color:C.muted, letterSpacing:"0.05em", textTransform:"uppercase", borderBottom:`1px solid ${C.border}` }}>
+        <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr 80px", padding:"10px 16px", fontSize:11, color:C.muted, letterSpacing:"0.05em", textTransform:"uppercase", borderBottom:`1px solid ${C.border}` }}>
           <span>Product</span><span>Category</span><span>Cost</span><span>Price</span><span>Stock</span><span>Action</span>
         </div>
         {filtered.length === 0 && (
@@ -1629,7 +1455,7 @@ function ProductList({ products, categories, onAdd, onEdit, onDelete }) {
           const cat = categories.find(c=>c.id===p.categoryId);
           const mg  = margin(p);
           return (
-            <div key={p.id} style={{ display:"grid", gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr 130px", padding:"12px 16px", borderBottom:`1px solid #f9fafb`, alignItems:"center", fontSize:13 }}>
+            <div key={p.id} style={{ display:"grid", gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr 80px", padding:"12px 16px", borderBottom:`1px solid #f9fafb`, alignItems:"center", fontSize:13 }}>
               <div>
                 <div style={{ fontWeight:500, color:C.text }}>{p.name}</div>
                 <div style={{ fontSize:11, color:C.muted, marginTop:1 }}>SKU: {p.sku} · <span style={{ color: p.type==="service"?C.orange:C.teal, fontWeight:500 }}>{p.type==="service"?"Service":"Product"}</span></div>
@@ -1647,9 +1473,8 @@ function ProductList({ products, categories, onAdd, onEdit, onDelete }) {
                   <span style={{ color:C.muted, fontSize:12 }}>Service</span>
                 )}
               </div>
-              <div style={{ display:"flex", gap:6 }}>
+              <div>
                 <Btn variant="ghost" size="sm" onClick={()=>onEdit(p)} style={{ fontSize:11, padding:"5px 10px" }}>Edit</Btn>
-                <Btn variant="ghost" size="sm" onClick={()=>onDelete(p)} style={{ fontSize:11, padding:"5px 10px", color:"#ef4444", borderColor:"#fca5a5" }}>Delete</Btn>
               </div>
             </div>
           );
@@ -1683,7 +1508,7 @@ function AddEditProduct({ product, categories, onSave, onCancel }) {
     <div style={{ maxWidth:640 }}>
       <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:24 }}>
         <button onClick={onCancel} style={{ background:"transparent", border:"none", cursor:"pointer", color:C.muted, fontSize:13, fontFamily:"'Poppins',sans-serif" }}>← Back</button>
-        <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:20, color:C.text }}>{isEdit?"Edit product":"Add new product"}</div>
+        <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:20, color:C.text }}>{isEdit?"Edit product":"Add new product"}</div>
       </div>
 
       <div style={card()}>
@@ -1692,7 +1517,7 @@ function AddEditProduct({ product, categories, onSave, onCancel }) {
           <label style={label}>Product type</label>
           <div style={{ display:"flex", gap:8 }}>
             {["product","service"].map(t=>(
-              <button key={t} style={{ flex:1, padding:"10px", borderRadius:8, cursor:"pointer", fontFamily:"'Poppins',sans-serif", fontSize:13, fontWeight:500, background: form.type===t ? C.orange+"18":C.light, color: form.type===t ? C.orange : C.muted, border:`1.5px solid ${form.type===t?C.orange+"44":C.border}` }} onClick={()=>{ set("type",t); if(t==="service") set("trackStock",false); else set("trackStock",true); }}>
+              <button key={t} style={{ flex:1, padding:"10px", borderRadius:8, border:"none", cursor:"pointer", fontFamily:"'Poppins',sans-serif", fontSize:13, fontWeight:500, background: form.type===t ? C.orange+"18":C.light, color: form.type===t ? C.orange : C.muted, border:`1.5px solid ${form.type===t?C.orange+"44":C.border}` }} onClick={()=>{ set("type",t); if(t==="service") set("trackStock",false); else set("trackStock",true); }}>
                 {t==="product" ? "📦 Physical product" : "⚙️ Service"}
               </button>
             ))}
@@ -1737,7 +1562,7 @@ function AddEditProduct({ product, categories, onSave, onCancel }) {
           <div style={{ background: margin>30?"#f0fdf4":margin>10?"#fff7ed":"#fef2f2", border:`1px solid ${margin>30?"#86efac":margin>10?C.orange+"44":"#fca5a5"}`, borderRadius:8, padding:"10px 14px", marginBottom:14, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
             <span style={{ fontSize:13, color:C.text }}>Profit per unit</span>
             <div style={{ textAlign:"right" }}>
-              <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:16, color: margin>30?"#16a34a":margin>10?C.orange:"#ef4444" }}>{fmt(parseFloat(form.sellPrice)-parseFloat(form.costPrice))}</div>
+              <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:16, color: margin>30?"#16a34a":margin>10?C.orange:"#ef4444" }}>{fmt(parseFloat(form.sellPrice)-parseFloat(form.costPrice))}</div>
               <div style={{ fontSize:11, color:C.muted }}>{margin}% margin</div>
             </div>
           </div>
@@ -1809,11 +1634,11 @@ function ProductCategories({ categories, products, onSave }) {
 
   return (
     <div style={{ maxWidth:520 }}>
-      <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:20, color:C.text, marginBottom:20 }}>Categories</div>
+      <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:20, color:C.text, marginBottom:20 }}>Categories</div>
 
       {/* Add new */}
       <div style={card({ marginBottom:20 })}>
-        <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:600, fontSize:14, color:C.text, marginBottom:14 }}>Add new category</div>
+        <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:14, color:C.text, marginBottom:14 }}>Add new category</div>
         <div style={{ display:"flex", gap:10, alignItems:"center" }}>
           <input style={{ ...input, flex:1 }} placeholder="Category name" value={newName} onChange={e=>setNewName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addCat()}/>
           <input type="color" value={newColor} onChange={e=>setNewColor(e.target.value)} style={{ width:40, height:40, border:`1px solid ${C.border}`, borderRadius:8, padding:2, cursor:"pointer" }}/>
