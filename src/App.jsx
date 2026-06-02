@@ -1,4 +1,30 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  BadgeCheck,
+  Banknote,
+  Building2,
+  CircleCheck,
+  CircleDollarSign,
+  Gift,
+  Hand,
+  Landmark,
+  Lightbulb,
+  LockKeyhole,
+  MessageCircle,
+  Package,
+  PartyPopper,
+  RadioTower,
+  Send,
+  Smartphone,
+  Sparkles,
+  Star,
+  TabletSmartphone,
+  TriangleAlert,
+  Wrench,
+  X,
+} from "lucide-react";
 import { supabase } from "./supabase";
 
 // ─── CONSTANTS ────────────────────────────────────────────────
@@ -11,22 +37,70 @@ const fmt    = n  => `GH₵ ${Number(n).toLocaleString("en-GH",{minimumFractionD
 
 // ─── WALLET PRESETS ───────────────────────────────────────────
 const WALLET_PRESETS = [
-  { id:"mtn",     label:"MTN MoMo",       color:"#FFCC00", bg:"#fff9e6", icon:"📱" },
-  { id:"telecel", label:"Telecel Cash",   color:"#E30613", bg:"#ffeaeb", icon:"📲" },
-  { id:"voda",    label:"Vodafone Cash",  color:"#E30613", bg:"#ffeaeb", icon:"📡" },
-  { id:"company", label:"Company Account",color:"#F97316", bg:"#fff4ed", icon:"🏢" },
-  { id:"cash",    label:"Cash",           color:"#16a34a", bg:"#f0fdf4", icon:"💵" },
-  { id:"bank",    label:"Bank Account",   color:"#2563eb", bg:"#eff6ff", icon:"🏦" },
+  { id:"mtn",     label:"MTN MoMo",       color:"#FFCC00", bg:"#fff9e6", icon:Smartphone },
+  { id:"telecel", label:"Telecel Cash",   color:"#E30613", bg:"#ffeaeb", icon:TabletSmartphone },
+  { id:"voda",    label:"Vodafone Cash",  color:"#E30613", bg:"#ffeaeb", icon:RadioTower },
+  { id:"company", label:"Company Account",color:"#F97316", bg:"#fff4ed", icon:Building2 },
+  { id:"cash",    label:"Cash",           color:"#16a34a", bg:"#f0fdf4", icon:Banknote },
+  { id:"bank",    label:"Bank Account",   color:"#2563eb", bg:"#eff6ff", icon:Landmark },
 ];
 
 // ─── DEMO DATA ────────────────────────────────────────────────
-const DEMO_WALLETS = [];
-const DEMO_TRANSACTIONS = [];
-const DEMO_PRODUCT_CATS = [];
+const DEFAULT_PRODUCT_CATEGORIES = [
+  { id:"c1", name:"Products", color:"#2563eb" },
+  { id:"c2", name:"Services", color:"#F97316" },
+];
 
-const DEMO_PRODUCTS = [];
-
-const DEMO_BUSINESS = { name:"My Business", owner:"", phone:"", industry:"", plan:"free", logoColor:"#F97316", logoBg:"#fff4ed" };
+const productStorageKey = (ownerKey, type) => `receiva.${ownerKey || "guest"}.${type}`;
+const readStoredJson = (key, fallback) => {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+};
+const writeStoredJson = (key, value) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Storage can fail in private browsing or when quota is full; the in-memory app still works.
+  }
+};
+const loadProductState = (ownerKey) => ({
+  products: readStoredJson(productStorageKey(ownerKey, "products"), []),
+  categories: readStoredJson(productStorageKey(ownerKey, "productCategories"), DEFAULT_PRODUCT_CATEGORIES),
+});
+const saveProductState = (ownerKey, products, categories) => {
+  writeStoredJson(productStorageKey(ownerKey, "products"), products);
+  writeStoredJson(productStorageKey(ownerKey, "productCategories"), categories);
+};
+const mapProductCategory = c => ({ id:c.id, name:c.name, color:c.color || "#F97316" });
+const mapProduct = p => ({
+  id:p.id,
+  name:p.name || "",
+  sku:p.sku || "",
+  categoryId:p.category_id || "",
+  type:p.type || "product",
+  costPrice:parseFloat(p.cost_price) || 0,
+  sellPrice:parseFloat(p.sell_price) || 0,
+  taxRate:parseFloat(p.tax_rate) || 0,
+  trackStock:p.track_stock ?? true,
+  stock:parseInt(p.stock) || 0,
+  description:p.description || "",
+});
+const productPayload = p => ({
+  name:p.name,
+  sku:p.sku || null,
+  category_id:p.categoryId || null,
+  type:p.type || "product",
+  cost_price:p.costPrice || 0,
+  sell_price:p.sellPrice || 0,
+  tax_rate:p.taxRate || 0,
+  track_stock:p.trackStock ?? true,
+  stock:p.stock || 0,
+  description:p.description || null,
+});
 
 // ─── GHANA MOMO PARSER ────────────────────────────────────────
 function detectNetwork(text) {
@@ -53,10 +127,10 @@ function parseGhanaMoMo(text) {
   const mtnId    = raw.match(/transaction\s*id[:\s]+(\d{8,12})/i);
   const telPfx   = raw.match(/^telecel(\d{10,16})/i);
   if (mtnId) txId=mtnId[1]; else if (telPfx) txId=telPfx[1];
-  const dateMatch = raw.match(/(\d{4}-\d{2}-\d{2}|\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/);
+  const dateMatch = raw.match(/(\d{4}-\d{2}-\d{2}|\d{1,2}[/-]\d{1,2}[/-]\d{2,4})/);
   let date = dateMatch ? dateMatch[1] : today();
-  if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test(date)) {
-    const p=date.split(/[\/\-]/), yr=p[2].length===2?"20"+p[2]:p[2];
+  if (/^\d{1,2}[/-]\d{1,2}[/-]\d{2,4}$/.test(date)) {
+    const p=date.split(/[/-]/), yr=p[2].length===2?"20"+p[2]:p[2];
     date=`${yr}-${p[1].padStart(2,"0")}-${p[0].padStart(2,"0")}`;
   }
   const timeMatch = raw.match(/(\d{1,2}:\d{2}:\d{2}|\d{1,2}:\d{2}\s*[APap][Mm])/);
@@ -326,6 +400,16 @@ export default function App() {
       setBusinessId(bizData.id);
       const { data: walletData } = await supabase.from("wallets").select("*").eq("business_id", bizData.id).order("created_at",{ascending:true});
       const { data: txData }     = await supabase.from("transactions").select("*").eq("business_id", bizData.id).order("date",{ascending:false});
+      let { data: catData, error: catErr } = await supabase.from("product_categories").select("*").eq("business_id", bizData.id).order("created_at",{ascending:true});
+      if (catErr) throw catErr;
+      if ((catData||[]).length === 0) {
+        const defaultCats = DEFAULT_PRODUCT_CATEGORIES.map(c => ({ business_id:bizData.id, name:c.name, color:c.color }));
+        const { data: newCats, error: createCatErr } = await supabase.from("product_categories").insert(defaultCats).select();
+        if (createCatErr) throw createCatErr;
+        catData = newCats || [];
+      }
+      const { data: productData, error: productErr } = await supabase.from("products").select("*").eq("business_id", bizData.id).order("created_at",{ascending:true});
+      if (productErr) throw productErr;
       const mappedWallets = (walletData||[]).map(w=>({ id:w.id, presetId:w.preset_id, name:w.name, number:w.number||"", balance:0 }));
       const mappedTx      = (txData||[]).map(t=>({ id:t.id, walletId:t.wallet_id, type:t.type, amount:parseFloat(t.amount), category:t.category||"", description:t.description||"", method:t.method||"", date:t.date, momoRef:t.momo_ref||"", receiptNo:t.receipt_no||genRNo() }));
       if (mappedWallets.length === 0) {
@@ -336,8 +420,8 @@ export default function App() {
       setBusiness(b => ({ ...b, name: bizData.business_name || "My Business", logoColor: bizData.logo_color || "#F97316", logoBg: bizData.logo_bg || "#fff4ed", plan: bizData.plan || "free" }));
       setWallets(mappedWallets);
       setTransactions(mappedTx);
-      setProducts([]);
-      setProductCategories([{ id:"c1", name:"Products", color:"#2563eb" },{ id:"c2", name:"Services", color:"#F97316" }]);
+      setProductCategories((catData||[]).map(mapProductCategory));
+      setProducts((productData||[]).map(mapProduct));
     } catch(err) {
       console.error("loadUserData error:", err);
       setDataError("Could not load your data. Check your connection and refresh.");
@@ -385,8 +469,25 @@ export default function App() {
   }, []);
 
   const handleLogin = (u) => { setUser(u); setAuthState("app"); if(u.id) loadUserData(u.id); };
-  const handleGuest = () => { setWallets([]); setTransactions([]); setAuthState("guest"); };
-  const handleSignOut = async () => { await supabase.auth.signOut(); setUser(null); setWallets([]); setTransactions([]); setBusinessId(null); setBusiness({ name:'My Business', owner:'', phone:'', industry:'', plan:'free', logoColor:'#F97316', logoBg:'#fff4ed' }); setAuthState("login"); };
+  const handleGuest = () => {
+    const productState = loadProductState("guest");
+    setWallets([]);
+    setTransactions([]);
+    setProducts(productState.products);
+    setProductCategories(productState.categories);
+    setAuthState("guest");
+  };
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setWallets([]);
+    setTransactions([]);
+    setProducts([]);
+    setProductCategories(DEFAULT_PRODUCT_CATEGORIES);
+    setBusinessId(null);
+    setBusiness({ name:'My Business', owner:'', phone:'', industry:'', plan:'free', logoColor:'#F97316', logoBg:'#fff4ed' });
+    setAuthState("login");
+  };
 
   if (authState === "loading") return (
     <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#f9fafb", fontFamily:"'Poppins',sans-serif" }}>
@@ -407,6 +508,83 @@ export default function App() {
   const balance    = income - expense;
   const txCap      = isPro ? Infinity : 30;
   const txUsed     = transactions.length;
+  const productOwnerKey = isGuest ? "guest" : user?.id;
+
+  const persistGuestProductState = (nextProducts, nextCategories = productCategories) => {
+    setProducts(nextProducts);
+    setProductCategories(nextCategories);
+    saveProductState(productOwnerKey, nextProducts, nextCategories);
+  };
+
+  const saveProduct = async (product) => {
+    if (isGuest || !businessId) {
+      const nextProducts = editingProduct
+        ? products.map(p => p.id === product.id ? product : p)
+        : [...products, { ...product, id:genId() }];
+      persistGuestProductState(nextProducts);
+      setEditingProduct(null);
+      navigateTo("product-list");
+      return;
+    }
+
+    const payload = productPayload(product);
+    const request = editingProduct
+      ? supabase.from("products").update(payload).eq("id", product.id).eq("business_id", businessId)
+      : supabase.from("products").insert({ ...payload, business_id:businessId });
+    const { data, error } = await request.select().single();
+    if (error) { console.error(error); alert("Could not save product. Please try again."); return; }
+
+    const saved = mapProduct(data);
+    setProducts(prev => editingProduct ? prev.map(p => p.id === saved.id ? saved : p) : [...prev, saved]);
+    setEditingProduct(null);
+    navigateTo("product-list");
+  };
+
+  const saveProductCategories = async (nextCategories) => {
+    if (isGuest || !businessId) {
+      persistGuestProductState(products, nextCategories);
+      return;
+    }
+
+    const currentById = new Map(productCategories.map(c => [c.id, c]));
+    const nextById = new Map(nextCategories.map(c => [c.id, c]));
+    const removed = productCategories.filter(c => !nextById.has(c.id));
+    const added = nextCategories.filter(c => !currentById.has(c.id));
+    const changed = nextCategories.filter(c => {
+      const current = currentById.get(c.id);
+      return current && (current.name !== c.name || current.color !== c.color);
+    });
+
+    for (const c of removed) {
+      const { error } = await supabase.from("product_categories").delete().eq("id", c.id).eq("business_id", businessId);
+      if (error) { console.error(error); alert("Could not delete category."); return; }
+    }
+    for (const c of changed) {
+      const { error } = await supabase.from("product_categories").update({ name:c.name, color:c.color }).eq("id", c.id).eq("business_id", businessId);
+      if (error) { console.error(error); alert("Could not save category."); return; }
+    }
+    if (added.length > 0) {
+      const rows = added.map(c => ({ business_id:businessId, name:c.name, color:c.color }));
+      const { error } = await supabase.from("product_categories").insert(rows);
+      if (error) { console.error(error); alert("Could not add category."); return; }
+    }
+
+    const { data, error } = await supabase.from("product_categories").select("*").eq("business_id", businessId).order("created_at",{ascending:true});
+    if (error) { console.error(error); alert("Could not refresh categories."); return; }
+    setProductCategories((data||[]).map(mapProductCategory));
+  };
+
+  const deleteProduct = async (product) => {
+    const ok = window.confirm(`Delete ${product.name}?`);
+    if (!ok) return;
+    if (isGuest || !businessId) {
+      persistGuestProductState(products.filter(p => p.id !== product.id));
+      return;
+    }
+    const { error } = await supabase.from("products").delete().eq("id", product.id).eq("business_id", businessId);
+    if (error) { console.error(error); alert("Could not delete product."); return; }
+    setProducts(prev => prev.filter(p => p.id !== product.id));
+  };
 
   const tryGenerateReceipt = (tx) => {
     if (isGuest) {
@@ -448,8 +626,6 @@ export default function App() {
       { key:"categories",      label:"Categories"      },
     ]},
   ];
-
-  const isProductPage = ["products","product-list","add-product","categories"].includes(page);
 
   const NavItem = ({ n, mobile=false, onNavigate }) => {
     if (n.children) {
@@ -635,14 +811,14 @@ export default function App() {
           <div className="content-pad" style={{ flex:1, padding:"24px 28px", overflowY:"auto" }}>
             {dataLoading && <div style={{ textAlign:"center", padding:"40px", color:C.muted, fontSize:14 }}>Loading your data...</div>}
             {dataError   && <div style={{ background:"#fef2f2", border:"1px solid #fca5a5", borderRadius:10, padding:"14px 18px", marginBottom:16, fontSize:13, color:"#b91c1c" }}>{dataError}</div>}
-            {page==="dashboard"    && <Dashboard transactions={txFiltered} income={income} expense={expense} balance={balance} wallets={wallets} activeWallet={activeWallet} business={business} user={user} onAdd={()=>setShowAddTx(true)} onReceipt={tryGenerateReceipt} onMoMo={()=>setShowMoMo(true)} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount}/>}
+            {page==="dashboard"    && <Dashboard transactions={txFiltered} income={income} expense={expense} balance={balance} wallets={wallets} activeWallet={activeWallet} user={user} onAdd={()=>setShowAddTx(true)} onReceipt={tryGenerateReceipt} onMoMo={()=>setShowMoMo(true)} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount}/>}
             {page==="wallets"      && <Wallets wallets={wallets} transactions={transactions} onAdd={()=>setShowAddWallet(true)} onSelect={setActiveWallet} activeWallet={activeWallet}/>}
             {page==="transactions" && <Transactions transactions={txFiltered} wallets={wallets} onAdd={()=>setShowAddTx(true)} onReceipt={tryGenerateReceipt}/>}
-            {page==="receipts"     && <Receipts transactions={txFiltered} wallets={wallets} business={business} onReceipt={tryGenerateReceipt} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount}/>}
+            {page==="receipts"     && <Receipts transactions={txFiltered} onReceipt={tryGenerateReceipt} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount}/>}
             {page==="reports"      && <Reports transactions={txFiltered} income={income} expense={expense} balance={balance} isPro={isPro} onUpgrade={()=>setShowUpgrade(true)}/>}
-            {(page==="products"||page==="product-list") && <ProductList products={products} categories={productCategories} onAdd={()=>navigateTo("add-product")} onEdit={p=>{ setEditingProduct(p); navigateTo("add-product"); }}/>}
-            {page==="add-product"  && <AddEditProduct product={editingProduct} categories={productCategories} onSave={p=>{ if(editingProduct){ setProducts(prev=>prev.map(x=>x.id===p.id?p:x)); } else { setProducts(prev=>[...prev,{...p,id:genId()}]); } setEditingProduct(null); navigateTo("product-list"); }} onCancel={()=>{ setEditingProduct(null); navigateTo("product-list"); }}/>}
-            {page==="categories"   && <ProductCategories categories={productCategories} products={products} onSave={setProductCategories}/>}
+            {(page==="products"||page==="product-list") && <ProductList products={products} categories={productCategories} onAdd={()=>navigateTo("add-product")} onEdit={p=>{ setEditingProduct(p); navigateTo("add-product"); }} onDelete={deleteProduct}/>}
+            {page==="add-product"  && <AddEditProduct product={editingProduct} categories={productCategories} onSave={saveProduct} onCancel={()=>{ setEditingProduct(null); navigateTo("product-list"); }}/>}
+            {page==="categories"   && <ProductCategories key={productCategories.map(c=>c.id).join("|")} categories={productCategories} products={products} onSave={saveProductCategories}/>}
           </div>
         </div>
       </div>
@@ -657,7 +833,7 @@ export default function App() {
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────
-function Dashboard({ transactions, income, expense, balance, wallets, business, user, onAdd, onReceipt, onMoMo, isPro, isGuest, guestLeft }) {
+function Dashboard({ transactions, income, expense, balance, wallets, user, onAdd, onReceipt, onMoMo, isGuest, guestLeft }) {
   const recent = transactions.slice(0,5);
   const statCards = [
     { label:"Total income",   value:fmt(income),   color:C.income  },
@@ -782,7 +958,6 @@ function TxTable({ transactions, wallets, onReceipt, showWallet=false }) {
       </div>
       {transactions.map(tx=>{
         const wallet = wallets.find ? wallets.find(w=>w.id===tx.walletId) : null;
-        const preset = wallet ? WALLET_PRESETS.find(p=>p.id===wallet?.presetId) : null;
         return (
           <div key={tx.id} style={{ display:"grid", gridTemplateColumns:"1fr 1fr 100px 110px 80px", padding:"11px 14px", borderBottom:`1px solid #f9fafb`, alignItems:"center", fontSize:13 }}>
             <div>
@@ -790,7 +965,7 @@ function TxTable({ transactions, wallets, onReceipt, showWallet=false }) {
               <div style={{ color:C.muted, fontSize:11, marginTop:1 }}>{tx.date}</div>
             </div>
             <div><Badge color={tx.type==="income" ? C.income : C.expense}>{tx.category}</Badge></div>
-            <div style={{ fontSize:12, color:C.muted }}>{tx.method}</div>
+            <div style={{ fontSize:12, color:C.muted }}>{showWallet && wallet ? wallet.name : tx.method}</div>
             <div style={{ fontWeight:700, color: tx.type==="income" ? C.income : C.expense }}>
               {tx.type==="income" ? "+" : "-"}{fmt(tx.amount)}
             </div>
@@ -832,7 +1007,7 @@ function Transactions({ transactions, wallets, onAdd, onReceipt }) {
 }
 
 // ─── RECEIPTS PAGE ────────────────────────────────────────────
-function Receipts({ transactions, wallets, business, onReceipt, isPro, isGuest, guestLeft }) {
+function Receipts({ transactions, onReceipt, isPro, isGuest, guestLeft }) {
   const income = transactions.filter(t=>t.type==="income");
   return (
     <div>
@@ -956,7 +1131,7 @@ function AddTxModal({ onClose, onSave, wallets }) {
 
 // ─── RECEIPT MODAL ────────────────────────────────────────────
 function ReceiptModal({ tx, business, isPro, onClose }) {
-  const rNo = useRef(genRNo()).current;
+  const [rNo] = useState(() => genRNo());
   const accentColor = isPro ? (business.logoColor||C.orange) : "#1B5F8C";
   const accentBg    = isPro ? (business.logoBg||"#fff4ed")   : "#f0f7ff";
   const waText = `Receipt from ${business.name}\n--------------------------\nReceipt No: ${tx.receiptNo||rNo}\nDate: ${tx.date}\nDescription: ${tx.description}\nAmount: GH₵ ${tx.amount}\nPayment: ${tx.method}${tx.momoRef?`\nMoMo Ref: ${tx.momoRef}`:""}\n--------------------------\nPowered by Receiva`;
@@ -1076,7 +1251,7 @@ function MoMoModal({ business, wallets, onClose, onSave }) {
       alert("No MoMo messages detected. Make sure you paste actual MoMo SMS text.");
       return;
     }
-    const parsed = chunks.map((chunk, i) => ({
+    const parsed = chunks.map((chunk) => ({
       _id: genId(),
       _raw: chunk,
       _included: true,
@@ -1210,11 +1385,10 @@ function MoMoModal({ business, wallets, onClose, onSave }) {
 
           {/* TRANSACTION CARDS */}
           <div style={{ maxHeight:420, overflowY:"auto", display:"flex", flexDirection:"column", gap:10, marginBottom:16, paddingRight:4 }}>
-            {items.map((it, idx) => (
+            {items.map((it) => (
               <BulkTxCard
                 key={it._id}
                 item={it}
-                index={idx}
                 onChange={(k,v) => updateItem(it._id, k, v)}
                 onToggle={() => toggleItem(it._id)}
               />
@@ -1278,7 +1452,7 @@ function MoMoModal({ business, wallets, onClose, onSave }) {
 }
 
 // ─── BULK TX CARD (individual review card) ────────────────────
-function BulkTxCard({ item, index, onChange, onToggle }) {
+function BulkTxCard({ item, onChange, onToggle }) {
   const [expanded, setExpanded] = useState(true);
   const netCol = NET_COLOR[item.network] || C.teal;
   const hasDesc = item.description.trim().length > 0;
@@ -1394,12 +1568,12 @@ function UpgradeModal({ onClose }) {
 }
 
 // ─── PRODUCT LIST ─────────────────────────────────────────────
-function ProductList({ products, categories, onAdd, onEdit }) {
+function ProductList({ products, categories, onAdd, onEdit, onDelete }) {
   const [search, setSearch]     = useState("");
   const [catFilter, setCatFilter] = useState("all");
 
   const filtered = products.filter(p => {
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || (p.sku || "").toLowerCase().includes(search.toLowerCase());
     const matchCat    = catFilter === "all" || p.categoryId === catFilter;
     return matchSearch && matchCat;
   });
@@ -1445,7 +1619,7 @@ function ProductList({ products, categories, onAdd, onEdit }) {
 
       {/* Table */}
       <div style={card({ padding:0, overflow:"hidden" })}>
-        <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr 80px", padding:"10px 16px", fontSize:11, color:C.muted, letterSpacing:"0.05em", textTransform:"uppercase", borderBottom:`1px solid ${C.border}` }}>
+        <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr 130px", padding:"10px 16px", fontSize:11, color:C.muted, letterSpacing:"0.05em", textTransform:"uppercase", borderBottom:`1px solid ${C.border}` }}>
           <span>Product</span><span>Category</span><span>Cost</span><span>Price</span><span>Stock</span><span>Action</span>
         </div>
         {filtered.length === 0 && (
@@ -1455,7 +1629,7 @@ function ProductList({ products, categories, onAdd, onEdit }) {
           const cat = categories.find(c=>c.id===p.categoryId);
           const mg  = margin(p);
           return (
-            <div key={p.id} style={{ display:"grid", gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr 80px", padding:"12px 16px", borderBottom:`1px solid #f9fafb`, alignItems:"center", fontSize:13 }}>
+            <div key={p.id} style={{ display:"grid", gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr 130px", padding:"12px 16px", borderBottom:`1px solid #f9fafb`, alignItems:"center", fontSize:13 }}>
               <div>
                 <div style={{ fontWeight:500, color:C.text }}>{p.name}</div>
                 <div style={{ fontSize:11, color:C.muted, marginTop:1 }}>SKU: {p.sku} · <span style={{ color: p.type==="service"?C.orange:C.teal, fontWeight:500 }}>{p.type==="service"?"Service":"Product"}</span></div>
@@ -1473,8 +1647,9 @@ function ProductList({ products, categories, onAdd, onEdit }) {
                   <span style={{ color:C.muted, fontSize:12 }}>Service</span>
                 )}
               </div>
-              <div>
+              <div style={{ display:"flex", gap:6 }}>
                 <Btn variant="ghost" size="sm" onClick={()=>onEdit(p)} style={{ fontSize:11, padding:"5px 10px" }}>Edit</Btn>
+                <Btn variant="ghost" size="sm" onClick={()=>onDelete(p)} style={{ fontSize:11, padding:"5px 10px", color:"#ef4444", borderColor:"#fca5a5" }}>Delete</Btn>
               </div>
             </div>
           );
@@ -1517,7 +1692,7 @@ function AddEditProduct({ product, categories, onSave, onCancel }) {
           <label style={label}>Product type</label>
           <div style={{ display:"flex", gap:8 }}>
             {["product","service"].map(t=>(
-              <button key={t} style={{ flex:1, padding:"10px", borderRadius:8, border:"none", cursor:"pointer", fontFamily:"'Poppins',sans-serif", fontSize:13, fontWeight:500, background: form.type===t ? C.orange+"18":C.light, color: form.type===t ? C.orange : C.muted, border:`1.5px solid ${form.type===t?C.orange+"44":C.border}` }} onClick={()=>{ set("type",t); if(t==="service") set("trackStock",false); else set("trackStock",true); }}>
+              <button key={t} style={{ flex:1, padding:"10px", borderRadius:8, cursor:"pointer", fontFamily:"'Poppins',sans-serif", fontSize:13, fontWeight:500, background: form.type===t ? C.orange+"18":C.light, color: form.type===t ? C.orange : C.muted, border:`1.5px solid ${form.type===t?C.orange+"44":C.border}` }} onClick={()=>{ set("type",t); if(t==="service") set("trackStock",false); else set("trackStock",true); }}>
                 {t==="product" ? "📦 Physical product" : "⚙️ Service"}
               </button>
             ))}
