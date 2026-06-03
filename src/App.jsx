@@ -176,116 +176,178 @@ const NET_COLOR = { MTN:"#FFCC00", Telecel:"#E30613", Vodafone:"#E30613", Airtel
 // LOGIN PAGE
 // ═══════════════════════════════════════════════════════════════
 function LoginPage({ onLogin, onGuest }) {
-  const [tab, setTab]     = useState("login");
-  const [email, setEmail] = useState("");
-  const [pass, setPass]   = useState("");
-  const [name, setName]   = useState("");
+  const [tab, setTab]         = useState("login");
+  const [email, setEmail]     = useState("");
+  const [pass, setPass]       = useState("");
+  const [name, setName]       = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState("");
+
+  const handleAuth = async () => {
+    if (!email || !pass) { setError("Please enter your email and password."); return; }
+    if (pass.length < 6) { setError("Password must be at least 6 characters."); return; }
+    setLoading(true); setError("");
+    try {
+      if (tab === "signup") {
+        const { data, error: e } = await supabase.auth.signUp({ email, password:pass, options:{ data:{ full_name: name||email.split("@")[0] } } });
+        if (e) { setError(e.message); return; }
+        if (data.session) { onLogin({ name:name||email.split("@")[0], email, plan:"free", id:data.user.id }); return; }
+        if (data.user && !data.session) { setError(""); alert("Account created! Check your email for a confirmation link, then sign in."); setTab("login"); return; }
+      } else {
+        const { data, error: e } = await supabase.auth.signInWithPassword({ email, password:pass });
+        if (e) { setError(e.message.includes("Invalid login") ? "Wrong email or password." : e.message); return; }
+        if (data.user) { onLogin({ name:data.user.user_metadata?.full_name||email.split("@")[0], email, plan:"free", id:data.user.id }); }
+      }
+    } catch(err) {
+      setError("Something went wrong. Check your connection.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleKey = (e) => { if (e.key === "Enter") handleAuth(); };
 
   return (
     <>
       <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-      <div style={{ minHeight:"100vh", background:"#f9fafb", fontFamily:"'Poppins',sans-serif", display:"flex", flexDirection:"column" }}>
+      <style>{`
+        * { font-family: 'Poppins', sans-serif; box-sizing: border-box; }
+        body { margin: 0; background: #f9fafb; }
+        .login-page { min-height: 100vh; display: flex; flex-direction: column; background: #f9fafb; }
+        .login-nav { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; background: #fff; border-bottom: 1px solid #e5e7eb; }
+        .login-body { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 20px 16px 40px; overflow-y: auto; }
+        .login-inner { width: 100%; max-width: 420px; }
+        .hero { text-align: center; margin-bottom: 24px; }
+        .badge-pill { display: inline-flex; align-items: center; gap: 6px; background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.25); border-radius: 20px; padding: 5px 12px; font-size: 11px; color: #F97316; font-weight: 500; margin-bottom: 12px; }
+        .hero-title { font-size: clamp(22px, 6vw, 28px); font-weight: 600; color: #111827; line-height: 1.25; margin-bottom: 8px; }
+        .hero-sub { font-size: 13px; color: #6b7280; line-height: 1.7; max-width: 300px; margin: 0 auto; }
+        .auth-card { background: #fff; border-radius: 20px; padding: 22px 18px; box-shadow: 0 4px 24px rgba(0,0,0,0.07); border: 1px solid #e5e7eb; margin-bottom: 14px; }
+        .tab-row { display: flex; background: #f3f4f6; border-radius: 10px; padding: 3px; margin-bottom: 18px; }
+        .tab-btn { flex: 1; padding: 10px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.15s; }
+        .tab-btn.active { background: #fff; color: #111827; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        .tab-btn.inactive { background: transparent; color: #6b7280; }
+        .field { margin-bottom: 12px; }
+        .field label { display: block; font-size: 11px; color: #6b7280; font-weight: 500; margin-bottom: 5px; letter-spacing: 0.04em; }
+        .field input { width: 100%; padding: 12px 14px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 16px; outline: none; background: #f9fafb; color: #111827; transition: border-color 0.2s; }
+        .field input:focus { border-color: rgba(249,115,22,0.5); background: #fff; }
+        .err-box { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; font-size: 13px; color: #b91c1c; }
+        .btn-main { width: 100%; padding: 14px; background: #F97316; color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+        .btn-main:hover { background: #ea6a08; }
+        .btn-main:disabled { opacity: 0.6; cursor: not-allowed; }
+        .divider { display: flex; align-items: center; gap: 10px; margin: 14px 0; }
+        .divider span { font-size: 12px; color: #9ca3af; }
+        .divider-line { flex: 1; height: 1px; background: #e5e7eb; }
+        .btn-ghost { width: 100%; padding: 12px; background: transparent; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px; color: #6b7280; cursor: pointer; transition: all 0.15s; }
+        .btn-ghost:hover { border-color: #F97316; color: #F97316; background: rgba(249,115,22,0.04); }
+        .features-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+        .feat-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px 8px; text-align: center; }
+        .plans-row { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; }
+        .plan-card { background: #fff; border: 1.5px solid #e5e7eb; border-radius: 14px; padding: 14px; min-width: 140px; flex-shrink: 0; position: relative; }
+        .plan-card.hot { background: rgba(249,115,22,0.06); border-color: rgba(249,115,22,0.4); }
+        .popular-tag { position: absolute; top: -9px; left: 50%; transform: translateX(-50%); background: #F97316; color: #fff; font-size: 9px; font-weight: 700; padding: 2px 10px; border-radius: 20px; white-space: nowrap; }
+        .footer-note { text-align: center; margin-top: 14px; font-size: 11px; color: #9ca3af; }
+      `}</style>
 
-        {/* TOP NAV */}
-        <div style={{ padding:"18px 40px", display:"flex", justifyContent:"space-between", alignItems:"center", background:C.white, borderBottom:`1px solid ${C.border}` }}>
-          <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:22, color:C.text }}>
-            Receiva<span style={{ color:C.orange }}>.</span>
-          </div>
-          <div style={{ fontSize:13, color:C.muted }}>Financial records for Ghana businesses</div>
+      <div className="login-page">
+        {/* NAV */}
+        <div className="login-nav">
+          <div style={{ fontWeight:700, fontSize:20, color:"#111827" }}>Receiva<span style={{ color:"#F97316" }}>.</span></div>
+          <div style={{ fontSize:11, color:"#6b7280" }}>Financial records for Ghana</div>
         </div>
 
-        <div style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", padding:"40px 20px" }}>
-          <div style={{ width:"100%", maxWidth:980, display:"grid", gridTemplateColumns:"1fr 1fr", gap:48, alignItems:"center" }}>
+        <div className="login-body">
+          <div className="login-inner">
 
-            {/* LEFT — VALUE PROP */}
-            <div>
-              <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:36, color:C.text, lineHeight:1.1, marginBottom:16 }}>
-                Your business records,<br/><span style={{ color:C.orange }}>organised.</span>
-              </div>
-              <div style={{ fontSize:15, color:C.muted, lineHeight:1.75, marginBottom:28 }}>
-                Turn MoMo SMS and payment screenshots into professional receipts. Track income, expenses, and generate monthly reports — all in one place.
-              </div>
-
-              {/* FREE TRIAL HIGHLIGHT */}
-              <div style={{ background:`linear-gradient(135deg, ${C.orange}18, ${C.orange}08)`, border:`1.5px solid ${C.orange}33`, borderRadius:14, padding:"18px 20px", marginBottom:24 }}>
-                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
-                  <span style={{ fontSize:20 }}>🎁</span>
-                  <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:16, color:C.text }}>Try before you sign up</div>
-                </div>
-                <div style={{ fontSize:14, color:C.muted, lineHeight:1.65, marginBottom:14 }}>
-                  Generate <strong style={{ color:C.orange }}>5 free receipts</strong> right now — no account needed. See exactly how Receiva works before committing.
-                </div>
-                <Btn variant="outline" onClick={onGuest} full>
-                  <Icon d={IC.receipt} size={15}/> Try 5 free receipts →
-                </Btn>
-              </div>
-
-              {/* PLANS */}
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
-                {[
-                  { plan:"Free", price:"GH₵ 0", perks:["30 transactions/mo","Basic receipts","MoMo parser","SMS paste"] },
-                  { plan:"Pro",  price:"GH₵ 40/mo", perks:["Unlimited transactions","Logo-branded receipts","PDF export","Multi-wallet","Priority support"], highlight:true },
-                ].map(p => (
-                  <div key={p.plan} style={{ background: p.highlight ? C.orange+"10" : "#f9fafb", border:`1.5px solid ${p.highlight ? C.orange+"44" : C.border}`, borderRadius:12, padding:"14px 16px" }}>
-                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
-                      <span style={{ fontWeight:600, color:C.text, fontSize:14 }}>{p.plan}</span>
-                      {p.highlight && <Badge color={C.orange}>Popular</Badge>}
-                    </div>
-                    <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:18, color: p.highlight ? C.orange : C.text, marginBottom:8 }}>{p.price}</div>
-                    {p.perks.map(pk => (
-                      <div key={pk} style={{ fontSize:12, color:C.muted, display:"flex", alignItems:"center", gap:5, marginBottom:3 }}>
-                        <span style={{ color: p.highlight ? C.orange : C.teal }}>✓</span> {pk}
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
+            {/* HERO */}
+            <div className="hero">
+              <div className="badge-pill">🇬🇭 Built for Ghana businesses</div>
+              <div className="hero-title">Your business records,<br/><span style={{ color:"#F97316" }}>organised.</span></div>
+              <div className="hero-sub">Turn MoMo SMS into professional receipts. Track income and expenses in one place.</div>
             </div>
 
-            {/* RIGHT — AUTH FORM */}
-            <div style={{ background:C.white, borderRadius:18, padding:"32px 30px", boxShadow:"0 4px 24px rgba(0,0,0,0.08)", border:`1px solid ${C.border}` }}>
-              {/* Tab toggle */}
-              <div style={{ display:"flex", background:"#f3f4f6", borderRadius:10, padding:3, marginBottom:24 }}>
-                {["login","signup"].map(t => (
-                  <button key={t} style={{ flex:1, padding:"9px", borderRadius:8, border:"none", cursor:"pointer", fontFamily:"'Poppins',sans-serif", fontSize:13, fontWeight:500, background: tab===t ? C.white : "transparent", color: tab===t ? C.text : C.muted, boxShadow: tab===t ? "0 1px 4px rgba(0,0,0,0.08)" : "none", transition:"all 0.15s" }} onClick={()=>setTab(t)}>
+            {/* AUTH CARD */}
+            <div className="auth-card">
+              <div className="tab-row">
+                {["login","signup"].map(t=>(
+                  <button key={t} className={`tab-btn ${tab===t?"active":"inactive"}`} onClick={()=>{ setTab(t); setError(""); }}>
                     {t==="login" ? "Sign in" : "Create account"}
                   </button>
                 ))}
               </div>
 
               {tab==="signup" && (
-                <div style={{ marginBottom:14 }}>
-                  <label style={label}>Full name</label>
-                  <input style={input} placeholder="Your full name" value={name} onChange={e=>setName(e.target.value)}/>
+                <div className="field">
+                  <label>Full name</label>
+                  <input placeholder="Your full name" value={name} onChange={e=>setName(e.target.value)} onKeyDown={handleKey}/>
                 </div>
               )}
-              <div style={{ marginBottom:14 }}>
-                <label style={label}>Email address</label>
-                <input style={input} type="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)}/>
+              <div className="field">
+                <label>Email address</label>
+                <input type="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={handleKey}/>
               </div>
-              <div style={{ marginBottom:20 }}>
-                <label style={label}>Password</label>
-                <input style={input} type="password" placeholder="••••••••" value={pass} onChange={e=>setPass(e.target.value)}/>
+              <div className="field" style={{ marginBottom: error ? 10 : 16 }}>
+                <label>Password</label>
+                <input type="password" placeholder="••••••••" value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={handleKey}/>
               </div>
-              <Btn variant="primary" full onClick={()=>onLogin({ name: name||email.split("@")[0], email, plan:"free" })}>
-                {tab==="login" ? "Sign in to Receiva" : "Create my account"} →
-              </Btn>
 
-              <div style={{ textAlign:"center", margin:"16px 0", fontSize:12, color:C.muted }}>or</div>
-              <Btn variant="ghost" full onClick={onGuest} style={{ color:C.muted, fontSize:13 }}>
-                <Icon d={IC.receipt} size={14}/> Continue with 5 free receipts
-              </Btn>
+              {error && <div className="err-box">{error}</div>}
 
-              <div style={{ marginTop:20, padding:"14px", background:"#f9fafb", borderRadius:10, fontSize:12, color:C.muted, textAlign:"center", lineHeight:1.6 }}>
-                🔒 Your data is encrypted and never shared. Cancel your plan anytime.
+              <button className="btn-main" onClick={handleAuth} disabled={loading}>
+                {loading ? "Please wait..." : tab==="login" ? "Sign in →" : "Create account →"}
+              </button>
+
+              <div className="divider">
+                <div className="divider-line"/><span>or</span><div className="divider-line"/>
               </div>
+
+              <button className="btn-ghost" onClick={onGuest}>
+                🎁 Try 5 free receipts — no signup needed
+              </button>
             </div>
+
+            {/* FEATURES */}
+            <div className="features-row">
+              {[["🧾","Receipts","Instant"],["📱","MoMo","Parser"],["📊","Reports","Monthly"]].map(([icon,title,sub])=>(
+                <div key={title} className="feat-card">
+                  <div style={{ fontSize:22, marginBottom:4 }}>{icon}</div>
+                  <div style={{ fontSize:12, fontWeight:500, color:"#111827" }}>{title}</div>
+                  <div style={{ fontSize:10, color:"#6b7280" }}>{sub}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* PLANS */}
+            <div className="plans-row">
+              {[
+                { plan:"Free",     price:"GH₵ 0",   sub:"/mo", perks:["30 transactions","Basic receipts","MoMo parser"],             hot:false },
+                { plan:"Growth",   price:"GH₵ 68",  sub:"/mo", perks:["1,000 transactions","4 wallets","PDF export"],                hot:true  },
+                { plan:"Business", price:"GH₵ 115", sub:"/mo", perks:["1,750 transactions","5 wallets","GRA reports"],               hot:false },
+              ].map(p=>(
+                <div key={p.plan} className={`plan-card ${p.hot?"hot":""}`}>
+                  {p.hot && <div className="popular-tag">Most popular</div>}
+                  <div style={{ fontSize:12, fontWeight:600, color:"#111827", marginBottom:4 }}>{p.plan}</div>
+                  <div style={{ fontWeight:700, fontSize:18, color: p.hot?"#F97316":"#111827" }}>
+                    {p.price}<span style={{ fontSize:11, fontWeight:400, color:"#6b7280" }}>{p.sub}</span>
+                  </div>
+                  <div style={{ marginTop:8 }}>
+                    {p.perks.map(pk=>(
+                      <div key={pk} style={{ fontSize:11, color:"#6b7280", display:"flex", alignItems:"center", gap:4, marginBottom:3 }}>
+                        <span style={{ color: p.hot?"#F97316":"#0BADA8", fontSize:10 }}>✓</span>{pk}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="footer-note">🔒 Encrypted · Cancel anytime · Ghana-built</div>
           </div>
         </div>
       </div>
     </>
   );
 }
+
 
 // ═══════════════════════════════════════════════════════════════
 // MAIN APP
