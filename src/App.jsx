@@ -1088,11 +1088,7 @@ function RecordPaymentModal({ onClose, onSave, wallets, business }) {
             <button style={{ padding:"6px 12px", borderRadius:8, border:"1px solid rgba(227,6,19,0.2)", background:"rgba(227,6,19,0.06)", color:"#b91c1c", fontSize:12, cursor:"pointer", fontFamily:"'Poppins',sans-serif" }} onClick={()=>setRaw(TEL_SAMPLE)}>Telecel sample</button>
             <button style={{ padding:"6px 12px", borderRadius:8, border:`1px solid ${C.border}`, background:"transparent", color:C.muted, fontSize:12, cursor:"pointer", fontFamily:"'Poppins',sans-serif" }} onClick={()=>setRaw("")}>Clear</button>
           </div>
-          <textarea style={{ ...input, minHeight:130, resize:"vertical", fontFamily:"monospace", fontSize:12, lineHeight:1.8, marginBottom:12 }} value={raw} onChange={e=>setRaw(e.target.value)} placeholder={"Paste your MoMo messages here — one or many...
-
-Payment received for GHS 9.00 from JOHN...
-
-telecel000... Confirmed. GHS12.00 sent to..."}/>
+          <textarea style={{ ...input, minHeight:130, resize:"vertical", fontFamily:"monospace", fontSize:12, lineHeight:1.8, marginBottom:12 }} value={raw} onChange={e=>setRaw(e.target.value)} placeholder={"Paste your MoMo messages here — one or many...\n\nPayment received for GHS 9.00 from JOHN...\n\ntelecel000... Confirmed. GHS12.00 sent to..."}/>
           <div style={{ marginBottom:16 }}>
             <label style={label}>Which wallet received these payments?</label>
             <select style={input} value={walletId} onChange={e=>setWalletId(e.target.value)}>
