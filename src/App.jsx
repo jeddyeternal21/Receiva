@@ -361,9 +361,8 @@ export default function App() {
   const [transactions, setTransactions]         = useState([]);
   const [business, setBusiness]                 = useState({ name:"My Business", owner:"", phone:"", industry:"", plan:"free", logoColor:"#F97316", logoBg:"#fff4ed" });
   const [guestCount, setGuestCount]             = useState(0);
-  const [showAddTx, setShowAddTx]               = useState(false);
+  const [showRecordPayment, setShowRecordPayment] = useState(false);
   const [showReceipt, setShowReceipt]           = useState(null);
-  const [showMoMo, setShowMoMo]                 = useState(false);
   const [showAddWallet, setShowAddWallet]       = useState(false);
   const [showUpgrade, setShowUpgrade]           = useState(false);
   const [dataLoading, setDataLoading]           = useState(false);
@@ -482,12 +481,12 @@ export default function App() {
     const newReceiptNo = genRNo();
     if (isGuest || !businessId) {
       setTransactions(p=>[{...tx, id:genId(), receiptNo:newReceiptNo}, ...p]);
-      setShowAddTx(false); setShowMoMo(false); return;
+      setShowRecordPayment(false); return;
     }
     const { data, error } = await supabase.from("transactions").insert({ wallet_id:tx.walletId, business_id:businessId, type:tx.type, amount:tx.amount, category:tx.category, description:tx.description, method:tx.method, date:tx.date, momo_ref:tx.momoRef||null, receipt_no:newReceiptNo }).select().single();
     if (error) { console.error(error); alert("Could not save transaction. Please try again."); return; }
     setTransactions(p=>[{ id:data.id, walletId:data.wallet_id, type:data.type, amount:parseFloat(data.amount), category:data.category||"", description:data.description||"", method:data.method||"", date:data.date, momoRef:data.momo_ref||"", receiptNo:data.receipt_no||newReceiptNo }, ...p]);
-    setShowAddTx(false); setShowMoMo(false);
+    setShowRecordPayment(false);
   };
 
   const addWallet = async (w) => {
@@ -697,9 +696,9 @@ export default function App() {
           <div className="content-pad" style={{ flex:1, padding:"24px 28px", overflowY:"auto" }}>
             {dataLoading && <div style={{ textAlign:"center", padding:"40px", color:C.muted, fontSize:14 }}>Loading your data...</div>}
             {dataError   && <div style={{ background:"#fef2f2", border:"1px solid #fca5a5", borderRadius:10, padding:"14px 18px", marginBottom:16, fontSize:13, color:"#b91c1c" }}>{dataError}</div>}
-            {page==="dashboard"    && <Dashboard transactions={txFiltered} income={income} expense={expense} balance={balance} wallets={wallets} activeWallet={activeWallet} business={business} user={user} onAdd={()=>setShowAddTx(true)} onReceipt={tryGenerateReceipt} onMoMo={()=>setShowMoMo(true)} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount}/>}
+            {page==="dashboard"    && <Dashboard transactions={txFiltered} income={income} expense={expense} balance={balance} wallets={wallets} activeWallet={activeWallet} business={business} user={user} onAdd={()=>setShowRecordPayment(true)} onReceipt={tryGenerateReceipt} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount}/>}
             {page==="wallets"      && <Wallets wallets={wallets} transactions={transactions} onAdd={()=>setShowAddWallet(true)} onSelect={setActiveWallet} activeWallet={activeWallet}/>}
-            {page==="transactions" && <Transactions transactions={txFiltered} wallets={wallets} onAdd={()=>setShowAddTx(true)} onReceipt={tryGenerateReceipt}/>}
+            {page==="transactions" && <Transactions transactions={txFiltered} wallets={wallets} onAdd={()=>setShowRecordPayment(true)} onReceipt={tryGenerateReceipt}/>}
             {page==="receipts"     && <Receipts transactions={txFiltered} wallets={wallets} business={business} onReceipt={tryGenerateReceipt} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount}/>}
             {page==="reports"      && <Reports transactions={txFiltered} income={income} expense={expense} balance={balance} isPro={isPro} onUpgrade={()=>setShowUpgrade(true)}/>}
             {(page==="products"||page==="product-list") && <ProductList products={products} categories={productCategories} onAdd={()=>navigateTo("add-product")} onEdit={p=>{ setEditingProduct(p); navigateTo("add-product"); }}/>}
@@ -709,9 +708,9 @@ export default function App() {
         </div>
       </div>
 
-      {showAddTx    && <AddTxModal onClose={()=>setShowAddTx(false)} onSave={addTransaction} wallets={wallets} products={products}/>}
+      {showRecordPayment && <RecordPaymentModal onClose={()=>setShowRecordPayment(false)} onSave={addTransaction} wallets={wallets} business={business}/>}
       {showReceipt  && <ReceiptModal tx={showReceipt} business={business} isPro={isPro} onClose={()=>setShowReceipt(null)}/>}
-      {showMoMo     && <MoMoModal business={business} wallets={wallets} onClose={()=>setShowMoMo(false)} onSave={addTransaction}/>}
+      
       {showAddWallet&& <AddWalletModal onClose={()=>setShowAddWallet(false)} onSave={addWallet}/>}
       {showUpgrade  && <UpgradeModal onClose={()=>setShowUpgrade(false)}/>}
     </>
@@ -719,7 +718,7 @@ export default function App() {
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────
-function Dashboard({ transactions, income, expense, balance, wallets, business, user, onAdd, onReceipt, onMoMo, isPro, isGuest, guestLeft }) {
+function Dashboard({ transactions, income, expense, balance, wallets, business, user, onAdd, onReceipt, isPro, isGuest, guestLeft }) {
   const recent = transactions.slice(0,5);
   const statCards = [
     { label:"Total income",   value:fmt(income),   color:C.income  },
@@ -765,8 +764,7 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
 
       {/* QUICK ACTIONS */}
       <div style={{ display:"flex", gap:10, marginBottom:22 }}>
-        <Btn variant="primary" onClick={onAdd}><Icon d={IC.plus} size={15}/> Log transaction</Btn>
-        <Btn variant="teal" onClick={onMoMo}><Icon d={IC.momo} size={15}/> Generate Receipt</Btn>
+        <Btn variant="primary" onClick={onAdd}><Icon d={IC.plus} size={15}/> Record Payment</Btn>
         {isGuest && <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:13, color:C.muted }}><Icon d={IC.receipt} size={14}/> {guestLeft} free receipts left</div>}
       </div>
 
@@ -884,7 +882,7 @@ function Transactions({ transactions, wallets, onAdd, onReceipt }) {
             </button>
           ))}
         </div>
-        <Btn variant="primary" onClick={onAdd}><Icon d={IC.plus} size={15}/> Add transaction</Btn>
+        <Btn variant="primary" onClick={onAdd}><Icon d={IC.plus} size={15}/> Record Payment</Btn>
       </div>
       <div style={card({ padding:0, overflow:"hidden" })}>
         <TxTable transactions={shown} wallets={wallets} onReceipt={onReceipt} showWallet/>
@@ -976,42 +974,171 @@ function Reports({ transactions, income, expense, balance, isPro, onUpgrade }) {
 }
 
 // ─── ADD TRANSACTION MODAL ────────────────────────────────────
-function AddTxModal({ onClose, onSave, wallets }) {
-  const [form, setForm] = useState({ type:"income", amount:"", category:"", description:"", walletId: wallets[0]?.id||"", date:today(), momoRef:"" });
-  const set = (k,v) => setForm(f=>({...f,[k]:v}));
-  const valid = form.amount && form.category && form.description && form.walletId;
+// ─── RECORD PAYMENT MODAL ────────────────────────────────────
+function RecordPaymentModal({ onClose, onSave, wallets, business }) {
+  const [mode, setMode]   = useState(null); // null=choose, "manual", "paste"
+  const [step, setStep]   = useState(1);
+
+  // Manual form state
+  const [form, setForm]   = useState({ type:"income", amount:"", category:"", description:"", walletId:wallets[0]?.id||"", date:today(), momoRef:"" });
+  const setF = (k,v) => setForm(f=>({...f,[k]:v}));
+  const validManual = form.amount && form.category && form.description && form.walletId;
+
+  // Paste state
+  const [raw, setRaw]         = useState("");
+  const [items, setItems]     = useState([]);
+  const [walletId, setWalletId] = useState(wallets[0]?.id||"");
+  const [saving, setSaving]   = useState(false);
+  const [savedCount, setSavedCount] = useState(0);
+
+  const MTN_SAMPLE = `Payment received for GHS 9.00 from JEDIDIAH OFORI OPARE Current Balance: GHS 9.09. Reference: JEDIDIAH OFORI OPARE ,233205597508,5 from VODAFONE. Transaction ID: 80993550724. TRANSACTION FEE: 0.00`;
+  const TEL_SAMPLE = `telecel0000012482388464 Confirmed. GHS12.00 sent to 0592040012 JEDIDIAH OFORI OPARE on MTN MOBILE MONEY on 2026-03-24 at 17:48:34. Your Telecel Cash balance is GHS0.35. You were charged GHS0.00. E-levy: GHS0.00. Reference: B. Sendi`;
+
+  const handleParse = () => {
+    const chunks = splitMoMoMessages(raw);
+    if (!chunks.length) { alert("No MoMo messages detected. Make sure you paste actual MoMo SMS text."); return; }
+    setItems(chunks.map(chunk => ({ _id:genId(), _raw:chunk, _included:true, ...parseGhanaMoMo(chunk) })));
+    setStep(2);
+  };
+
+  const updateItem  = (id,k,v) => setItems(p=>p.map(it=>it._id===id?{...it,[k]:v}:it));
+  const toggleItem  = (id)     => setItems(p=>p.map(it=>it._id===id?{...it,_included:!it._included}:it));
+  const included    = items.filter(it=>it._included);
+  const totalAmt    = included.reduce((s,it)=>s+(parseFloat(it.amount)||0),0);
+  const missingDesc = included.filter(it=>!it.description).length;
+
+  const handleSaveAll = () => {
+    setSaving(true);
+    included.forEach(it => {
+      if (!it.amount) return;
+      onSave({ type:"income", amount:parseFloat(it.amount), category:it.category||"Sales", description:it.description||`Payment from ${it.sender||"customer"}`, method:it.network+" MoMo", date:it.date, momoRef:it.txId, walletId });
+    });
+    setSavedCount(included.length);
+    setStep(3);
+    setSaving(false);
+  };
+
+  const modeBtn = (id, icon, title, sub) => (
+    <div onClick={()=>{ setMode(id); setStep(1); }} style={{ flex:1, border:`1.5px solid ${mode===id?C.orange:C.border}`, background:mode===id?C.orange+"08":"#f9fafb", borderRadius:14, padding:"20px 14px", cursor:"pointer", textAlign:"center", transition:"all 0.15s" }}>
+      <div style={{ fontSize:28, marginBottom:8 }}>{icon}</div>
+      <div style={{ fontSize:14, fontWeight:600, color:C.text, marginBottom:3 }}>{title}</div>
+      <div style={{ fontSize:12, color:C.muted, lineHeight:1.5 }}>{sub}</div>
+    </div>
+  );
+
   return (
-    <Modal onClose={onClose}>
-      <ModalHeader title="Log transaction" onClose={onClose}/>
-      <div style={{ display:"flex", gap:8, marginBottom:18 }}>
-        {["income","expense"].map(t=>(
-          <button key={t} style={{ flex:1, padding:"9px", borderRadius:8, border:"none", cursor:"pointer", fontFamily:"'Poppins',sans-serif", fontSize:14, fontWeight:500, background: form.type===t ? (t==="income"?C.income+"18":C.expense+"15") : "#f3f4f6", color: form.type===t ? (t==="income"?C.income:C.expense) : C.muted }} onClick={()=>set("type",t)}>
-            {t==="income"?"💰 Income":"📤 Expense"}
-          </button>
-        ))}
-      </div>
-      <div style={{ marginBottom:12 }}>
-        <label style={label}>Wallet</label>
-        <select style={input} value={form.walletId} onChange={e=>set("walletId",e.target.value)}>
-          {wallets.map(w=><option key={w.id} value={w.id}>{WALLET_PRESETS.find(p=>p.id===w.presetId)?.icon} {w.name}</option>)}
-        </select>
-      </div>
-      <div style={formRow}>
-        <div><label style={label}>Amount (GH₵)</label><input style={input} type="number" placeholder="0.00" value={form.amount} onChange={e=>set("amount",e.target.value)}/></div>
-        <div><label style={label}>Date</label><input style={input} type="date" value={form.date} onChange={e=>set("date",e.target.value)}/></div>
-      </div>
-      <div style={{ marginBottom:12 }}>
-        <label style={label}>Category</label>
-        <select style={input} value={form.category} onChange={e=>set("category",e.target.value)}>
-          <option value="">Select category</option>
-          {CATEGORIES.map(c=><option key={c}>{c}</option>)}
-        </select>
-      </div>
-      <div style={{ marginBottom:12 }}><label style={label}>Description</label><input style={input} placeholder="e.g. iPhone cases x3" value={form.description} onChange={e=>set("description",e.target.value)}/></div>
-      <div style={{ marginBottom:16 }}><label style={label}>MoMo reference (optional)</label><input style={input} placeholder="e.g. 80993550724" value={form.momoRef} onChange={e=>set("momoRef",e.target.value)}/></div>
-      <Btn variant="primary" full disabled={!valid} onClick={()=>valid&&onSave({...form,amount:parseFloat(form.amount),method:wallets.find(w=>w.id===form.walletId)?.name||"MoMo"})}>
-        <Icon d={IC.check} size={15}/> Save transaction
-      </Btn>
+    <Modal onClose={onClose} maxWidth={580}>
+      <ModalHeader title="Record Payment" onClose={onClose}/>
+
+      {/* MODE CHOOSER */}
+      {!mode && (
+        <>
+          <div style={{ fontSize:14, color:C.muted, marginBottom:20 }}>How would you like to record this payment?</div>
+          <div style={{ display:"flex", gap:12, marginBottom:8 }}>
+            {modeBtn("manual","✍️","Enter manually","Type in the amount, category and details yourself")}
+            {modeBtn("paste","📋","Paste MoMo SMS","Paste one or many MTN / Telecel messages")}
+          </div>
+        </>
+      )}
+
+      {/* ── MANUAL MODE ── */}
+      {mode==="manual" && (
+        <>
+          <div style={{ display:"flex", gap:8, marginBottom:18 }}>
+            {["income","expense"].map(t=>(
+              <button key={t} style={{ flex:1, padding:"10px", borderRadius:8, border:"none", cursor:"pointer", fontFamily:"'Poppins',sans-serif", fontSize:14, fontWeight:500, background:form.type===t?(t==="income"?C.income+"18":C.expense+"15"):"#f3f4f6", color:form.type===t?(t==="income"?C.income:C.expense):C.muted }} onClick={()=>setF("type",t)}>
+                {t==="income"?"💰 Income":"📤 Expense"}
+              </button>
+            ))}
+          </div>
+          <div style={{ marginBottom:12 }}>
+            <label style={label}>Wallet</label>
+            <select style={input} value={form.walletId} onChange={e=>setF("walletId",e.target.value)}>
+              {wallets.map(w=><option key={w.id} value={w.id}>{WALLET_PRESETS.find(p=>p.id===w.presetId)?.icon} {w.name}</option>)}
+            </select>
+          </div>
+          <div style={formRow}>
+            <div><label style={label}>Amount (GH₵)</label><input style={input} type="number" placeholder="0.00" value={form.amount} onChange={e=>setF("amount",e.target.value)}/></div>
+            <div><label style={label}>Date</label><input style={input} type="date" value={form.date} onChange={e=>setF("date",e.target.value)}/></div>
+          </div>
+          <div style={{ marginBottom:12 }}>
+            <label style={label}>Category</label>
+            <select style={input} value={form.category} onChange={e=>setF("category",e.target.value)}>
+              <option value="">Select category</option>
+              {CATEGORIES.map(c=><option key={c}>{c}</option>)}
+            </select>
+          </div>
+          <div style={{ marginBottom:12 }}><label style={label}>Description</label><input style={input} placeholder="e.g. iPhone cases x3" value={form.description} onChange={e=>setF("description",e.target.value)}/></div>
+          <div style={{ marginBottom:16 }}><label style={label}>MoMo reference (optional)</label><input style={input} placeholder="e.g. 80993550724" value={form.momoRef} onChange={e=>setF("momoRef",e.target.value)}/></div>
+          <div style={{ display:"flex", gap:10 }}>
+            <Btn variant="ghost" onClick={()=>setMode(null)}>← Back</Btn>
+            <Btn variant="primary" full disabled={!validManual} onClick={()=>validManual&&onSave({...form,amount:parseFloat(form.amount),method:wallets.find(w=>w.id===form.walletId)?.name||"MoMo"})}>
+              <Icon d={IC.check} size={15}/> Save payment
+            </Btn>
+          </div>
+        </>
+      )}
+
+      {/* ── PASTE MODE — STEP 1: input ── */}
+      {mode==="paste" && step===1 && (
+        <>
+          <div style={{ fontSize:13, color:C.muted, marginBottom:14 }}>Paste one or many MTN · Telecel · Vodafone messages — all at once is fine.</div>
+          <div style={{ display:"flex", gap:8, marginBottom:12 }}>
+            <button style={{ padding:"6px 12px", borderRadius:8, border:"1px solid rgba(255,204,0,0.4)", background:"rgba(255,204,0,0.08)", color:"#b45309", fontSize:12, cursor:"pointer", fontFamily:"'Poppins',sans-serif" }} onClick={()=>setRaw(MTN_SAMPLE)}>MTN sample</button>
+            <button style={{ padding:"6px 12px", borderRadius:8, border:"1px solid rgba(227,6,19,0.2)", background:"rgba(227,6,19,0.06)", color:"#b91c1c", fontSize:12, cursor:"pointer", fontFamily:"'Poppins',sans-serif" }} onClick={()=>setRaw(TEL_SAMPLE)}>Telecel sample</button>
+            <button style={{ padding:"6px 12px", borderRadius:8, border:`1px solid ${C.border}`, background:"transparent", color:C.muted, fontSize:12, cursor:"pointer", fontFamily:"'Poppins',sans-serif" }} onClick={()=>setRaw("")}>Clear</button>
+          </div>
+          <textarea style={{ ...input, minHeight:130, resize:"vertical", fontFamily:"monospace", fontSize:12, lineHeight:1.8, marginBottom:12 }} value={raw} onChange={e=>setRaw(e.target.value)} placeholder={"Paste your MoMo messages here — one or many...
+
+Payment received for GHS 9.00 from JOHN...
+
+telecel000... Confirmed. GHS12.00 sent to..."}/>
+          <div style={{ marginBottom:16 }}>
+            <label style={label}>Which wallet received these payments?</label>
+            <select style={input} value={walletId} onChange={e=>setWalletId(e.target.value)}>
+              {wallets.map(w=><option key={w.id} value={w.id}>{WALLET_PRESETS.find(p=>p.id===w.presetId)?.icon} {w.name}</option>)}
+            </select>
+          </div>
+          <div style={{ display:"flex", gap:10 }}>
+            <Btn variant="ghost" onClick={()=>setMode(null)}>← Back</Btn>
+            <Btn variant="primary" full disabled={!raw.trim()} onClick={handleParse}><Icon d={IC.receipt} size={15}/> Parse messages →</Btn>
+          </div>
+        </>
+      )}
+
+      {/* ── PASTE MODE — STEP 2: review ── */}
+      {mode==="paste" && step===2 && (
+        <>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10, marginBottom:14 }}>
+            {[[items.length,"Found",C.text],[fmt(totalAmt),"Total",C.income],[missingDesc,"Need desc",missingDesc>0?C.orange:"#16a34a"]].map(([v,l,c])=>(
+              <div key={l} style={{ background:"#f9fafb", border:`1px solid ${C.border}`, borderRadius:10, padding:"10px 14px", textAlign:"center" }}>
+                <div style={{ fontSize:11, color:C.muted, marginBottom:2 }}>{l}</div>
+                <div style={{ fontWeight:700, fontSize:18, color:c }}>{v}</div>
+              </div>
+            ))}
+          </div>
+          {missingDesc>0 && <div style={{ background:"#fff7ed", border:`1px solid ${C.orange}33`, borderRadius:8, padding:"10px 14px", marginBottom:12, fontSize:13, color:C.orange }}>⚠️ Add descriptions to highlighted items before saving.</div>}
+          <div style={{ maxHeight:380, overflowY:"auto", display:"flex", flexDirection:"column", gap:8, marginBottom:14 }}>
+            {items.map((it,idx)=><BulkTxCard key={it._id} item={it} index={idx} onChange={(k,v)=>updateItem(it._id,k,v)} onToggle={()=>toggleItem(it._id)}/>)}
+          </div>
+          <div style={{ display:"flex", gap:10, borderTop:`1px solid ${C.border}`, paddingTop:14 }}>
+            <Btn variant="ghost" onClick={()=>setStep(1)}>← Back</Btn>
+            <Btn variant="primary" full disabled={saving||included.length===0} onClick={handleSaveAll}>
+              <Icon d={IC.check} size={15}/> Save {included.length} payment{included.length!==1?"s":""} ({fmt(totalAmt)})
+            </Btn>
+          </div>
+        </>
+      )}
+
+      {/* ── PASTE MODE — STEP 3: done ── */}
+      {mode==="paste" && step===3 && (
+        <div style={{ textAlign:"center", padding:"32px 20px" }}>
+          <div style={{ fontSize:48, marginBottom:14 }}>🎉</div>
+          <div style={{ fontWeight:700, fontSize:20, color:C.text, marginBottom:8 }}>{savedCount} payment{savedCount!==1?"s":""} saved!</div>
+          <div style={{ fontSize:14, color:C.muted, marginBottom:24 }}>{fmt(totalAmt)} recorded to your {wallets.find(w=>w.id===walletId)?.name} wallet.</div>
+          <Btn variant="primary" onClick={onClose}>Done →</Btn>
+        </div>
+      )}
     </Modal>
   );
 }
@@ -1115,320 +1242,6 @@ function splitMoMoMessages(raw) {
   return chunks
     .map(c => c.trim())
     .filter(c => c.length > 20 && /GHS?\s*[\d.]+/i.test(c));
-}
-
-// ─── MOMO MODAL ───────────────────────────────────────────────
-function MoMoModal({ business, wallets, onClose, onSave }) {
-  const [step, setStep]         = useState(1); // 1=paste, 2=review, 3=done
-  const [raw, setRaw]           = useState("");
-  const [items, setItems]       = useState([]); // array of parsed+editable tx objects
-  const [walletId, setWalletId] = useState(wallets[0]?.id || "");
-  const [saving, setSaving]     = useState(false);
-  const [savedCount, setSavedCount] = useState(0);
-
-  const BULK_SAMPLE = [
-    `Payment received for GHS 9.00 from JEDIDIAH OFORI OPARE Current Balance: GHS 9.09 . Available Balance: GHS 9.09. Reference: JEDIDIAH OFORI OPARE ,233205597508,5 from VODAFONE. Transaction ID: 80993550724. TRANSACTION FEE: 0.00`,
-    `telecel0000012482388464 Confirmed. GHS12.00 sent to 0592040012 JEDIDIAH OFORI OPARE on MTN MOBILE MONEY on 2026-03-24 at 17:48:34. Your Telecel Cash balance is GHS0.35. You were charged GHS0.00. Your E-levy charge is GHS0.00. Reference: B. Sendi k3k3`,
-    `Payment received for GHS 250.00 from ABENA SERWAH Current Balance: GHS 450.09. Reference: ABENA SERWAH,0244567890. Transaction ID: 91823746502. TRANSACTION FEE: 0.00`,
-  ].join("\n\n");
-
-  const handleParse = () => {
-    const chunks = splitMoMoMessages(raw);
-    if (chunks.length === 0) {
-      alert("No MoMo messages detected. Make sure you paste actual MoMo SMS text.");
-      return;
-    }
-    const parsed = chunks.map((chunk, i) => ({
-      _id: genId(),
-      _raw: chunk,
-      _included: true,
-      ...parseGhanaMoMo(chunk),
-    }));
-    setItems(parsed);
-    setStep(2);
-  };
-
-  const updateItem = (id, key, val) => {
-    setItems(prev => prev.map(it => it._id === id ? { ...it, [key]: val } : it));
-  };
-
-  const toggleItem = (id) => {
-    setItems(prev => prev.map(it => it._id === id ? { ...it, _included: !it._included } : it));
-  };
-
-  const handleSaveAll = () => {
-    setSaving(true);
-    const toSave = items.filter(it => it._included && it.amount);
-    toSave.forEach(it => {
-      onSave({
-        type:        "income",
-        amount:      parseFloat(it.amount),
-        category:    it.category || "Sales",
-        description: it.description || `Payment from ${it.sender || "customer"}`,
-        method:      it.network + " MoMo",
-        date:        it.date,
-        momoRef:     it.txId,
-        walletId,
-      });
-    });
-    setSavedCount(toSave.length);
-    setStep(3);
-    setSaving(false);
-  };
-
-  const included  = items.filter(it => it._included);
-  const totalAmt  = included.reduce((s, it) => s + (parseFloat(it.amount) || 0), 0);
-  const missingDesc = included.filter(it => !it.description).length;
-
-  return (
-    <Modal onClose={onClose} maxWidth={680}>
-      <ModalHeader title="Generate Receipt" onClose={onClose} />
-
-      {/* STEP INDICATOR */}
-      <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:20 }}>
-        {[["1","Paste SMS"],["2","Review & Edit"],["3","Saved"]].map(([n,l],i)=>{
-          const active = step === i+1;
-          const done   = step > i+1;
-          return (
-            <div key={n} style={{ display:"flex", alignItems:"center", gap:6 }}>
-              <div style={{ width:24, height:24, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, background: done ? "#16a34a" : active ? C.orange : "#f3f4f6", color: done||active ? "#fff" : C.muted }}>
-                {done ? "✓" : n}
-              </div>
-              <span style={{ fontSize:12, color: active ? C.text : C.muted, fontWeight: active ? 500 : 400 }}>{l}</span>
-              {i < 2 && <div style={{ width:24, height:1, background:C.border }}/>}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* ── STEP 1: PASTE ── */}
-      {step === 1 && (
-        <>
-          <div style={{ background:"#f9fafb", border:`1px solid ${C.border}`, borderRadius:10, padding:"12px 14px", marginBottom:14 }}>
-            <div style={{ fontSize:13, fontWeight:500, color:C.text, marginBottom:4 }}>💡 How it works</div>
-            <div style={{ fontSize:12, color:C.muted, lineHeight:1.7 }}>
-              Copy all your MoMo messages from your phone — one or many — and paste them here together. Receiva will automatically split, parse, and let you review each one before saving.
-            </div>
-          </div>
-
-          <div style={{ display:"flex", gap:8, marginBottom:12 }}>
-            <button style={{ padding:"6px 12px", borderRadius:8, border:`1px solid rgba(255,204,0,0.4)`, background:"rgba(255,204,0,0.08)", color:"#b45309", fontSize:12, cursor:"pointer", fontFamily:"'Poppins',sans-serif" }} onClick={()=>setRaw(BULK_SAMPLE)}>
-              Load 3-message sample
-            </button>
-            <button style={{ padding:"6px 12px", borderRadius:8, border:`1px solid ${C.border}`, background:"transparent", color:C.muted, fontSize:12, cursor:"pointer", fontFamily:"'Poppins',sans-serif" }} onClick={()=>setRaw("")}>
-              Clear
-            </button>
-          </div>
-
-          <label style={label}>Paste all your MoMo messages here</label>
-          <textarea
-            style={{ ...input, minHeight:160, resize:"vertical", fontFamily:"monospace", fontSize:12, lineHeight:1.8, marginBottom:14 }}
-            value={raw}
-            onChange={e => setRaw(e.target.value)}
-            placeholder={"Paste one or many MoMo SMS messages here — all at once is fine.\n\nExample:\nPayment received for GHS 9.00 from JEDIDIAH...\n\ntelecel000... Confirmed. GHS12.00 sent to..."}
-          />
-
-          <div style={{ marginBottom:16 }}>
-            <label style={label}>Which wallet received these payments?</label>
-            <select style={input} value={walletId} onChange={e => setWalletId(e.target.value)}>
-              {wallets.map(w => (
-                <option key={w.id} value={w.id}>
-                  {WALLET_PRESETS.find(p => p.id === w.presetId)?.icon} {w.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <Btn variant="primary" full disabled={!raw.trim()} onClick={handleParse}>
-            <Icon d={IC.receipt} size={15}/> Parse messages →
-          </Btn>
-        </>
-      )}
-
-      {/* ── STEP 2: REVIEW ── */}
-      {step === 2 && (
-        <>
-          {/* SUMMARY BAR */}
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10, marginBottom:16 }}>
-            <div style={{ background:"#f9fafb", border:`1px solid ${C.border}`, borderRadius:10, padding:"10px 14px", textAlign:"center" }}>
-              <div style={{ fontSize:11, color:C.muted, marginBottom:2 }}>Messages found</div>
-              <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:20, color:C.text }}>{items.length}</div>
-            </div>
-            <div style={{ background:C.income+"08", border:`1px solid ${C.income}22`, borderRadius:10, padding:"10px 14px", textAlign:"center" }}>
-              <div style={{ fontSize:11, color:C.muted, marginBottom:2 }}>Total to save</div>
-              <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:20, color:C.income }}>{fmt(totalAmt)}</div>
-            </div>
-            <div style={{ background: missingDesc > 0 ? "#fff7ed" : "#f0fdf4", border:`1px solid ${missingDesc>0?C.orange+"44":"#86efac"}`, borderRadius:10, padding:"10px 14px", textAlign:"center" }}>
-              <div style={{ fontSize:11, color:C.muted, marginBottom:2 }}>Need description</div>
-              <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:20, color: missingDesc>0 ? C.orange : "#16a34a" }}>{missingDesc}</div>
-            </div>
-          </div>
-
-          {missingDesc > 0 && (
-            <div style={{ background:"#fff7ed", border:`1px solid ${C.orange}33`, borderRadius:8, padding:"10px 14px", marginBottom:14, fontSize:13, color:C.orange }}>
-              ⚠️ Add descriptions to the highlighted transactions before saving — this helps you track what each payment was for.
-            </div>
-          )}
-
-          {/* TRANSACTION CARDS */}
-          <div style={{ maxHeight:420, overflowY:"auto", display:"flex", flexDirection:"column", gap:10, marginBottom:16, paddingRight:4 }}>
-            {items.map((it, idx) => (
-              <BulkTxCard
-                key={it._id}
-                item={it}
-                index={idx}
-                onChange={(k,v) => updateItem(it._id, k, v)}
-                onToggle={() => toggleItem(it._id)}
-              />
-            ))}
-          </div>
-
-          {/* ACTIONS */}
-          <div style={{ display:"flex", gap:10, borderTop:`1px solid ${C.border}`, paddingTop:14 }}>
-            <Btn variant="ghost" onClick={() => setStep(1)}>← Back</Btn>
-            <Btn
-              variant="primary"
-              full
-              disabled={saving || included.length === 0}
-              onClick={handleSaveAll}
-            >
-              <Icon d={IC.check} size={15}/>
-              Save {included.length} transaction{included.length !== 1 ? "s" : ""} ({fmt(totalAmt)})
-            </Btn>
-          </div>
-        </>
-      )}
-
-      {/* ── STEP 3: DONE ── */}
-      {step === 3 && (
-        <div style={{ textAlign:"center", padding:"32px 20px" }}>
-          <div style={{ fontSize:52, marginBottom:16 }}>🎉</div>
-          <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:24, color:C.text, marginBottom:8 }}>
-            {savedCount} transaction{savedCount !== 1 ? "s" : ""} saved!
-          </div>
-          <div style={{ fontSize:14, color:C.muted, marginBottom:24 }}>
-            {fmt(totalAmt)} has been recorded to your{" "}
-            <strong style={{ color:C.text }}>{wallets.find(w=>w.id===walletId)?.name}</strong> wallet.
-          </div>
-
-          {/* RECEIPT PREVIEW for all saved */}
-          <div style={{ background:"#f0fdf4", border:"1px solid #86efac", borderRadius:12, padding:"14px 16px", marginBottom:20, fontFamily:"monospace", fontSize:11, whiteSpace:"pre-wrap", color:"#166534", lineHeight:1.9, textAlign:"left" }}>
-            {`*Bulk Import Receipt — ${business.name}*\n` +
-             `━━━━━━━━━━━━━━━\n` +
-             items.filter(it=>it._included&&it.amount).map((it,i)=>
-               `${i+1}. GH₵ ${it.amount} — ${it.description||"Payment"} (${it.network}) · ${it.date}`
-             ).join("\n") +
-             `\n━━━━━━━━━━━━━━━\nTotal: GH₵ ${totalAmt.toFixed(2)}\nPowered by Receiva`}
-          </div>
-
-          <div style={{ display:"flex", gap:10, justifyContent:"center" }}>
-            <Btn variant="wa" href={`https://wa.me/?text=${encodeURIComponent(
-              `*Bulk Import — ${business.name}*\n━━━━━━━━━━━━━━━\n` +
-              items.filter(it=>it._included&&it.amount).map((it,i)=>`${i+1}. GH₵${it.amount} — ${it.description||"Payment"} (${it.network}) · ${it.date}`).join("\n") +
-              `\n━━━━━━━━━━━━━━━\nTotal: GH₵${totalAmt.toFixed(2)}\nPowered by Receiva`
-            )}`}>
-              <Icon d={IC.share} size={14}/> Share summary
-            </Btn>
-            <Btn variant="primary" onClick={onClose}>
-              View transactions →
-            </Btn>
-          </div>
-        </div>
-      )}
-    </Modal>
-  );
-}
-
-// ─── BULK TX CARD (individual review card) ────────────────────
-function BulkTxCard({ item, index, onChange, onToggle }) {
-  const [expanded, setExpanded] = useState(true);
-  const netCol = NET_COLOR[item.network] || C.teal;
-  const hasDesc = item.description.trim().length > 0;
-
-  return (
-    <div style={{
-      border: `1.5px solid ${item._included ? (hasDesc ? C.border : C.orange+"66") : "#e5e7eb88"}`,
-      borderRadius: 12,
-      overflow: "hidden",
-      opacity: item._included ? 1 : 0.5,
-      transition: "all 0.2s",
-    }}>
-      {/* CARD HEADER */}
-      <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", background: item._included ? "#f9fafb" : "#f3f4f6", cursor:"pointer" }} onClick={() => setExpanded(e => !e)}>
-        {/* Checkbox */}
-        <div
-          onClick={e => { e.stopPropagation(); onToggle(); }}
-          style={{ width:18, height:18, borderRadius:4, border:`1.5px solid ${item._included ? C.orange : C.border}`, background: item._included ? C.orange : "transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, cursor:"pointer" }}
-        >
-          {item._included && <span style={{ color:"#fff", fontSize:11, fontWeight:700 }}>✓</span>}
-        </div>
-
-        {/* Network badge */}
-        <span style={{ background: netCol+"18", color: netCol, border:`1px solid ${netCol}33`, borderRadius:20, padding:"2px 9px", fontSize:11, fontWeight:600, whiteSpace:"nowrap" }}>
-          {item.network}
-        </span>
-
-        {/* Amount */}
-        <span style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:16, color:C.income }}>
-          GH₵ {item.amount || "?"}
-        </span>
-
-        {/* Description preview */}
-        <span style={{ flex:1, fontSize:12, color: hasDesc ? C.text : C.orange, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-          {hasDesc ? item.description : "⚠ Add description"}
-        </span>
-
-        {/* Date */}
-        <span style={{ fontSize:11, color:C.muted, whiteSpace:"nowrap" }}>{item.date}</span>
-
-        {/* Expand toggle */}
-        <span style={{ color:C.muted, fontSize:12 }}>{expanded ? "▲" : "▼"}</span>
-      </div>
-
-      {/* CARD BODY - editable fields */}
-      {expanded && item._included && (
-        <div style={{ padding:"12px 14px", background:C.white, borderTop:`1px solid ${C.border}` }}>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:10 }}>
-            <div>
-              <label style={{ ...label, fontSize:11 }}>Description <span style={{ color:C.expense }}>*</span></label>
-              <input
-                style={{ ...input, fontSize:13, padding:"8px 12px", borderColor: !hasDesc ? C.orange+"88" : C.border }}
-                placeholder="What was this payment for?"
-                value={item.description}
-                onChange={e => onChange("description", e.target.value)}
-              />
-            </div>
-            <div>
-              <label style={{ ...label, fontSize:11 }}>Category</label>
-              <select style={{ ...input, fontSize:13, padding:"8px 12px" }} value={item.category} onChange={e => onChange("category", e.target.value)}>
-                {CATEGORIES.map(c => <option key={c}>{c}</option>)}
-              </select>
-            </div>
-          </div>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10 }}>
-            <div>
-              <label style={{ ...label, fontSize:11 }}>Amount (GH₵)</label>
-              <input style={{ ...input, fontSize:13, padding:"8px 12px" }} value={item.amount} onChange={e => onChange("amount", e.target.value)} />
-            </div>
-            <div>
-              <label style={{ ...label, fontSize:11 }}>Sender</label>
-              <input style={{ ...input, fontSize:13, padding:"8px 12px" }} value={item.sender} onChange={e => onChange("sender", e.target.value)} placeholder="Customer name" />
-            </div>
-            <div>
-              <label style={{ ...label, fontSize:11 }}>Tx ID</label>
-              <input style={{ ...input, fontSize:13, padding:"8px 12px", fontFamily:"monospace" }} value={item.txId} onChange={e => onChange("txId", e.target.value)} />
-            </div>
-          </div>
-          {/* Verification badge */}
-          <div style={{ marginTop:8, display:"flex", alignItems:"center", gap:6 }}>
-            <span style={{ fontSize:11, color: item.verification?.valid ? "#16a34a" : C.orange, background: item.verification?.valid ? "#f0fdf4" : "#fff7ed", border:`1px solid ${item.verification?.valid?"#86efac":C.orange+"44"}`, borderRadius:20, padding:"2px 8px" }}>
-              {item.verification?.valid ? "✓" : "⚠"} {item.verification?.reason}
-            </span>
-          </div>
-        </div>
-      )}
-    </div>
-  );
 }
 
 // ─── UPGRADE MODAL ────────────────────────────────────────────
