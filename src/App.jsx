@@ -96,6 +96,8 @@ const IC = {
   box:     "M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16zM3.27 6.96L12 12.01l8.73-5.05M12 22.08V12",
   lock:    "M19 11H5a2 2 0 00-2 2v7a2 2 0 002 2h14a2 2 0 002-2v-7a2 2 0 00-2-2zM7 11V7a5 5 0 0110 0v4",
   star:    "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z",
+  edit:    "M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z",
+  trash:   "M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6",
 };
 
 // ─── COLORS ──────────────────────────────────────────────────
@@ -373,6 +375,9 @@ export default function App() {
   const [productsExpanded, setProductsExpanded] = useState(false);
   const [products, setProducts]                 = useState([]);
   const [productCategories, setProductCategories] = useState([]);
+  const [showEditTransaction, setShowEditTransaction] = useState(null);
+  const [voidedReceipts, setVoidedReceipts] = useState(new Set());
+  const [deletedTransactions, setDeletedTransactions] = useState([]);
 
   // ── Load all user data from Supabase ──
   const loadUserData = async (userId) => {
@@ -487,6 +492,38 @@ export default function App() {
     if (error) { console.error(error); alert("Could not save transaction. Please try again."); return; }
     setTransactions(p=>[{ id:data.id, walletId:data.wallet_id, type:data.type, amount:parseFloat(data.amount), category:data.category||"", description:data.description||"", method:data.method||"", date:data.date, momoRef:data.momo_ref||"", receiptNo:data.receipt_no||newReceiptNo }, ...p]);
     setShowRecordPayment(false);
+  };
+
+  const updateTransaction = async (tx) => {
+    if (isGuest || !businessId) {
+      setTransactions(p => p.map(t => t.id === tx.id ? tx : t));
+      setShowEditTransaction(null);
+      return;
+    }
+    const { error } = await supabase.from("transactions").update({
+      wallet_id: tx.walletId, type: tx.type, amount: tx.amount,
+      category: tx.category, description: tx.description,
+      method: tx.method, date: tx.date, momo_ref: tx.momoRef || null
+    }).eq("id", tx.id);
+    if (error) { console.error(error); alert("Could not update transaction."); return; }
+    setTransactions(p => p.map(t => t.id === tx.id ? tx : t));
+    setShowEditTransaction(null);
+  };
+
+  const deleteTransaction = async (tx) => {
+    if (isGuest || !businessId) {
+      setTransactions(p => p.filter(t => t.id !== tx.id));
+      setDeletedTransactions(prev => [...prev, { ...tx, _deleted: true }]);
+      if (tx.receiptNo) setVoidedReceipts(prev => new Set(prev).add(tx.receiptNo));
+      setShowEditTransaction(null);
+      return;
+    }
+    const { error } = await supabase.from("transactions").delete().eq("id", tx.id);
+    if (error) { console.error(error); alert("Could not delete transaction."); return; }
+    setTransactions(p => p.filter(t => t.id !== tx.id));
+    setDeletedTransactions(prev => [...prev, { ...tx, _deleted: true }]);
+    if (tx.receiptNo) setVoidedReceipts(prev => new Set(prev).add(tx.receiptNo));
+    setShowEditTransaction(null);
   };
 
   const addWallet = async (w) => {
@@ -696,10 +733,10 @@ export default function App() {
           <div className="content-pad" style={{ flex:1, padding:"24px 28px", overflowY:"auto" }}>
             {dataLoading && <div style={{ textAlign:"center", padding:"40px", color:C.muted, fontSize:14 }}>Loading your data...</div>}
             {dataError   && <div style={{ background:"#fef2f2", border:"1px solid #fca5a5", borderRadius:10, padding:"14px 18px", marginBottom:16, fontSize:13, color:"#b91c1c" }}>{dataError}</div>}
-            {page==="dashboard"    && <Dashboard transactions={txFiltered} income={income} expense={expense} balance={balance} wallets={wallets} activeWallet={activeWallet} business={business} user={user} onAdd={()=>setShowRecordPayment(true)} onReceipt={tryGenerateReceipt} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount}/>}
+            {page==="dashboard"    && <Dashboard transactions={txFiltered} income={income} expense={expense} balance={balance} wallets={wallets} activeWallet={activeWallet} business={business} user={user} onAdd={()=>setShowRecordPayment(true)} onReceipt={tryGenerateReceipt} onEdit={setShowEditTransaction} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount}/>}
             {page==="wallets"      && <Wallets wallets={wallets} transactions={transactions} onAdd={()=>setShowAddWallet(true)} onSelect={setActiveWallet} activeWallet={activeWallet}/>}
-            {page==="transactions" && <Transactions transactions={txFiltered} wallets={wallets} onAdd={()=>setShowRecordPayment(true)} onReceipt={tryGenerateReceipt}/>}
-            {page==="receipts"     && <Receipts transactions={txFiltered} wallets={wallets} business={business} onReceipt={tryGenerateReceipt} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount}/>}
+            {page==="transactions" && <Transactions transactions={txFiltered} wallets={wallets} onAdd={()=>setShowRecordPayment(true)} onReceipt={tryGenerateReceipt} onEdit={setShowEditTransaction}/>}
+            {page==="receipts"     && <Receipts transactions={txFiltered} wallets={wallets} business={business} onReceipt={tryGenerateReceipt} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount} voidedReceipts={voidedReceipts} deletedTransactions={deletedTransactions}/>}
             {page==="reports"      && <Reports transactions={txFiltered} income={income} expense={expense} balance={balance} isPro={isPro} onUpgrade={()=>setShowUpgrade(true)}/>}
             {(page==="products"||page==="product-list") && <ProductList products={products} categories={productCategories} onAdd={()=>navigateTo("add-product")} onEdit={p=>{ setEditingProduct(p); navigateTo("add-product"); }}/>}
             {page==="add-product"  && <AddEditProduct product={editingProduct} categories={productCategories} onSave={p=>{ if(editingProduct){ setProducts(prev=>prev.map(x=>x.id===p.id?p:x)); } else { setProducts(prev=>[...prev,{...p,id:genId()}]); } setEditingProduct(null); navigateTo("product-list"); }} onCancel={()=>{ setEditingProduct(null); navigateTo("product-list"); }}/>}
@@ -709,7 +746,8 @@ export default function App() {
       </div>
 
       {showRecordPayment && <RecordPaymentModal onClose={()=>setShowRecordPayment(false)} onSave={addTransaction} wallets={wallets} business={business}/>}
-      {showReceipt  && <ReceiptModal tx={showReceipt} business={business} isPro={isPro} onClose={()=>setShowReceipt(null)}/>}
+      {showReceipt  && <ReceiptModal tx={showReceipt} business={business} isPro={isPro} onClose={()=>setShowReceipt(null)} isVoided={voidedReceipts.has(showReceipt.receiptNo)}/>}
+      {showEditTransaction && <EditTransactionModal tx={showEditTransaction} onClose={()=>setShowEditTransaction(null)} onSave={updateTransaction} onDelete={deleteTransaction} wallets={wallets}/>}
       
       {showAddWallet&& <AddWalletModal onClose={()=>setShowAddWallet(false)} onSave={addWallet}/>}
       {showUpgrade  && <UpgradeModal onClose={()=>setShowUpgrade(false)}/>}
@@ -718,7 +756,7 @@ export default function App() {
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────
-function Dashboard({ transactions, income, expense, balance, wallets, business, user, onAdd, onReceipt, isPro, isGuest, guestLeft }) {
+function Dashboard({ transactions, income, expense, balance, wallets, business, user, onAdd, onReceipt, onEdit, isPro, isGuest, guestLeft }) {
   const recent = transactions.slice(0,5);
   const statCards = [
     { label:"Total income",   value:fmt(income),   color:C.income  },
@@ -780,7 +818,7 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
       {/* RECENT */}
       <div style={card()}>
         <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:15, color:C.text, marginBottom:14 }}>Recent transactions</div>
-        <TxTable transactions={recent} wallets={[]} onReceipt={onReceipt} showWallet/>
+        <TxTable transactions={recent} wallets={[]} onReceipt={onReceipt} onEdit={onEdit} showWallet/>
       </div>
     </div>
   );
@@ -833,18 +871,18 @@ function Wallets({ wallets, transactions, onAdd, onSelect, activeWallet }) {
 }
 
 // ─── TX TABLE ─────────────────────────────────────────────────
-function TxTable({ transactions, wallets, onReceipt, showWallet=false }) {
+function TxTable({ transactions, wallets, onReceipt, onEdit, showWallet=false }) {
   if (!transactions.length) return <div style={{ textAlign:"center", padding:"32px", color:C.muted, fontSize:14 }}>No transactions yet</div>;
   return (
     <div>
-      <div style={{ display:"grid", gridTemplateColumns: showWallet ? "1fr 1fr 100px 110px 80px" : "1fr 1fr 100px 110px 80px", padding:"8px 14px", fontSize:11, color:C.muted, letterSpacing:"0.05em", textTransform:"uppercase", borderBottom:`1px solid ${C.border}` }}>
-        <span>Description</span><span>Category</span><span>Method</span><span>Amount</span><span>Receipt</span>
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 90px 110px 120px", padding:"8px 14px", fontSize:11, color:C.muted, letterSpacing:"0.05em", textTransform:"uppercase", borderBottom:`1px solid ${C.border}` }}>
+        <span>Description</span><span>Category</span><span>Method</span><span>Amount</span><span>Actions</span>
       </div>
       {transactions.map(tx=>{
         const wallet = wallets.find ? wallets.find(w=>w.id===tx.walletId) : null;
         const preset = wallet ? WALLET_PRESETS.find(p=>p.id===wallet?.presetId) : null;
         return (
-          <div key={tx.id} style={{ display:"grid", gridTemplateColumns:"1fr 1fr 100px 110px 80px", padding:"11px 14px", borderBottom:`1px solid #f9fafb`, alignItems:"center", fontSize:13 }}>
+          <div key={tx.id} style={{ display:"grid", gridTemplateColumns:"1fr 1fr 90px 110px 120px", padding:"11px 14px", borderBottom:`1px solid #f9fafb`, alignItems:"center", fontSize:13 }}>
             <div>
               <div style={{ color:C.text, fontWeight:500 }}>{tx.description}</div>
               <div style={{ color:C.muted, fontSize:11, marginTop:1 }}>{tx.date}</div>
@@ -854,12 +892,9 @@ function TxTable({ transactions, wallets, onReceipt, showWallet=false }) {
             <div style={{ fontWeight:700, color: tx.type==="income" ? C.income : C.expense }}>
               {tx.type==="income" ? "+" : "-"}{fmt(tx.amount)}
             </div>
-            <div>
-              {tx.type==="income" ? (
-                <Btn variant="ghost" size="sm" onClick={()=>onReceipt(tx)} style={{ fontSize:11, padding:"5px 10px" }}>
-                  <Icon d={IC.eye} size={12}/> View
-                </Btn>
-              ) : <span style={{ color:"#d1d5db", fontSize:12 }}>—</span>}
+            <div style={{ display:"flex", gap:4 }}>
+              {onEdit && <Btn variant="ghost" size="sm" onClick={()=>onEdit(tx)} style={{ fontSize:11, padding:"5px 8px" }}><Icon d={IC.edit} size={12}/> Edit</Btn>}
+              {tx.type==="income" && <Btn variant="ghost" size="sm" onClick={()=>onReceipt(tx)} style={{ fontSize:11, padding:"5px 8px" }}><Icon d={IC.eye} size={12}/></Btn>}
             </div>
           </div>
         );
@@ -869,7 +904,7 @@ function TxTable({ transactions, wallets, onReceipt, showWallet=false }) {
 }
 
 // ─── TRANSACTIONS PAGE ────────────────────────────────────────
-function Transactions({ transactions, wallets, onAdd, onReceipt }) {
+function Transactions({ transactions, wallets, onAdd, onReceipt, onEdit }) {
   const [filter, setFilter] = useState("all");
   const shown = filter==="all" ? transactions : transactions.filter(t=>t.type===filter);
   return (
@@ -885,15 +920,17 @@ function Transactions({ transactions, wallets, onAdd, onReceipt }) {
         <Btn variant="primary" onClick={onAdd}><Icon d={IC.plus} size={15}/> Record Payment</Btn>
       </div>
       <div style={card({ padding:0, overflow:"hidden" })}>
-        <TxTable transactions={shown} wallets={wallets} onReceipt={onReceipt} showWallet/>
+        <TxTable transactions={shown} wallets={wallets} onReceipt={onReceipt} onEdit={onEdit} showWallet/>
       </div>
     </div>
   );
 }
 
 // ─── RECEIPTS PAGE ────────────────────────────────────────────
-function Receipts({ transactions, wallets, business, onReceipt, isPro, isGuest, guestLeft }) {
+function Receipts({ transactions, wallets, business, onReceipt, isPro, isGuest, guestLeft, voidedReceipts, deletedTransactions }) {
   const income = transactions.filter(t=>t.type==="income");
+  const voidedIncome = (deletedTransactions||[]).filter(t=>t.type==="income");
+  const allReceipts = [...income, ...voidedIncome];
   return (
     <div>
       {isGuest && (
@@ -908,20 +945,24 @@ function Receipts({ transactions, wallets, business, onReceipt, isPro, isGuest, 
         </div>
       )}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))", gap:14 }}>
-        {income.map(tx=>(
-          <div key={tx.id} style={card({ cursor:"pointer" })} onClick={()=>onReceipt(tx)}>
+        {allReceipts.map(tx=>{
+          const isVoid = voidedReceipts && voidedReceipts.has(tx.receiptNo);
+          return (
+          <div key={tx.id} style={{ ...card({ cursor:"pointer" }), position:"relative", overflow:"hidden", opacity:isVoid?0.75:1 }} onClick={()=>onReceipt(tx)}>
+            {isVoid && <div style={{ position:"absolute", top:12, right:-28, background:"#ef4444", color:"#fff", fontSize:10, fontWeight:700, padding:"2px 32px", transform:"rotate(35deg)", letterSpacing:1, zIndex:1 }}>VOID</div>}
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:10 }}>
-              <Badge color={C.teal}>Receipt</Badge>
+              <Badge color={isVoid?"#ef4444":C.teal}>{isVoid?"Voided":"Receipt"}</Badge>
               <span style={{ fontSize:11, color:C.muted }}>{tx.date}</span>
             </div>
-            <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:22, color:C.income, marginBottom:4 }}>{fmt(tx.amount)}</div>
-            <div style={{ fontSize:13, color:C.text, marginBottom:8 }}>{tx.description}</div>
+            <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:22, color:isVoid?"#9ca3af":C.income, marginBottom:4, textDecoration:isVoid?"line-through":"none" }}>{fmt(tx.amount)}</div>
+            <div style={{ fontSize:13, color:isVoid?"#9ca3af":C.text, marginBottom:8 }}>{tx.description}</div>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
               <span style={{ fontSize:11, color:C.muted, fontFamily:"monospace" }}>{tx.receiptNo}</span>
-              <Btn variant="outline" size="sm"><Icon d={IC.receipt} size={12}/> Generate</Btn>
+              {isVoid ? <Badge color="#ef4444">Deleted</Badge> : <Btn variant="outline" size="sm"><Icon d={IC.receipt} size={12}/> Generate</Btn>}
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -1140,7 +1181,7 @@ function RecordPaymentModal({ onClose, onSave, wallets, business }) {
 }
 
 // ─── RECEIPT MODAL ────────────────────────────────────────────
-function ReceiptModal({ tx, business, isPro, onClose }) {
+function ReceiptModal({ tx, business, isPro, onClose, isVoided }) {
   const rNo = useRef(genRNo()).current;
   const accentColor = isPro ? (business.logoColor||C.orange) : "#1B5F8C";
   const accentBg    = isPro ? (business.logoBg||"#fff4ed")   : "#f0f7ff";
@@ -1150,7 +1191,8 @@ function ReceiptModal({ tx, business, isPro, onClose }) {
       <ModalHeader title="Receipt" onClose={onClose}/>
       {isPro && <div style={{ background:C.orange+"12", borderRadius:8, padding:"8px 12px", marginBottom:14, fontSize:12, color:C.orange, fontWeight:500 }}>⭐ Pro — branded with your logo colors</div>}
       {/* RECEIPT CARD */}
-      <div style={{ background:"#fff", border:`1px solid ${C.border}`, borderRadius:14, padding:"26px 28px", marginBottom:16 }}>
+      <div style={{ background:"#fff", border:`1px solid ${isVoided?"#fca5a5":C.border}`, borderRadius:14, padding:"26px 28px", marginBottom:16, position:"relative", overflow:"hidden" }}>
+        {isVoided && <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%) rotate(-30deg)", fontSize:48, fontWeight:900, color:"rgba(239,68,68,0.18)", letterSpacing:8, textTransform:"uppercase", whiteSpace:"nowrap", pointerEvents:"none", zIndex:1, fontFamily:"'Poppins',sans-serif" }}>VOIDED</div>}
         <div style={{ borderBottom:`2px solid ${accentColor}`, paddingBottom:14, marginBottom:16 }}>
           <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:20, color:accentColor }}>{business.name}</div>
           {isPro && <div style={{ fontSize:11, color:C.muted, marginTop:2, fontStyle:"italic" }}>Official Receipt · Pro</div>}
@@ -1173,13 +1215,98 @@ function ReceiptModal({ tx, business, isPro, onClose }) {
           Thank you for your business · Powered by Receiva{isPro?" Pro":""}
         </div>
       </div>
-      <div style={{ display:"flex", gap:10 }}>
+      {isVoided && <div style={{ background:"#fef2f2", border:"1px solid #fca5a5", borderRadius:8, padding:"10px 14px", marginBottom:12, fontSize:13, color:"#b91c1c", textAlign:"center", fontWeight:500 }}>⚠️ This transaction has been deleted — receipt is voided</div>}
+      <div style={{ display:"flex", gap:10, opacity:isVoided?0.5:1, pointerEvents:isVoided?"none":"auto" }}>
         <Btn variant="wa" href={`https://wa.me/?text=${encodeURIComponent(waText)}`} style={{ flex:1 }}>
           <Icon d={IC.share} size={14}/> WhatsApp
         </Btn>
         <Btn variant={isPro?"primary":"ghost"} style={{ flex:1 }} onClick={()=>!isPro&&alert("PDF export is a Pro feature. Upgrade to download receipts as PDF.")}>
           <Icon d={IC.share} size={14}/> {isPro?"Download PDF":"PDF (Pro)"}
         </Btn>
+      </div>
+    </Modal>
+  );
+}
+
+// ─── EDIT TRANSACTION MODAL ──────────────────────────────────────────
+function EditTransactionModal({ tx, onClose, onSave, onDelete, wallets }) {
+  const [form, setForm] = useState({ type:tx.type, amount:String(tx.amount), category:tx.category, description:tx.description, walletId:tx.walletId, date:tx.date, momoRef:tx.momoRef||"" });
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const setF = (k,v) => setForm(f=>({...f,[k]:v}));
+  const valid = form.amount && form.category && form.description && form.walletId;
+
+  const handleSave = () => { if(!valid) return; onSave({ ...tx, type:form.type, amount:parseFloat(form.amount), category:form.category, description:form.description, walletId:form.walletId, date:form.date, momoRef:form.momoRef, method:wallets.find(w=>w.id===form.walletId)?.name||"MoMo" }); };
+  const handleDelete = () => { setDeleting(true); onDelete(tx); };
+
+  return (
+    <Modal onClose={onClose} maxWidth={520}>
+      <ModalHeader title="Edit Transaction" onClose={onClose}/>
+
+      {/* Type toggle */}
+      <div style={{ display:"flex", gap:8, marginBottom:18 }}>
+        {["income","expense"].map(t=>(
+          <button key={t} style={{ flex:1, padding:"10px", borderRadius:8, border:"none", cursor:"pointer", fontFamily:"'Poppins',sans-serif", fontSize:14, fontWeight:500, background:form.type===t?(t==="income"?C.income+"18":C.expense+"15"):"#f3f4f6", color:form.type===t?(t==="income"?C.income:C.expense):C.muted }} onClick={()=>setF("type",t)}>
+            {t==="income"?"💰 Income":"📤 Expense"}
+          </button>
+        ))}
+      </div>
+
+      {/* Wallet */}
+      <div style={{ marginBottom:12 }}>
+        <label style={label}>Wallet</label>
+        <select style={input} value={form.walletId} onChange={e=>setF("walletId",e.target.value)}>
+          {wallets.map(w=><option key={w.id} value={w.id}>{WALLET_PRESETS.find(p=>p.id===w.presetId)?.icon} {w.name}</option>)}
+        </select>
+      </div>
+
+      {/* Amount + Date */}
+      <div style={formRow}>
+        <div><label style={label}>Amount (GH₵)</label><input style={input} type="number" placeholder="0.00" value={form.amount} onChange={e=>setF("amount",e.target.value)}/></div>
+        <div><label style={label}>Date</label><input style={input} type="date" value={form.date} onChange={e=>setF("date",e.target.value)}/></div>
+      </div>
+
+      {/* Category */}
+      <div style={{ marginBottom:12 }}>
+        <label style={label}>Category</label>
+        <select style={input} value={form.category} onChange={e=>setF("category",e.target.value)}>
+          <option value="">Select category</option>
+          {CATEGORIES.map(c=><option key={c}>{c}</option>)}
+        </select>
+      </div>
+
+      {/* Description */}
+      <div style={{ marginBottom:12 }}><label style={label}>Description</label><input style={input} placeholder="e.g. iPhone cases x3" value={form.description} onChange={e=>setF("description",e.target.value)}/></div>
+
+      {/* MoMo ref */}
+      <div style={{ marginBottom:16 }}><label style={label}>MoMo reference (optional)</label><input style={input} placeholder="e.g. 80993550724" value={form.momoRef} onChange={e=>setF("momoRef",e.target.value)}/></div>
+
+      {/* Save button */}
+      <div style={{ display:"flex", gap:10, marginBottom:20 }}>
+        <Btn variant="ghost" onClick={onClose}>Cancel</Btn>
+        <Btn variant="primary" full disabled={!valid} onClick={handleSave}>
+          <Icon d={IC.check} size={15}/> Save changes
+        </Btn>
+      </div>
+
+      {/* ─── Danger zone — delete ─── */}
+      <div style={{ borderTop:`1px solid ${C.border}`, paddingTop:16 }}>
+        {!confirmDelete ? (
+          <button onClick={()=>setConfirmDelete(true)} style={{ display:"flex", alignItems:"center", gap:6, background:"transparent", border:"1px solid #fca5a5", borderRadius:8, padding:"8px 14px", color:"#ef4444", fontSize:13, cursor:"pointer", fontFamily:"'Poppins',sans-serif", fontWeight:500, width:"100%", justifyContent:"center", transition:"all 0.15s" }}>
+            <Icon d={IC.trash} size={13}/> Delete this transaction
+          </button>
+        ) : (
+          <div style={{ background:"#fef2f2", border:"1px solid #fca5a5", borderRadius:10, padding:"14px 16px" }}>
+            <div style={{ fontSize:14, fontWeight:600, color:"#b91c1c", marginBottom:6 }}>Are you sure?</div>
+            <div style={{ fontSize:13, color:"#6b7280", marginBottom:12 }}>This transaction will be permanently deleted. If a receipt was generated, it will be marked as voided.</div>
+            <div style={{ display:"flex", gap:8 }}>
+              <Btn variant="ghost" onClick={()=>setConfirmDelete(false)} style={{ flex:1 }}>Cancel</Btn>
+              <button onClick={handleDelete} disabled={deleting} style={{ flex:1, padding:"9px 16px", background:"#ef4444", color:"#fff", border:"none", borderRadius:8, fontSize:13, fontWeight:600, cursor:deleting?"not-allowed":"pointer", fontFamily:"'Poppins',sans-serif", opacity:deleting?0.6:1 }}>
+                {deleting ? "Deleting..." : "Yes, delete"}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </Modal>
   );
