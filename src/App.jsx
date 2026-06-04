@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "./supabase";
+import { sanitizeTransaction } from "./security/sanitize.js";
 
 // ─── CONSTANTS ────────────────────────────────────────────────
 const CATEGORIES = ["Sales","Service fee","Rent","Supplies","Transport","Salary","Utilities","MoMo transfer","Other"];
@@ -185,7 +186,25 @@ function LoginPage({ onLogin, onGuest }) {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState("");
 
+  // ── Brute-force protection ──
+  const [failCount, setFailCount]   = useState(0);
+  const [lockUntil, setLockUntil]   = useState(null);
+  const [lockRemaining, setLockRemaining] = useState(0);
+
+  useEffect(() => {
+    if (!lockUntil) return;
+    const tick = setInterval(() => {
+      const left = Math.ceil((lockUntil - Date.now()) / 1000);
+      if (left <= 0) { setLockUntil(null); setLockRemaining(0); clearInterval(tick); }
+      else setLockRemaining(left);
+    }, 1000);
+    return () => clearInterval(tick);
+  }, [lockUntil]);
+
+  const isLocked = lockUntil && Date.now() < lockUntil;
+
   const handleAuth = async () => {
+    if (isLocked) { setError(`Too many attempts. Try again in ${lockRemaining}s.`); return; }
     if (!email || !pass) { setError("Please enter your email and password."); return; }
     if (pass.length < 6) { setError("Password must be at least 6 characters."); return; }
     setLoading(true); setError("");
@@ -193,12 +212,25 @@ function LoginPage({ onLogin, onGuest }) {
       if (tab === "signup") {
         const { data, error: e } = await supabase.auth.signUp({ email, password:pass, options:{ data:{ full_name: name||email.split("@")[0] } } });
         if (e) { setError(e.message); return; }
-        if (data.session) { onLogin({ name:name||email.split("@")[0], email, plan:"free", id:data.user.id }); return; }
+        if (data.session) { setFailCount(0); onLogin({ name:name||email.split("@")[0], email, plan:"free", id:data.user.id }); return; }
         if (data.user && !data.session) { setError(""); alert("Account created! Check your email for a confirmation link, then sign in."); setTab("login"); return; }
       } else {
         const { data, error: e } = await supabase.auth.signInWithPassword({ email, password:pass });
-        if (e) { setError(e.message.includes("Invalid login") ? "Wrong email or password." : e.message); return; }
-        if (data.user) { onLogin({ name:data.user.user_metadata?.full_name||email.split("@")[0], email, plan:"free", id:data.user.id }); }
+        if (e) {
+          const newFails = failCount + 1;
+          setFailCount(newFails);
+          if (newFails >= 10) {
+            setLockUntil(Date.now() + 5 * 60 * 1000); setLockRemaining(300);
+            setError("Account locked for 5 minutes. Too many failed attempts.");
+          } else if (newFails >= 5) {
+            setLockUntil(Date.now() + 60 * 1000); setLockRemaining(60);
+            setError("Too many failed attempts. Try again in 60 seconds.");
+          } else {
+            setError(e.message.includes("Invalid login") ? "Wrong email or password." : e.message);
+          }
+          return;
+        }
+        if (data.user) { setFailCount(0); onLogin({ name:data.user.user_metadata?.full_name||email.split("@")[0], email, plan:"free", id:data.user.id }); }
       }
     } catch(err) {
       setError("Something went wrong. Check your connection.");
@@ -482,7 +514,9 @@ export default function App() {
     setShowReceipt(tx);
   };
 
-  const addTransaction = async (tx) => {
+  const addTransaction = async (rawTx) => {
+    let tx;
+    try { tx = sanitizeTransaction(rawTx); } catch (e) { alert(e.message); return; }
     const newReceiptNo = genRNo();
     if (isGuest || !businessId) {
       setTransactions(p=>[{...tx, id:genId(), receiptNo:newReceiptNo}, ...p]);
@@ -494,7 +528,9 @@ export default function App() {
     setShowRecordPayment(false);
   };
 
-  const updateTransaction = async (tx) => {
+  const updateTransaction = async (rawTx) => {
+    let tx;
+    try { tx = sanitizeTransaction(rawTx); } catch (e) { alert(e.message); return; }
     if (isGuest || !businessId) {
       setTransactions(p => p.map(t => t.id === tx.id ? tx : t));
       setShowEditTransaction(null);
