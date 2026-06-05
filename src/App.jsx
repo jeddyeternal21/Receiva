@@ -1,6 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "./supabase";
 import { sanitizeTransaction } from "./security/sanitize.js";
+import {
+  Home, Wallet, ArrowLeftRight, Receipt, BarChart3, Package,
+  Plus, Share2, Check, X, Eye, Clock, Lock, Star, Pencil, Trash2,
+  Smartphone, TabletSmartphone, Satellite, Building2, Banknote, Landmark,
+  MessageCircle, Gift, FileText, BarChart2, Shield, ChevronDown,
+  Menu, LogOut, Upload, Clipboard, AlertTriangle, PartyPopper,
+  HandCoins, ArrowUpFromLine, Cog, User
+} from "lucide-react";
 
 // ─── CONSTANTS ────────────────────────────────────────────────
 const CATEGORIES = ["Sales","Service fee","Rent","Supplies","Transport","Salary","Utilities","MoMo transfer","Other"];
@@ -11,14 +19,22 @@ const genRNo = () => `RCV-${Date.now().toString().slice(-6)}`;
 const fmt    = n  => `GH₵ ${Number(n).toLocaleString("en-GH",{minimumFractionDigits:2})}`;
 
 // ─── WALLET PRESETS ───────────────────────────────────────────
+const WALLET_ICON_MAP = {
+  mtn: Smartphone, telecel: TabletSmartphone, voda: Satellite,
+  company: Building2, cash: Banknote, bank: Landmark,
+};
 const WALLET_PRESETS = [
-  { id:"mtn",     label:"MTN MoMo",       color:"#FFCC00", bg:"#fff9e6", icon:"📱" },
-  { id:"telecel", label:"Telecel Cash",   color:"#E30613", bg:"#ffeaeb", icon:"📲" },
-  { id:"voda",    label:"Vodafone Cash",  color:"#E30613", bg:"#ffeaeb", icon:"📡" },
-  { id:"company", label:"Company Account",color:"#F97316", bg:"#fff4ed", icon:"🏢" },
-  { id:"cash",    label:"Cash",           color:"#16a34a", bg:"#f0fdf4", icon:"💵" },
-  { id:"bank",    label:"Bank Account",   color:"#2563eb", bg:"#eff6ff", icon:"🏦" },
+  { id:"mtn",     label:"MTN MoMo",       color:"#FFCC00", bg:"#fff9e6" },
+  { id:"telecel", label:"Telecel Cash",   color:"#E30613", bg:"#ffeaeb" },
+  { id:"voda",    label:"Vodafone Cash",  color:"#E30613", bg:"#ffeaeb" },
+  { id:"company", label:"Company Account",color:"#F97316", bg:"#fff4ed" },
+  { id:"cash",    label:"Cash",           color:"#16a34a", bg:"#f0fdf4" },
+  { id:"bank",    label:"Bank Account",   color:"#2563eb", bg:"#eff6ff" },
 ];
+function WalletIcon({ presetId, size=18, color }) {
+  const IconComp = WALLET_ICON_MAP[presetId] || Smartphone;
+  return <IconComp size={size} color={color} strokeWidth={1.8}/>;
+}
 
 // ─── DEMO DATA ────────────────────────────────────────────────
 const DEMO_WALLETS = [];
@@ -76,30 +92,18 @@ function parseGhanaMoMo(text) {
   return { network, amount, txId, date, time, sender, fee, balance, elevy, description:"", category:"Sales", verification:verifyTxId(txId,network) };
 }
 
-// ─── ICONS ───────────────────────────────────────────────────
-const Icon = ({ d, size=18 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d={d}/>
-  </svg>
-);
-const IC = {
-  home:    "M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z",
-  tx:      "M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6",
-  receipt: "M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8",
-  wallet:  "M21 7H3a2 2 0 00-2 2v10a2 2 0 002 2h18a2 2 0 002-2V9a2 2 0 00-2-2zM16 13a1 1 0 110 2 1 1 0 010-2zM1 7l4-4h14l4 4",
-  plus:    "M12 5v14M5 12h14",
-  share:   "M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13",
-  check:   "M20 6L9 17l-5-5",
-  x:       "M18 6L6 18M6 6l12 12",
-  report:  "M18 20V10M12 20V4M6 20v-6",
-  eye:     "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 9a3 3 0 100 6 3 3 0 000-6z",
-  momo:    "M12 2a10 10 0 100 20A10 10 0 0012 2zM12 6v6l4 2",
-  box:     "M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16zM3.27 6.96L12 12.01l8.73-5.05M12 22.08V12",
-  lock:    "M19 11H5a2 2 0 00-2 2v7a2 2 0 002 2h14a2 2 0 002-2v-7a2 2 0 00-2-2zM7 11V7a5 5 0 0110 0v4",
-  star:    "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z",
-  edit:    "M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z",
-  trash:   "M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6",
+// ─── ICON MAPPING (Lucide React) ─────────────────────────────
+const LI = {
+  home: Home, tx: ArrowLeftRight, receipt: Receipt, wallet: Wallet,
+  plus: Plus, share: Share2, check: Check, x: X, report: BarChart3,
+  eye: Eye, momo: Clock, box: Package, lock: Lock, star: Star,
+  edit: Pencil, trash: Trash2,
 };
+function LIcon({ name, size=18, color, strokeWidth=1.8, style={} }) {
+  const Comp = LI[name];
+  if (!Comp) return null;
+  return <Comp size={size} color={color} strokeWidth={strokeWidth} style={style}/>;
+}
 
 // ─── COLORS ──────────────────────────────────────────────────
 const C = {
@@ -156,7 +160,7 @@ function ModalHeader({ title, onClose }) {
   return (
     <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
       <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:18, color:C.text }}>{title}</div>
-      <Btn variant="ghost" size="sm" onClick={onClose} style={{ padding:"6px 10px" }}><Icon d={IC.x} size={14}/></Btn>
+      <Btn variant="ghost" size="sm" onClick={onClose} style={{ padding:"6px 10px" }}><LIcon name="x" size={14}/></Btn>
     </div>
   );
 }
@@ -166,7 +170,7 @@ function WalletPill({ wallet, active, onClick }) {
   const preset = WALLET_PRESETS.find(p=>p.id===wallet.presetId) || WALLET_PRESETS[0];
   return (
     <div onClick={onClick} style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 14px", borderRadius:20, cursor:"pointer", background: active ? preset.color+"18" : "#f3f4f6", border:`1.5px solid ${active ? preset.color : "transparent"}`, transition:"all 0.15s", whiteSpace:"nowrap" }}>
-      <span style={{ fontSize:14 }}>{preset.icon}</span>
+      <WalletIcon presetId={wallet.presetId} size={14} color={active ? preset.color : undefined}/>
       <span style={{ fontSize:13, fontWeight:500, color: active ? preset.color : C.muted }}>{wallet.name}</span>
     </div>
   );
@@ -294,7 +298,7 @@ function LoginPage({ onLogin, onGuest }) {
 
             {/* HERO */}
             <div className="hero">
-              <div className="badge-pill">🇬🇭 Built for Ghana businesses</div>
+              <div className="badge-pill"><Shield size={14} strokeWidth={1.8} style={{marginRight:4}}/> Built for Ghana businesses</div>
               <div className="hero-title">Your business records,<br/><span style={{ color:"#F97316" }}>organised.</span></div>
               <div className="hero-sub">Turn MoMo SMS into professional receipts. Track income and expenses in one place.</div>
             </div>
@@ -335,15 +339,15 @@ function LoginPage({ onLogin, onGuest }) {
               </div>
 
               <button className="btn-ghost" onClick={onGuest}>
-                🎁 Try 5 free receipts — no signup needed
+                <Gift size={16} strokeWidth={1.8} style={{marginRight:6}}/> Try 5 free receipts — no signup needed
               </button>
             </div>
 
             {/* FEATURES */}
             <div className="features-row">
-              {[["🧾","Receipts","Instant"],["📱","MoMo","Parser"],["📊","Reports","Monthly"]].map(([icon,title,sub])=>(
+              {[[Receipt,"Receipts","Instant"],[Smartphone,"MoMo","Parser"],[BarChart2,"Reports","Monthly"]].map(([IconComp,title,sub])=>(
                 <div key={title} className="feat-card">
-                  <div style={{ fontSize:22, marginBottom:4 }}>{icon}</div>
+                  <div style={{ marginBottom:4 }}><IconComp size={22} strokeWidth={1.8}/></div>
                   <div style={{ fontSize:12, fontWeight:500, color:"#111827" }}>{title}</div>
                   <div style={{ fontSize:10, color:"#6b7280" }}>{sub}</div>
                 </div>
@@ -366,7 +370,7 @@ function LoginPage({ onLogin, onGuest }) {
                   <div style={{ marginTop:8 }}>
                     {p.perks.map(pk=>(
                       <div key={pk} style={{ fontSize:11, color:"#6b7280", display:"flex", alignItems:"center", gap:4, marginBottom:3 }}>
-                        <span style={{ color: p.hot?"#F97316":"#0BADA8", fontSize:10 }}>✓</span>{pk}
+                        <Check size={10} color={p.hot?"#F97316":"#0BADA8"} strokeWidth={2.5}/>{pk}
                       </div>
                     ))}
                   </div>
@@ -374,7 +378,7 @@ function LoginPage({ onLogin, onGuest }) {
               ))}
             </div>
 
-            <div className="footer-note">🔒 Encrypted · Cancel anytime · Ghana-built</div>
+            <div className="footer-note"><Lock size={12} strokeWidth={1.8} style={{marginRight:4,verticalAlign:"middle"}}/> Encrypted · Cancel anytime · Ghana-built</div>
           </div>
         </div>
       </div>
@@ -571,12 +575,12 @@ export default function App() {
   };
 
   const allNav = [
-    { key:"dashboard",    label:"Dashboard",   icon:IC.home    },
-    { key:"wallets",      label:"Wallets",      icon:IC.wallet  },
-    { key:"transactions", label:"Transactions", icon:IC.tx      },
-    { key:"receipts",     label:"Receipts",     icon:IC.receipt },
-    { key:"reports",      label:"Reports",      icon:IC.report  },
-    { key:"products",     label:"Products",     icon:IC.box, children:[
+    { key:"dashboard",    label:"Dashboard",   icon:"home"    },
+    { key:"wallets",      label:"Wallets",      icon:"wallet"  },
+    { key:"transactions", label:"Transactions", icon:"tx"      },
+    { key:"receipts",     label:"Receipts",     icon:"receipt" },
+    { key:"reports",      label:"Reports",      icon:"report"  },
+    { key:"products",     label:"Products",     icon:"box", children:[
       { key:"product-list",    label:"Product List"    },
       { key:"add-product",     label:"Add New Product" },
       { key:"categories",      label:"Categories"      },
@@ -591,8 +595,8 @@ export default function App() {
       return (
         <div>
           <div onClick={()=>setProductsExpanded(e=>!e)} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, padding: mobile?"14px 20px":"11px 20px", cursor:"pointer", fontSize:14, color: childActive ? C.orange : C.muted, background: childActive ? C.orange+"10" : "transparent", borderLeft: mobile?"none":`2px solid ${childActive ? C.orange : "transparent"}`, transition:"all 0.15s", fontWeight: childActive ? 500 : 400 }}>
-            <div style={{ display:"flex", alignItems:"center", gap:10 }}><Icon d={n.icon} size={16}/>{n.label}</div>
-            <span style={{ fontSize:10, transition:"transform 0.2s", transform: productsExpanded?"rotate(180deg)":"rotate(0)" }}>▼</span>
+            <div style={{ display:"flex", alignItems:"center", gap:10 }}><LIcon name={n.icon} size={16}/>{n.label}</div>
+            <ChevronDown size={12} style={{ transition:"transform 0.2s", transform: productsExpanded?"rotate(180deg)":"rotate(0)" }}/>
           </div>
           {productsExpanded && (
             <div style={{ background:"#fafafa", borderLeft: mobile?"none":"2px solid #f0f0f0", marginLeft: mobile?0:20 }}>
@@ -609,7 +613,7 @@ export default function App() {
     const active = page===n.key;
     return (
       <div onClick={()=>onNavigate(n.key)} style={{ display:"flex", alignItems:"center", gap:10, padding: mobile?"14px 20px":"11px 20px", cursor:"pointer", fontSize:14, color: active ? C.orange : C.muted, background: active ? C.orange+"10" : "transparent", borderLeft: mobile?"none":`2px solid ${active ? C.orange : "transparent"}`, transition:"all 0.15s", fontWeight: active ? 500 : 400 }}>
-        <Icon d={n.icon} size={16}/>{n.label}
+        <LIcon name={n.icon} size={16}/>{n.label}
       </div>
     );
   };
@@ -660,7 +664,7 @@ export default function App() {
             <div style={{ margin:"0 12px 12px", background:C.orange+"12", border:`1px solid ${C.orange}33`, borderRadius:10, padding:"10px 12px" }}>
               <div style={{ fontSize:12, fontWeight:600, color:C.orange, marginBottom:3 }}>Guest mode</div>
               <div style={{ fontSize:11, color:C.muted, marginBottom:8 }}>{FREE_RECEIPT_LIMIT - guestCount} free receipts left</div>
-              <Btn variant="primary" full size="sm" onClick={()=>setAuthState("login")}>Sign up free →</Btn>
+              <Btn variant="primary" full size="sm" onClick={()=>setAuthState("login")}><ArrowUpFromLine size={13}/> Sign up free</Btn>
             </div>
           )}
 
@@ -669,14 +673,14 @@ export default function App() {
           {/* WhatsApp Support */}
           <div style={{ margin:"12px 12px 0" }}>
             <a href="https://wa.me/233205597508" target="_blank" rel="noreferrer" style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 12px", background:"#25D36614", border:"1px solid #25D36633", borderRadius:10, textDecoration:"none", color:"#166534", fontSize:12, fontWeight:500 }}>
-              <span style={{ fontSize:16 }}>💬</span> Chat with support
+              <MessageCircle size={16} strokeWidth={1.8}/> Chat with support
             </a>
           </div>
 
           <div style={{ marginTop:"auto", padding:"16px 18px 0" }}>
             {!isPro && (
               <div style={{ background:`linear-gradient(135deg,${C.orange}18,${C.orange}08)`, border:`1px solid ${C.orange}30`, borderRadius:10, padding:"12px 14px", marginBottom:10 }}>
-                <div style={{ fontSize:11, color:C.orange, fontWeight:600, marginBottom:2, display:"flex", alignItems:"center", gap:5 }}><Icon d={IC.star} size={11}/> Upgrade to Pro</div>
+                <div style={{ fontSize:11, color:C.orange, fontWeight:600, marginBottom:2, display:"flex", alignItems:"center", gap:5 }}><LIcon name="star" size={11}/> Upgrade to Pro</div>
                 <div style={{ fontSize:11, color:C.muted, marginBottom:8 }}>Logo receipts · PDF · More</div>
                 <Btn variant="primary" full size="sm" onClick={()=>setShowUpgrade(true)}>Upgrade — GH₵ 40/mo</Btn>
               </div>
@@ -698,13 +702,13 @@ export default function App() {
             <div className="mobile-drawer">
               <div style={{ padding:"20px 20px 16px", borderBottom:`1px solid ${C.border}`, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                 <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:20, color:C.text }}>Receiva<span style={{ color:C.orange }}>.</span></div>
-                <button onClick={()=>setMobileMenuOpen(false)} style={{ background:"transparent", border:"none", cursor:"pointer", fontSize:20, color:C.muted, padding:4 }}>✕</button>
+                <button onClick={()=>setMobileMenuOpen(false)} style={{ background:"transparent", border:"none", cursor:"pointer", color:C.muted, padding:4 }}><X size={20}/></button>
               </div>
               {isGuest && (
                 <div style={{ margin:"12px 12px 0", background:C.orange+"12", border:`1px solid ${C.orange}33`, borderRadius:10, padding:"10px 12px" }}>
                   <div style={{ fontSize:12, fontWeight:600, color:C.orange, marginBottom:3 }}>Guest mode</div>
                   <div style={{ fontSize:11, color:C.muted, marginBottom:8 }}>{FREE_RECEIPT_LIMIT - guestCount} free receipts left</div>
-                  <Btn variant="primary" full size="sm" onClick={()=>{ setAuthState("login"); setMobileMenuOpen(false); }}>Sign up free →</Btn>
+                  <Btn variant="primary" full size="sm" onClick={()=>{ setAuthState("login"); setMobileMenuOpen(false); }}><ArrowUpFromLine size={13}/> Sign up free</Btn>
                 </div>
               )}
               <div style={{ flex:1, overflowY:"auto" }}>
@@ -712,7 +716,7 @@ export default function App() {
               </div>
               <div style={{ padding:"16px 12px", borderTop:`1px solid ${C.border}` }}>
                 <a href="https://wa.me/233205597508" target="_blank" rel="noreferrer" style={{ display:"flex", alignItems:"center", gap:8, padding:"12px 14px", background:"#25D36614", border:"1px solid #25D36633", borderRadius:10, textDecoration:"none", color:"#166534", fontSize:13, fontWeight:500 }}>
-                  <span style={{ fontSize:18 }}>💬</span> Chat with support on WhatsApp
+                  <MessageCircle size={18} strokeWidth={1.8}/> Chat with support on WhatsApp
                 </a>
               </div>
             </div>
@@ -726,10 +730,8 @@ export default function App() {
           <div style={{ padding:"14px 20px", borderBottom:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"space-between", background:C.white }}>
             <div style={{ display:"flex", alignItems:"center", gap:12 }}>
               {/* Hamburger */}
-              <button className="hamburger-btn" onClick={()=>setMobileMenuOpen(true)} style={{ background:"transparent", border:`1px solid ${C.border}`, borderRadius:8, padding:"6px 8px", cursor:"pointer", flexDirection:"column", gap:4, display:"none", alignItems:"center", justifyContent:"center" }}>
-                <div style={{ width:18, height:2, background:C.text, borderRadius:1 }}/>
-                <div style={{ width:18, height:2, background:C.text, borderRadius:1 }}/>
-                <div style={{ width:18, height:2, background:C.text, borderRadius:1 }}/>
+              <button className="hamburger-btn" onClick={()=>setMobileMenuOpen(true)} style={{ background:"transparent", border:`1px solid ${C.border}`, borderRadius:8, padding:"6px 8px", cursor:"pointer", display:"none", alignItems:"center", justifyContent:"center" }}>
+                <Menu size={18} color={C.text}/>
               </button>
               <div className="mobile-topbar-title" style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:18, color:C.text }}>{currentLabel()}</div>
             </div>
@@ -747,15 +749,15 @@ export default function App() {
                       <option value="all">All wallets</option>
                       {wallets.map(w=>{
                         const preset = WALLET_PRESETS.find(p=>p.id===w.presetId)||WALLET_PRESETS[0];
-                        return <option key={w.id} value={w.id}>{preset.icon} {w.name}</option>;
+                        return <option key={w.id} value={w.id}>{preset.label} — {w.name}</option>;
                       })}
                     </select>
                   )}
                 </div>
               )}
-              <a href="https://wa.me/233205597508" target="_blank" rel="noreferrer" title="WhatsApp support" style={{ width:32, height:32, borderRadius:"50%", background:"#25D36618", border:"1.5px solid #25D36644", display:"flex", alignItems:"center", justifyContent:"center", fontSize:15, textDecoration:"none" }}>💬</a>
+              <a href="https://wa.me/233205597508" target="_blank" rel="noreferrer" title="WhatsApp support" style={{ width:32, height:32, borderRadius:"50%", background:"#25D36618", border:"1.5px solid #25D36644", display:"flex", alignItems:"center", justifyContent:"center", textDecoration:"none" }}><MessageCircle size={15} color="#25D366" strokeWidth={1.8}/></a>
               <div style={{ width:32, height:32, borderRadius:"50%", background:C.orange+"18", border:`1.5px solid ${C.orange}44`, display:"flex", alignItems:"center", justifyContent:"center", color:C.orange, fontSize:13, fontWeight:700 }}>
-                {isGuest ? "G" : (user?.name?.[0]?.toUpperCase() || "J")}
+                {isGuest ? <User size={14}/> : (user?.name?.[0]?.toUpperCase() || <User size={14}/>)}
               </div>
               {!isGuest && (
                 <button onClick={handleSignOut} style={{ fontSize:11, color:C.muted, background:"transparent", border:`1px solid ${C.border}`, borderRadius:6, padding:"5px 8px", cursor:"pointer", fontFamily:"'Poppins',sans-serif" }}>
@@ -803,7 +805,7 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
   return (
     <div>
       <div style={{ marginBottom:22 }}>
-        <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:24, color:C.text, marginBottom:3 }}>Good day, {user?.name?.split(' ')[0] || 'there'} 👋</div>
+        <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:24, color:C.text, marginBottom:3 }}>Good day, {user?.name?.split(' ')[0] || 'there'} <HandCoins size={24} style={{display:"inline",verticalAlign:"middle",marginLeft:4}}/></div>
         <div style={{ fontSize:14, color:C.muted }}>Here's your financial snapshot for May 2026</div>
       </div>
 
@@ -827,7 +829,7 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
             const wBal = wTx.filter(t=>t.type==="income").reduce((s,t)=>s+t.amount,0) - wTx.filter(t=>t.type==="expense").reduce((s,t)=>s+t.amount,0);
             return (
               <div key={w.id} style={{ background:preset.bg, border:`1.5px solid ${preset.color}33`, borderRadius:12, padding:"14px 18px", minWidth:160 }}>
-                <div style={{ fontSize:18, marginBottom:4 }}>{preset.icon}</div>
+                <div style={{ marginBottom:4 }}><WalletIcon presetId={w.presetId} size={18} color={preset.color}/></div>
                 <div style={{ fontSize:12, color:C.muted, marginBottom:2 }}>{w.name}</div>
                 <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:18, color:preset.color }}>{fmt(wBal)}</div>
               </div>
@@ -838,14 +840,14 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
 
       {/* QUICK ACTIONS */}
       <div style={{ display:"flex", gap:10, marginBottom:22 }}>
-        <Btn variant="primary" onClick={onAdd}><Icon d={IC.plus} size={15}/> Record Payment</Btn>
-        {isGuest && <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:13, color:C.muted }}><Icon d={IC.receipt} size={14}/> {guestLeft} free receipts left</div>}
+        <Btn variant="primary" onClick={onAdd}><LIcon name="plus" size={15}/> Record Payment</Btn>
+        {isGuest && <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:13, color:C.muted }}><LIcon name="receipt" size={14}/> {guestLeft} free receipts left</div>}
       </div>
 
       {/* EMPTY STATE */}
       {wallets.length===0 && (
         <div style={{ textAlign:"center", padding:"48px 20px", background:"#fff", borderRadius:14, border:"1px solid #e5e7eb" }}>
-          <div style={{ fontSize:40, marginBottom:12 }}>👋</div>
+          <div style={{ marginBottom:12 }}><HandCoins size={40} color={C.orange}/></div>
           <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:18, color:"#111827", marginBottom:8 }}>Welcome to Receiva</div>
           <div style={{ fontSize:14, color:"#6b7280", marginBottom:20, maxWidth:340, margin:"0 auto 20px" }}>Start by adding your first wallet — your MTN MoMo, Telecel Cash, or any account you receive payments on.</div>
         </div>
@@ -866,7 +868,7 @@ function Wallets({ wallets, transactions, onAdd, onSelect, activeWallet }) {
     <div>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
         <div style={{ fontSize:14, color:C.muted }}>Manage all your MoMo accounts and wallets in one place</div>
-        <Btn variant="primary" onClick={onAdd}><Icon d={IC.plus} size={15}/> Add wallet</Btn>
+        <Btn variant="primary" onClick={onAdd}><LIcon name="plus" size={15}/> Add wallet</Btn>
       </div>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))", gap:14 }}>
         {wallets.map(w=>{
@@ -929,8 +931,8 @@ function TxTable({ transactions, wallets, onReceipt, onEdit, showWallet=false })
               {tx.type==="income" ? "+" : "-"}{fmt(tx.amount)}
             </div>
             <div style={{ display:"flex", gap:4 }}>
-              {onEdit && <Btn variant="ghost" size="sm" onClick={()=>onEdit(tx)} style={{ fontSize:11, padding:"5px 8px" }}><Icon d={IC.edit} size={12}/> Edit</Btn>}
-              {tx.type==="income" && <Btn variant="ghost" size="sm" onClick={()=>onReceipt(tx)} style={{ fontSize:11, padding:"5px 8px" }}><Icon d={IC.eye} size={12}/></Btn>}
+              {onEdit && <Btn variant="ghost" size="sm" onClick={()=>onEdit(tx)} style={{ fontSize:11, padding:"5px 8px" }}><LIcon name="edit" size={12}/> Edit</Btn>}
+              {tx.type==="income" && <Btn variant="ghost" size="sm" onClick={()=>onReceipt(tx)} style={{ fontSize:11, padding:"5px 8px" }}><LIcon name="eye" size={12}/></Btn>}
             </div>
           </div>
         );
@@ -953,7 +955,7 @@ function Transactions({ transactions, wallets, onAdd, onReceipt, onEdit }) {
             </button>
           ))}
         </div>
-        <Btn variant="primary" onClick={onAdd}><Icon d={IC.plus} size={15}/> Record Payment</Btn>
+        <Btn variant="primary" onClick={onAdd}><LIcon name="plus" size={15}/> Record Payment</Btn>
       </div>
       <div style={card({ padding:0, overflow:"hidden" })}>
         <TxTable transactions={shown} wallets={wallets} onReceipt={onReceipt} onEdit={onEdit} showWallet/>
@@ -994,7 +996,7 @@ function Receipts({ transactions, wallets, business, onReceipt, isPro, isGuest, 
             <div style={{ fontSize:13, color:isVoid?"#9ca3af":C.text, marginBottom:8 }}>{tx.description}</div>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
               <span style={{ fontSize:11, color:C.muted, fontFamily:"monospace" }}>{tx.receiptNo}</span>
-              {isVoid ? <Badge color="#ef4444">Deleted</Badge> : <Btn variant="outline" size="sm"><Icon d={IC.receipt} size={12}/> Generate</Btn>}
+              {isVoid ? <Badge color="#ef4444">Deleted</Badge> : <Btn variant="outline" size="sm"><LIcon name="receipt" size={12}/> Generate</Btn>}
             </div>
           </div>
           );
@@ -1036,10 +1038,10 @@ function Reports({ transactions, income, expense, balance, isPro, onUpgrade }) {
         <div style={card()}>
           <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:15, color:C.text, marginBottom:14 }}>PDF Export & Tax Report</div>
           {isPro ? (
-            <div style={{ fontSize:14, color:C.muted }}>✓ Your monthly PDF report is ready to download.</div>
+            <div style={{ fontSize:14, color:C.muted, display:"flex", alignItems:"center", gap:6 }}><Check size={14} color="#16a34a"/> Your monthly PDF report is ready to download.</div>
           ) : (
             <div style={{ background:"#fff4ed", border:`1px solid ${C.orange}33`, borderRadius:10, padding:"16px" }}>
-              <div style={{ fontSize:14, color:C.text, marginBottom:6 }}><Icon d={IC.lock} size={14}/> Pro feature</div>
+              <div style={{ fontSize:14, color:C.text, marginBottom:6, display:"flex", alignItems:"center", gap:6 }}><LIcon name="lock" size={14}/> Pro feature</div>
               <div style={{ fontSize:13, color:C.muted, marginBottom:12 }}>PDF export, GRA-ready tax breakdown, and advanced payroll tracking.</div>
               <Btn variant="primary" full onClick={onUpgrade}>Upgrade — GH₵ 40/mo</Btn>
             </div>
@@ -1112,8 +1114,8 @@ function RecordPaymentModal({ onClose, onSave, wallets, business }) {
         <>
           <div style={{ fontSize:14, color:C.muted, marginBottom:20 }}>How would you like to record this payment?</div>
           <div style={{ display:"flex", gap:12, marginBottom:8 }}>
-            {modeBtn("manual","✍️","Enter manually","Type in the amount, category and details yourself")}
-            {modeBtn("paste","📋","Paste MoMo SMS","Paste one or many MTN / Telecel messages")}
+            {modeBtn("manual",<Pencil size={28} strokeWidth={1.5}/>,"Enter manually","Type in the amount, category and details yourself")}
+            {modeBtn("paste",<Clipboard size={28} strokeWidth={1.5}/>,"Paste MoMo SMS","Paste one or many MTN / Telecel messages")}
           </div>
         </>
       )}
@@ -1124,14 +1126,14 @@ function RecordPaymentModal({ onClose, onSave, wallets, business }) {
           <div style={{ display:"flex", gap:8, marginBottom:18 }}>
             {["income","expense"].map(t=>(
               <button key={t} style={{ flex:1, padding:"10px", borderRadius:8, border:"none", cursor:"pointer", fontFamily:"'Poppins',sans-serif", fontSize:14, fontWeight:500, background:form.type===t?(t==="income"?C.income+"18":C.expense+"15"):"#f3f4f6", color:form.type===t?(t==="income"?C.income:C.expense):C.muted }} onClick={()=>setF("type",t)}>
-                {t==="income"?"💰 Income":"📤 Expense"}
+                {t==="income"?<><HandCoins size={14} style={{marginRight:4}}/> Income</>:<><Upload size={14} style={{marginRight:4}}/> Expense</>}
               </button>
             ))}
           </div>
           <div style={{ marginBottom:12 }}>
             <label style={label}>Wallet</label>
             <select style={input} value={form.walletId} onChange={e=>setF("walletId",e.target.value)}>
-              {wallets.map(w=><option key={w.id} value={w.id}>{WALLET_PRESETS.find(p=>p.id===w.presetId)?.icon} {w.name}</option>)}
+              {wallets.map(w=><option key={w.id} value={w.id}>{WALLET_PRESETS.find(p=>p.id===w.presetId)?.label} — {w.name}</option>)}
             </select>
           </div>
           <div style={formRow}>
@@ -1150,7 +1152,7 @@ function RecordPaymentModal({ onClose, onSave, wallets, business }) {
           <div style={{ display:"flex", gap:10 }}>
             <Btn variant="ghost" onClick={()=>setMode(null)}>← Back</Btn>
             <Btn variant="primary" full disabled={!validManual} onClick={()=>validManual&&onSave({...form,amount:parseFloat(form.amount),method:wallets.find(w=>w.id===form.walletId)?.name||"MoMo"})}>
-              <Icon d={IC.check} size={15}/> Save payment
+              <LIcon name="check" size={15}/> Save payment
             </Btn>
           </div>
         </>
@@ -1169,12 +1171,12 @@ function RecordPaymentModal({ onClose, onSave, wallets, business }) {
           <div style={{ marginBottom:16 }}>
             <label style={label}>Which wallet received these payments?</label>
             <select style={input} value={walletId} onChange={e=>setWalletId(e.target.value)}>
-              {wallets.map(w=><option key={w.id} value={w.id}>{WALLET_PRESETS.find(p=>p.id===w.presetId)?.icon} {w.name}</option>)}
+              {wallets.map(w=><option key={w.id} value={w.id}>{WALLET_PRESETS.find(p=>p.id===w.presetId)?.label} — {w.name}</option>)}
             </select>
           </div>
           <div style={{ display:"flex", gap:10 }}>
             <Btn variant="ghost" onClick={()=>setMode(null)}>← Back</Btn>
-            <Btn variant="primary" full disabled={!raw.trim()} onClick={handleParse}><Icon d={IC.receipt} size={15}/> Parse messages →</Btn>
+            <Btn variant="primary" full disabled={!raw.trim()} onClick={handleParse}><LIcon name="receipt" size={15}/> Parse messages</Btn>
           </div>
         </>
       )}
@@ -1190,14 +1192,14 @@ function RecordPaymentModal({ onClose, onSave, wallets, business }) {
               </div>
             ))}
           </div>
-          {missingDesc>0 && <div style={{ background:"#fff7ed", border:`1px solid ${C.orange}33`, borderRadius:8, padding:"10px 14px", marginBottom:12, fontSize:13, color:C.orange }}>⚠️ Add descriptions to highlighted items before saving.</div>}
+          {missingDesc>0 && <div style={{ background:"#fff7ed", border:`1px solid ${C.orange}33`, borderRadius:8, padding:"10px 14px", marginBottom:12, fontSize:13, color:C.orange, display:"flex", alignItems:"center", gap:6 }}><AlertTriangle size={14}/> Add descriptions to highlighted items before saving.</div>}
           <div style={{ maxHeight:380, overflowY:"auto", display:"flex", flexDirection:"column", gap:8, marginBottom:14 }}>
             {items.map((it,idx)=><BulkTxCard key={it._id} item={it} index={idx} onChange={(k,v)=>updateItem(it._id,k,v)} onToggle={()=>toggleItem(it._id)}/>)}
           </div>
           <div style={{ display:"flex", gap:10, borderTop:`1px solid ${C.border}`, paddingTop:14 }}>
             <Btn variant="ghost" onClick={()=>setStep(1)}>← Back</Btn>
             <Btn variant="primary" full disabled={saving||included.length===0} onClick={handleSaveAll}>
-              <Icon d={IC.check} size={15}/> Save {included.length} payment{included.length!==1?"s":""} ({fmt(totalAmt)})
+              <LIcon name="check" size={15}/> Save {included.length} payment{included.length!==1?"s":""} ({fmt(totalAmt)})
             </Btn>
           </div>
         </>
@@ -1206,7 +1208,7 @@ function RecordPaymentModal({ onClose, onSave, wallets, business }) {
       {/* ── PASTE MODE — STEP 3: done ── */}
       {mode==="paste" && step===3 && (
         <div style={{ textAlign:"center", padding:"32px 20px" }}>
-          <div style={{ fontSize:48, marginBottom:14 }}>🎉</div>
+          <div style={{ marginBottom:14 }}><PartyPopper size={48} color={C.orange} strokeWidth={1.5}/></div>
           <div style={{ fontWeight:700, fontSize:20, color:C.text, marginBottom:8 }}>{savedCount} payment{savedCount!==1?"s":""} saved!</div>
           <div style={{ fontSize:14, color:C.muted, marginBottom:24 }}>{fmt(totalAmt)} recorded to your {wallets.find(w=>w.id===walletId)?.name} wallet.</div>
           <Btn variant="primary" onClick={onClose}>Done →</Btn>
@@ -1225,7 +1227,7 @@ function ReceiptModal({ tx, business, isPro, onClose, isVoided }) {
   return (
     <Modal onClose={onClose} maxWidth={460}>
       <ModalHeader title="Receipt" onClose={onClose}/>
-      {isPro && <div style={{ background:C.orange+"12", borderRadius:8, padding:"8px 12px", marginBottom:14, fontSize:12, color:C.orange, fontWeight:500 }}>⭐ Pro — branded with your logo colors</div>}
+      {isPro && <div style={{ background:C.orange+"12", borderRadius:8, padding:"8px 12px", marginBottom:14, fontSize:12, color:C.orange, fontWeight:500, display:"flex", alignItems:"center", gap:6 }}><Star size={14} fill={C.orange}/> Pro — branded with your logo colors</div>}
       {/* RECEIPT CARD */}
       <div style={{ background:"#fff", border:`1px solid ${isVoided?"#fca5a5":C.border}`, borderRadius:14, padding:"26px 28px", marginBottom:16, position:"relative", overflow:"hidden" }}>
         {isVoided && <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%) rotate(-30deg)", fontSize:48, fontWeight:900, color:"rgba(239,68,68,0.18)", letterSpacing:8, textTransform:"uppercase", whiteSpace:"nowrap", pointerEvents:"none", zIndex:1, fontFamily:"'Poppins',sans-serif" }}>VOIDED</div>}
@@ -1251,13 +1253,13 @@ function ReceiptModal({ tx, business, isPro, onClose, isVoided }) {
           Thank you for your business · Powered by Receiva{isPro?" Pro":""}
         </div>
       </div>
-      {isVoided && <div style={{ background:"#fef2f2", border:"1px solid #fca5a5", borderRadius:8, padding:"10px 14px", marginBottom:12, fontSize:13, color:"#b91c1c", textAlign:"center", fontWeight:500 }}>⚠️ This transaction has been deleted — receipt is voided</div>}
+      {isVoided && <div style={{ background:"#fef2f2", border:"1px solid #fca5a5", borderRadius:8, padding:"10px 14px", marginBottom:12, fontSize:13, color:"#b91c1c", textAlign:"center", fontWeight:500, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}><AlertTriangle size={14}/> This transaction has been deleted — receipt is voided</div>}
       <div style={{ display:"flex", gap:10, opacity:isVoided?0.5:1, pointerEvents:isVoided?"none":"auto" }}>
         <Btn variant="wa" href={`https://wa.me/?text=${encodeURIComponent(waText)}`} style={{ flex:1 }}>
-          <Icon d={IC.share} size={14}/> WhatsApp
+          <LIcon name="share" size={14}/> WhatsApp
         </Btn>
         <Btn variant={isPro?"primary":"ghost"} style={{ flex:1 }} onClick={()=>!isPro&&alert("PDF export is a Pro feature. Upgrade to download receipts as PDF.")}>
-          <Icon d={IC.share} size={14}/> {isPro?"Download PDF":"PDF (Pro)"}
+          <LIcon name="share" size={14}/> {isPro?"Download PDF":"PDF (Pro)"}
         </Btn>
       </div>
     </Modal>
@@ -1283,7 +1285,7 @@ function EditTransactionModal({ tx, onClose, onSave, onDelete, wallets }) {
       <div style={{ display:"flex", gap:8, marginBottom:18 }}>
         {["income","expense"].map(t=>(
           <button key={t} style={{ flex:1, padding:"10px", borderRadius:8, border:"none", cursor:"pointer", fontFamily:"'Poppins',sans-serif", fontSize:14, fontWeight:500, background:form.type===t?(t==="income"?C.income+"18":C.expense+"15"):"#f3f4f6", color:form.type===t?(t==="income"?C.income:C.expense):C.muted }} onClick={()=>setF("type",t)}>
-            {t==="income"?"💰 Income":"📤 Expense"}
+            {t==="income"?<><HandCoins size={14} style={{marginRight:4}}/> Income</>:<><Upload size={14} style={{marginRight:4}}/> Expense</>}
           </button>
         ))}
       </div>
@@ -1292,7 +1294,7 @@ function EditTransactionModal({ tx, onClose, onSave, onDelete, wallets }) {
       <div style={{ marginBottom:12 }}>
         <label style={label}>Wallet</label>
         <select style={input} value={form.walletId} onChange={e=>setF("walletId",e.target.value)}>
-          {wallets.map(w=><option key={w.id} value={w.id}>{WALLET_PRESETS.find(p=>p.id===w.presetId)?.icon} {w.name}</option>)}
+          {wallets.map(w=><option key={w.id} value={w.id}>{WALLET_PRESETS.find(p=>p.id===w.presetId)?.label} — {w.name}</option>)}
         </select>
       </div>
 
@@ -1321,7 +1323,7 @@ function EditTransactionModal({ tx, onClose, onSave, onDelete, wallets }) {
       <div style={{ display:"flex", gap:10, marginBottom:20 }}>
         <Btn variant="ghost" onClick={onClose}>Cancel</Btn>
         <Btn variant="primary" full disabled={!valid} onClick={handleSave}>
-          <Icon d={IC.check} size={15}/> Save changes
+          <LIcon name="check" size={15}/> Save changes
         </Btn>
       </div>
 
@@ -1329,7 +1331,7 @@ function EditTransactionModal({ tx, onClose, onSave, onDelete, wallets }) {
       <div style={{ borderTop:`1px solid ${C.border}`, paddingTop:16 }}>
         {!confirmDelete ? (
           <button onClick={()=>setConfirmDelete(true)} style={{ display:"flex", alignItems:"center", gap:6, background:"transparent", border:"1px solid #fca5a5", borderRadius:8, padding:"8px 14px", color:"#ef4444", fontSize:13, cursor:"pointer", fontFamily:"'Poppins',sans-serif", fontWeight:500, width:"100%", justifyContent:"center", transition:"all 0.15s" }}>
-            <Icon d={IC.trash} size={13}/> Delete this transaction
+            <LIcon name="trash" size={13}/> Delete this transaction
           </button>
         ) : (
           <div style={{ background:"#fef2f2", border:"1px solid #fca5a5", borderRadius:10, padding:"14px 16px" }}>
@@ -1362,7 +1364,7 @@ function AddWalletModal({ onClose, onSave }) {
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8 }}>
           {WALLET_PRESETS.map(p=>(
             <div key={p.id} onClick={()=>setPresetId(p.id)} style={{ border:`1.5px solid ${presetId===p.id ? p.color : C.border}`, borderRadius:10, padding:"10px 8px", cursor:"pointer", textAlign:"center", background: presetId===p.id ? p.bg : C.white }}>
-              <div style={{ fontSize:20, marginBottom:3 }}>{p.icon}</div>
+              <div style={{ marginBottom:3 }}><WalletIcon presetId={p.id} size={20} color={presetId===p.id ? p.color : undefined}/></div>
               <div style={{ fontSize:11, fontWeight:500, color: presetId===p.id ? p.color : C.muted }}>{p.label}</div>
             </div>
           ))}
@@ -1371,7 +1373,7 @@ function AddWalletModal({ onClose, onSave }) {
       <div style={{ marginBottom:12 }}><label style={label}>Wallet name (optional)</label><input style={input} placeholder={preset?.label} value={name} onChange={e=>setName(e.target.value)}/></div>
       <div style={{ marginBottom:18 }}><label style={label}>Phone / account number</label><input style={input} placeholder="e.g. 0592040012" value={number} onChange={e=>setNumber(e.target.value)}/></div>
       <Btn variant="primary" full onClick={()=>onSave({ presetId, name:name||preset?.label, number })}>
-        <Icon d={IC.check} size={15}/> Add wallet
+        <LIcon name="check" size={15}/> Add wallet
       </Btn>
     </Modal>
   );
@@ -1409,13 +1411,13 @@ function UpgradeModal({ onClose }) {
     <Modal onClose={onClose} maxWidth={440}>
       <ModalHeader title="Upgrade to Pro" onClose={onClose}/>
       <div style={{ textAlign:"center", marginBottom:20 }}>
-        <div style={{ fontSize:36, marginBottom:8 }}>⭐</div>
+        <div style={{ marginBottom:8 }}><Star size={36} color={C.orange} fill={C.orange} strokeWidth={1.5}/></div>
         <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:28, color:C.orange }}>GH₵ 40 / month</div>
         <div style={{ fontSize:14, color:C.muted, marginTop:4 }}>Everything you need to run a professional business</div>
       </div>
       {[["Logo-branded receipts","Your company colors on every receipt"],["Unlimited transactions","No monthly cap, ever"],["PDF export","Download receipts and reports"],["Multi-wallet","MTN, Telecel, company account — all in one"],["Tax-ready reports","GRA-friendly monthly summaries"],["Priority support","WhatsApp support within 2 hours"]].map(([t,d])=>(
         <div key={t} style={{ display:"flex", gap:12, padding:"10px 0", borderBottom:`1px solid ${C.border}`, alignItems:"flex-start" }}>
-          <span style={{ color:C.orange, fontWeight:700, marginTop:1 }}>✓</span>
+          <Check size={14} color={C.orange} strokeWidth={2.5} style={{marginTop:1, flexShrink:0}}/>
           <div><div style={{ fontSize:14, fontWeight:500, color:C.text }}>{t}</div><div style={{ fontSize:12, color:C.muted }}>{d}</div></div>
         </div>
       ))}
@@ -1448,7 +1450,7 @@ function ProductList({ products, categories, onAdd, onEdit }) {
           <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:20, color:C.text }}>Products</div>
           <div style={{ fontSize:13, color:C.muted }}>{products.length} products · {products.filter(p=>p.type==="service").length} services</div>
         </div>
-        <Btn variant="primary" onClick={onAdd}><Icon d={IC.plus} size={15}/> Add product</Btn>
+        <Btn variant="primary" onClick={onAdd}><LIcon name="plus" size={15}/> Add product</Btn>
       </div>
 
       {/* Filters */}
@@ -1552,7 +1554,7 @@ function AddEditProduct({ product, categories, onSave, onCancel }) {
           <div style={{ display:"flex", gap:8 }}>
             {["product","service"].map(t=>(
               <button key={t} style={{ flex:1, padding:"10px", borderRadius:8, border:"none", cursor:"pointer", fontFamily:"'Poppins',sans-serif", fontSize:13, fontWeight:500, background: form.type===t ? C.orange+"18":C.light, color: form.type===t ? C.orange : C.muted, border:`1.5px solid ${form.type===t?C.orange+"44":C.border}` }} onClick={()=>{ set("type",t); if(t==="service") set("trackStock",false); else set("trackStock",true); }}>
-                {t==="product" ? "📦 Physical product" : "⚙️ Service"}
+                {t==="product" ? <><Package size={14} style={{marginRight:4}}/> Physical product</> : <><Cog size={14} style={{marginRight:4}}/> Service</>}
               </button>
             ))}
           </div>
@@ -1632,7 +1634,7 @@ function AddEditProduct({ product, categories, onSave, onCancel }) {
         <div style={{ display:"flex", gap:10 }}>
           <Btn variant="ghost" onClick={onCancel}>Cancel</Btn>
           <Btn variant="primary" full disabled={!valid} onClick={()=>valid&&onSave({ ...form, costPrice:parseFloat(form.costPrice)||0, sellPrice:parseFloat(form.sellPrice)||0, taxRate:parseFloat(form.taxRate)||0, stock:parseInt(form.stock)||0 })}>
-            <Icon d={IC.check} size={15}/> {isEdit?"Save changes":"Add product"}
+            <LIcon name="check" size={15}/> {isEdit?"Save changes":"Add product"}
           </Btn>
         </div>
       </div>
@@ -1676,7 +1678,7 @@ function ProductCategories({ categories, products, onSave }) {
         <div style={{ display:"flex", gap:10, alignItems:"center" }}>
           <input style={{ ...input, flex:1 }} placeholder="Category name" value={newName} onChange={e=>setNewName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addCat()}/>
           <input type="color" value={newColor} onChange={e=>setNewColor(e.target.value)} style={{ width:40, height:40, border:`1px solid ${C.border}`, borderRadius:8, padding:2, cursor:"pointer" }}/>
-          <Btn variant="primary" onClick={addCat} disabled={!newName.trim()}><Icon d={IC.plus} size={15}/> Add</Btn>
+          <Btn variant="primary" onClick={addCat} disabled={!newName.trim()}><LIcon name="plus" size={15}/> Add</Btn>
         </div>
       </div>
 
