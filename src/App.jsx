@@ -354,29 +354,7 @@ function LoginPage({ onLogin, onGuest }) {
               ))}
             </div>
 
-            {/* PLANS */}
-            <div className="plans-row">
-              {[
-                { plan:"Free",     price:"GH₵ 0",   sub:"/mo", perks:["30 transactions","Basic receipts","MoMo parser"],             hot:false },
-                { plan:"Growth",   price:"GH₵ 68",  sub:"/mo", perks:["1,000 transactions","4 wallets","PDF export"],                hot:true  },
-                { plan:"Business", price:"GH₵ 115", sub:"/mo", perks:["1,750 transactions","5 wallets","GRA reports"],               hot:false },
-              ].map(p=>(
-                <div key={p.plan} className={`plan-card ${p.hot?"hot":""}`}>
-                  {p.hot && <div className="popular-tag">Most popular</div>}
-                  <div style={{ fontSize:12, fontWeight:600, color:"#111827", marginBottom:4 }}>{p.plan}</div>
-                  <div style={{ fontWeight:700, fontSize:18, color: p.hot?"#F97316":"#111827" }}>
-                    {p.price}<span style={{ fontSize:11, fontWeight:400, color:"#6b7280" }}>{p.sub}</span>
-                  </div>
-                  <div style={{ marginTop:8 }}>
-                    {p.perks.map(pk=>(
-                      <div key={pk} style={{ fontSize:11, color:"#6b7280", display:"flex", alignItems:"center", gap:4, marginBottom:3 }}>
-                        <Check size={10} color={p.hot?"#F97316":"#0BADA8"} strokeWidth={2.5}/>{pk}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+
 
             <div className="footer-note"><Lock size={12} strokeWidth={1.8} style={{marginRight:4,verticalAlign:"middle"}}/> Encrypted · Cancel anytime · Ghana-built</div>
           </div>
@@ -502,12 +480,12 @@ export default function App() {
   if (authState === "login") return <LoginPage onLogin={handleLogin} onGuest={handleGuest}/>;
 
   const isGuest    = authState === "guest";
-  const isPro      = user?.plan === "pro";
+  const isPro      = user?.plan === "pro" || business?.plan === "pro";
   const txFiltered = activeWallet ? transactions.filter(t=>t.walletId===activeWallet) : transactions;
   const income     = txFiltered.filter(t=>t.type==="income").reduce((s,t)=>s+t.amount,0);
   const expense    = txFiltered.filter(t=>t.type==="expense").reduce((s,t)=>s+t.amount,0);
   const balance    = income - expense;
-  const txCap      = isPro ? Infinity : 30;
+  const txCap      = isPro ? Infinity : 60;
   const txUsed     = transactions.length;
 
   const tryGenerateReceipt = (tx) => {
@@ -682,7 +660,7 @@ export default function App() {
               <div style={{ background:`linear-gradient(135deg,${C.orange}18,${C.orange}08)`, border:`1px solid ${C.orange}30`, borderRadius:10, padding:"12px 14px", marginBottom:10 }}>
                 <div style={{ fontSize:11, color:C.orange, fontWeight:600, marginBottom:2, display:"flex", alignItems:"center", gap:5 }}><LIcon name="star" size={11}/> Upgrade to Pro</div>
                 <div style={{ fontSize:11, color:C.muted, marginBottom:8 }}>Logo receipts · PDF · More</div>
-                <Btn variant="primary" full size="sm" onClick={()=>setShowUpgrade(true)}>Upgrade — GH₵ 40/mo</Btn>
+                <Btn variant="primary" full size="sm" onClick={()=>setShowUpgrade(true)}>Upgrade — GH₵ 23/mo</Btn>
               </div>
             )}
             {!isGuest && (
@@ -788,8 +766,8 @@ export default function App() {
         {[
           { key:"dashboard", label:"Dashboard", IconComp:Home },
           { key:"reports", label:"Reports", IconComp:BarChart3 },
-          { key:"receipts", label:"Profile", IconComp:User },
           { key:"add", label:"Quick-add", IconComp:Plus },
+          { key:"receipts", label:"Profile", IconComp:User },
         ].map(n=>(
           <div key={n.key} onClick={()=>{ if(n.key==="add"){ setShowRecordPayment(true); } else { navigateTo(n.key); setMobileMenuOpen(false); } }} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:3, cursor:"pointer", padding:"6px 0", flex:1, color: n.key==="add" ? C.orange : page===n.key ? C.orange : C.muted, transition:"color 0.15s" }}>
             <n.IconComp size={20} strokeWidth={page===n.key || n.key==="add" ? 2 : 1.5}/>
@@ -1212,7 +1190,7 @@ function Receipts({ transactions, wallets, business, onReceipt, isPro, isGuest, 
     <div>
       {isGuest && (
         <div style={{ background:C.orange+"12", border:`1.5px solid ${C.orange}33`, borderRadius:12, padding:"14px 18px", marginBottom:18, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-          <div style={{ fontSize:14, color:C.text }}><strong style={{ color:C.orange }}>{guestLeft} free receipt{guestLeft!==1?"s":""}</strong> remaining. Sign up for 30/month free.</div>
+          <div style={{ fontSize:14, color:C.text }}><strong style={{ color:C.orange }}>{guestLeft} free receipt{guestLeft!==1?"s":""}</strong> remaining. Sign up for 60/month free.</div>
           <Btn variant="primary" size="sm" onClick={()=>{}}>Sign up free</Btn>
         </div>
       )}
@@ -1282,7 +1260,7 @@ function Reports({ transactions, income, expense, balance, isPro, onUpgrade }) {
             <div style={{ background:"#fff4ed", border:`1px solid ${C.orange}33`, borderRadius:10, padding:"16px" }}>
               <div style={{ fontSize:14, color:C.text, marginBottom:6, display:"flex", alignItems:"center", gap:6 }}><LIcon name="lock" size={14}/> Pro feature</div>
               <div style={{ fontSize:13, color:C.muted, marginBottom:12 }}>PDF export, GRA-ready tax breakdown, and advanced payroll tracking.</div>
-              <Btn variant="primary" full onClick={onUpgrade}>Upgrade — GH₵ 40/mo</Btn>
+              <Btn variant="primary" full onClick={onUpgrade}>Upgrade — GH₵ 23/mo</Btn>
             </div>
           )}
         </div>
@@ -1651,7 +1629,7 @@ function UpgradeModal({ onClose }) {
       <ModalHeader title="Upgrade to Pro" onClose={onClose}/>
       <div style={{ textAlign:"center", marginBottom:20 }}>
         <div style={{ marginBottom:8 }}><Star size={36} color={C.orange} fill={C.orange} strokeWidth={1.5}/></div>
-        <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:28, color:C.orange }}>GH₵ 40 / month</div>
+        <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:28, color:C.orange }}>GH₵ 23 / month</div>
         <div style={{ fontSize:14, color:C.muted, marginTop:4 }}>Everything you need to run a professional business</div>
       </div>
       {[["Logo-branded receipts","Your company colors on every receipt"],["Unlimited transactions","No monthly cap, ever"],["PDF export","Download receipts and reports"],["Multi-wallet","MTN, Telecel, company account — all in one"],["Tax-ready reports","GRA-friendly monthly summaries"],["Priority support","WhatsApp support within 2 hours"]].map(([t,d])=>(
@@ -1661,7 +1639,7 @@ function UpgradeModal({ onClose }) {
         </div>
       ))}
       <Btn variant="primary" full style={{ marginTop:20 }} onClick={()=>alert("Payment coming soon! Contact us on WhatsApp: 0592040012")}>
-        Upgrade now — GH₵ 40/mo
+        Upgrade now — GH₵ 23/mo
       </Btn>
       <div style={{ textAlign:"center", fontSize:12, color:C.muted, marginTop:10 }}>Cancel anytime · No hidden fees</div>
     </Modal>
