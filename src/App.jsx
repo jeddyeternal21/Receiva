@@ -97,7 +97,7 @@ const LI = {
   home: Home, tx: ArrowLeftRight, receipt: Receipt, wallet: Wallet,
   plus: Plus, share: Share2, check: Check, x: X, report: BarChart3,
   eye: Eye, momo: Clock, box: Package, lock: Lock, star: Star,
-  edit: Pencil, trash: Trash2,
+  edit: Pencil, trash: Trash2, user: User, settings: Cog,
 };
 function LIcon({ name, size=18, color, strokeWidth=1.8, style={} }) {
   const Comp = LI[name];
@@ -107,18 +107,18 @@ function LIcon({ name, size=18, color, strokeWidth=1.8, style={} }) {
 
 // ─── COLORS ──────────────────────────────────────────────────
 const C = {
-  orange:  "#F97316",
-  orangeD: "#ea6a08",
-  teal:    "#0BADA8",
-  income:  "#0BADA8",
-  expense: "#ef4444",
-  text:    "#111827",
-  muted:   "#6b7280",
-  light:   "#f9fafb",
-  border:  "#e5e7eb",
-  white:   "#ffffff",
-  sidebar: "#ffffff",
-  sidebarBorder: "#f0f0f0",
+  orange:  "var(--c-orange)",
+  orangeD: "var(--c-orangeD)",
+  teal:    "var(--c-teal)",
+  income:  "var(--c-income)",
+  expense: "var(--c-expense)",
+  text:    "var(--c-text)",
+  muted:   "var(--c-muted)",
+  light:   "var(--c-light)",
+  border:  "var(--c-border)",
+  white:   "var(--c-white)",
+  sidebar: "var(--c-sidebar)",
+  sidebarBorder: "var(--c-sidebarBorder)",
 };
 
 // ─── SHARED UI ────────────────────────────────────────────────
@@ -372,6 +372,18 @@ export default function App() {
   const [authState, setAuthState]               = useState("loading");
   const [user, setUser]                         = useState(null);
   const [page, setPage]                         = useState("dashboard");
+  const [darkMode, setDarkMode]                 = useState(() => localStorage.getItem("darkMode") === "true");
+
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.add("dark-mode");
+      localStorage.setItem("darkMode", "true");
+    } else {
+      document.body.classList.remove("dark-mode");
+      localStorage.setItem("darkMode", "false");
+    }
+  }, [darkMode]);
+
   const [wallets, setWallets]                   = useState([]);
   const [activeWallet, setActiveWallet]         = useState(null);
   const [transactions, setTransactions]         = useState([]);
@@ -480,12 +492,14 @@ export default function App() {
   if (authState === "login") return <LoginPage onLogin={handleLogin} onGuest={handleGuest}/>;
 
   const isGuest    = authState === "guest";
-  const isPro      = user?.plan === "pro" || business?.plan === "pro";
+  const isPro      = user?.plan === "pro" || business?.plan === "pro" || business?.plan === "growth" || business?.plan === "business";
   const txFiltered = activeWallet ? transactions.filter(t=>t.walletId===activeWallet) : transactions;
   const income     = txFiltered.filter(t=>t.type==="income").reduce((s,t)=>s+t.amount,0);
   const expense    = txFiltered.filter(t=>t.type==="expense").reduce((s,t)=>s+t.amount,0);
   const balance    = income - expense;
-  const txCap      = isPro ? Infinity : 60;
+  const txCap      = business?.plan === "pro" ? Infinity :
+                     business?.plan === "business" ? 1750 :
+                     business?.plan === "growth" ? 1000 : 60;
   const txUsed     = transactions.length;
 
   const tryGenerateReceipt = (tx) => {
@@ -545,6 +559,13 @@ export default function App() {
   };
 
   const addWallet = async (w) => {
+    const walletLimit = business?.plan === "pro" ? Infinity :
+                        business?.plan === "business" ? 5 :
+                        business?.plan === "growth" ? 4 : 2;
+    if (wallets.length >= walletLimit) {
+      alert(`Your current plan (${(business.plan||'free').toUpperCase()}) only supports up to ${walletLimit} wallets. Please upgrade your subscription on the Reports page to add more.`);
+      return;
+    }
     if (isGuest || !businessId) { setWallets(p=>[...p,{...w,id:genId(),balance:0}]); setShowAddWallet(false); return; }
     const { data, error } = await supabase.from("wallets").insert({ business_id:businessId, preset_id:w.presetId, name:w.name, number:w.number||null }).select().single();
     if (error) { console.error(error); alert("Could not save wallet."); return; }
@@ -563,6 +584,8 @@ export default function App() {
       { key:"add-product",     label:"Add New Product" },
       { key:"categories",      label:"Categories"      },
     ]},
+    { key:"profile",      label:"Profile",      icon:"user"    },
+    { key:"settings",     label:"Settings",     icon:"settings" },
   ];
 
   const isProductPage = ["products","product-list","add-product","categories"].includes(page);
@@ -610,7 +633,36 @@ export default function App() {
     <>
       <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet"/>
       <style>{`
-        body, input, button, select, textarea { font-family: 'Poppins', sans-serif; }
+        :root {
+          --c-orange: #F97316;
+          --c-orangeD: #ea6a08;
+          --c-teal: #0BADA8;
+          --c-income: #0BADA8;
+          --c-expense: #ef4444;
+          --c-text: #111827;
+          --c-muted: #6b7280;
+          --c-light: #f9fafb;
+          --c-border: #e5e7eb;
+          --c-white: #ffffff;
+          --c-sidebar: #ffffff;
+          --c-sidebarBorder: #f0f0f0;
+        }
+        body.dark-mode {
+          --c-orange: #f97316;
+          --c-orangeD: #ea6a08;
+          --c-teal: #14b8a6;
+          --c-income: #14b8a6;
+          --c-expense: #f43f5e;
+          --c-text: #f3f4f6;
+          --c-muted: #9ca3af;
+          --c-light: #0d1527;
+          --c-border: #334155;
+          --c-white: #1e293b;
+          --c-sidebar: #1e293b;
+          --c-sidebarBorder: #334155;
+          background-color: #0d1527 !important;
+        }
+        body, input, button, select, textarea { font-family: 'Poppins', sans-serif; transition: background-color 0.2s, border-color 0.2s, color 0.2s; }
         @media(max-width:768px){
           .desktop-sidebar{display:none!important;}
           .mobile-topbar-title{font-size:16px!important;}
@@ -618,18 +670,58 @@ export default function App() {
           .content-pad{padding:16px!important;}
           .stat-grid{grid-template-columns:1fr 1fr!important;}
           .hamburger-btn{display:flex!important;}
+          
+          .wallets-header-container {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 12px !important;
+            text-align: left;
+          }
+          .wallets-header-container button {
+            width: 100% !important;
+          }
         }
         @media(min-width:769px){
           .hamburger-btn{display:none!important;}
           .mobile-overlay{display:none!important;}
         }
         .mobile-overlay{position:fixed;inset:0;z-index:200;display:flex;}
-        .mobile-drawer{width:280px;background:#fff;height:100%;overflow-y:auto;box-shadow:4px 0 24px rgba(0,0,0,0.15);display:flex;flex-direction:column;}
+        .mobile-drawer{width:280px;background:var(--c-white);height:100%;overflow-y:auto;box-shadow:4px 0 24px rgba(0,0,0,0.15);display:flex;flex-direction:column;}
         .mobile-backdrop{flex:1;background:rgba(0,0,0,0.4);}
         .nav-item-hover:hover{background:${C.orange}08;}
+        
+        /* Dark Mode overrides for raw components */
+        body.dark-mode .auth-card,
+        body.dark-mode .plan-card,
+        body.dark-mode .feat-card {
+          background: #1e293b !important;
+          border-color: #334155 !important;
+        }
+        body.dark-mode .tab-row {
+          background: #0d1527 !important;
+        }
+        body.dark-mode .tab-btn.active {
+          background: #1e293b !important;
+          color: #f3f4f6 !important;
+        }
+        body.dark-mode input,
+        body.dark-mode textarea,
+        body.dark-mode select {
+          background: #0d1527 !important;
+          border-color: #334155 !important;
+          color: #f3f4f6 !important;
+        }
+        body.dark-mode .mobile-bottom-nav {
+          background: #1e293b !important;
+          border-top-color: #334155 !important;
+        }
+        body.dark-mode .mobile-topbar {
+          background: #1e293b !important;
+          border-bottom-color: #334155 !important;
+        }
       `}</style>
 
-      <div style={{ minHeight:"100vh", background:"#f9fafb", color:C.text, fontFamily:"'Poppins',sans-serif", display:"flex" }}>
+      <div style={{ minHeight:"100vh", background:C.light, color:C.text, fontFamily:"'Poppins',sans-serif", display:"flex" }}>
 
         {/* DESKTOP SIDEBAR */}
         <div className="desktop-sidebar" style={{ width:220, background:C.white, borderRight:`1px solid ${C.sidebarBorder}`, display:"flex", flexDirection:"column", padding:"24px 0", flexShrink:0, boxShadow:"2px 0 8px rgba(0,0,0,0.04)" }}>
@@ -749,14 +841,16 @@ export default function App() {
           <div className="content-pad" style={{ flex:1, padding:"24px 28px", overflowY:"auto" }}>
             {dataLoading && <div style={{ textAlign:"center", padding:"40px", color:C.muted, fontSize:14 }}>Loading your data...</div>}
             {dataError   && <div style={{ background:"#fef2f2", border:"1px solid #fca5a5", borderRadius:10, padding:"14px 18px", marginBottom:16, fontSize:13, color:"#b91c1c" }}>{dataError}</div>}
-            {page==="dashboard"    && <Dashboard transactions={txFiltered} income={income} expense={expense} balance={balance} wallets={wallets} activeWallet={activeWallet} business={business} user={user} onAdd={()=>setShowRecordPayment(true)} onReceipt={tryGenerateReceipt} onEdit={setShowEditTransaction} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount}/>}
+             {page==="dashboard"    && <Dashboard transactions={txFiltered} income={income} expense={expense} balance={balance} wallets={wallets} activeWallet={activeWallet} business={business} user={user} onAdd={()=>setShowRecordPayment(true)} onReceipt={tryGenerateReceipt} onEdit={setShowEditTransaction} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount}/>}
             {page==="wallets"      && <Wallets wallets={wallets} transactions={transactions} onAdd={()=>setShowAddWallet(true)} onSelect={setActiveWallet} activeWallet={activeWallet}/>}
             {page==="transactions" && <Transactions transactions={txFiltered} wallets={wallets} onAdd={()=>setShowRecordPayment(true)} onReceipt={tryGenerateReceipt} onEdit={setShowEditTransaction}/>}
             {page==="receipts"     && <Receipts transactions={txFiltered} wallets={wallets} business={business} onReceipt={tryGenerateReceipt} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount} voidedReceipts={voidedReceipts} deletedTransactions={deletedTransactions}/>}
-            {page==="reports"      && <Reports transactions={txFiltered} income={income} expense={expense} balance={balance} isPro={isPro} onUpgrade={()=>setShowUpgrade(true)}/>}
+            {page==="reports"      && <Reports transactions={txFiltered} income={income} expense={expense} balance={balance} isPro={isPro} onUpgrade={()=>setShowUpgrade(true)} business={business} setBusiness={setBusiness} isGuest={isGuest} businessId={businessId}/>}
             {(page==="products"||page==="product-list") && <ProductList products={products} categories={productCategories} onAdd={()=>navigateTo("add-product")} onEdit={p=>{ setEditingProduct(p); navigateTo("add-product"); }}/>}
             {page==="add-product"  && <AddEditProduct product={editingProduct} categories={productCategories} onSave={p=>{ if(editingProduct){ setProducts(prev=>prev.map(x=>x.id===p.id?p:x)); } else { setProducts(prev=>[...prev,{...p,id:genId()}]); } setEditingProduct(null); navigateTo("product-list"); }} onCancel={()=>{ setEditingProduct(null); navigateTo("product-list"); }}/>}
             {page==="categories"   && <ProductCategories categories={productCategories} products={products} onSave={setProductCategories}/>}
+            {page==="profile"      && <Profile user={user} business={business} setBusiness={setBusiness} isGuest={isGuest} businessId={businessId} onSignOut={handleSignOut}/>}
+            {page==="settings"     && <Settings user={user} business={business} setBusiness={setBusiness} isGuest={isGuest} businessId={businessId} transactions={transactions}/>}
           </div>
         </div>
       </div>
@@ -767,7 +861,7 @@ export default function App() {
           { key:"dashboard", label:"Dashboard", IconComp:Home },
           { key:"reports", label:"Reports", IconComp:BarChart3 },
           { key:"add", label:"Quick-add", IconComp:Plus },
-          { key:"receipts", label:"Profile", IconComp:User },
+          { key:"profile", label:"Profile", IconComp:User },
         ].map(n=>(
           <div key={n.key} onClick={()=>{ if(n.key==="add"){ setShowRecordPayment(true); } else { navigateTo(n.key); setMobileMenuOpen(false); } }} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:3, cursor:"pointer", padding:"6px 0", flex:1, color: n.key==="add" ? C.orange : page===n.key ? C.orange : C.muted, transition:"color 0.15s" }}>
             <n.IconComp size={20} strokeWidth={page===n.key || n.key==="add" ? 2 : 1.5}/>
@@ -1052,9 +1146,9 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
 function Wallets({ wallets, transactions, onAdd, onSelect, activeWallet }) {
   return (
     <div>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
-        <div style={{ fontSize:14, color:C.muted }}>Manage all your MoMo accounts and wallets in one place</div>
-        <Btn variant="primary" onClick={onAdd}><LIcon name="plus" size={15}/> Add wallet</Btn>
+      <div className="wallets-header-container" style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:12, marginBottom:20 }}>
+        <div className="desc" style={{ fontSize:14, color:C.muted }}>Manage all your MoMo accounts and wallets in one place</div>
+        <Btn variant="primary" style={{ flexShrink:0 }} onClick={onAdd}><LIcon name="plus" size={15}/> Add wallet</Btn>
       </div>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))", gap:14 }}>
         {wallets.map(w=>{
@@ -1224,9 +1318,30 @@ function Receipts({ transactions, wallets, business, onReceipt, isPro, isGuest, 
 }
 
 // ─── REPORTS PAGE ─────────────────────────────────────────────
-function Reports({ transactions, income, expense, balance, isPro, onUpgrade }) {
+function Reports({ transactions, income, expense, balance, isPro, onUpgrade, business, setBusiness, isGuest, businessId }) {
   const byCat = transactions.reduce((a,t)=>{ if(!a[t.category])a[t.category]={i:0,e:0}; a[t.category][t.type==="income"?"i":"e"]+=t.amount; return a; },{});
   const maxCat = Math.max(1,...Object.values(byCat).map(c=>c.i+c.e));
+
+  const handleSelectPlan = async (selectedPlan) => {
+    if (isGuest) {
+      setBusiness(b => ({ ...b, plan: selectedPlan }));
+      alert(`Plan updated to ${selectedPlan.toUpperCase()} locally in guest mode!`);
+      return;
+    }
+    try {
+      const { error } = await supabase
+        .from("businesses")
+        .update({ plan: selectedPlan })
+        .eq("id", businessId);
+      if (error) throw error;
+      setBusiness(b => ({ ...b, plan: selectedPlan }));
+      alert(`Successfully upgraded to the ${selectedPlan.toUpperCase()} plan!`);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update plan. Check your internet connection.");
+    }
+  };
+
   return (
     <div>
       <div className="dash-stats-grid" style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:24 }}>
@@ -1255,14 +1370,14 @@ function Reports({ transactions, income, expense, balance, isPro, onUpgrade }) {
         <div style={card()}>
           <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:15, color:C.text, marginBottom:14 }}>PDF Export & Tax Report</div>
           {isPro ? (
-            <div style={{ fontSize:14, color:C.muted, display:"flex", alignItems:"center", gap:6 }}><Check size={14} color="#16a34a"/> Your monthly PDF report is ready to download.</div>
+            <div style={{ fontSize:14, color:C.muted, display:"flex", alignItems:"center", gap:6, marginBottom:16 }}><Check size={14} color="#16a34a"/> Your monthly PDF report is ready to download.</div>
           ) : (
-            <div style={{ background:"#fff4ed", border:`1px solid ${C.orange}33`, borderRadius:10, padding:"16px" }}>
+            <div style={{ background:"#fff4ed", border:`1px solid ${C.orange}33`, borderRadius:10, padding:"16px", marginBottom:16 }}>
               <div style={{ fontSize:14, color:C.text, marginBottom:6, display:"flex", alignItems:"center", gap:6 }}><LIcon name="lock" size={14}/> Pro feature</div>
-              <div style={{ fontSize:13, color:C.muted, marginBottom:12 }}>PDF export, GRA-ready tax breakdown, and advanced payroll tracking.</div>
-              <Btn variant="primary" full onClick={onUpgrade}>Upgrade — GH₵ 23/mo</Btn>
+              <div style={{ fontSize:13, color:C.muted }}>PDF export, GRA-ready tax breakdown, and advanced payroll tracking.</div>
             </div>
           )}
+          <PlanSlider currentPlan={business.plan} onSelectPlan={handleSelectPlan}/>
         </div>
       </div>
     </div>
@@ -1466,8 +1581,9 @@ function ReceiptModal({ tx, business, isPro, onClose, isVoided }) {
           <span style={{ color:C.muted, fontSize:14 }}>Total paid</span>
           <span style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:24, color:accentColor }}>{fmt(tx.amount)}</span>
         </div>
-        <div style={{ marginTop:16, textAlign:"center", fontSize:10, color:"#d1d5db", borderTop:`1px solid #f3f4f6`, paddingTop:10 }}>
-          Thank you for your business · Powered by Receiva{isPro?" Pro":""}
+        <div style={{ marginTop:16, textAlign:"center", fontSize:10, color:"#9ca3af", borderTop:`1px solid #e5e7eb`, paddingTop:10 }}>
+          {localStorage.getItem("settings_receipt_msg") || "Thank you for your business!"}
+          {localStorage.getItem("settings_powered_by") !== "false" && ` · Powered by Receiva${isPro ? " Pro" : ""}`}
         </div>
       </div>
       {isVoided && <div style={{ background:"#fef2f2", border:"1px solid #fca5a5", borderRadius:8, padding:"10px 14px", marginBottom:12, fontSize:13, color:"#b91c1c", textAlign:"center", fontWeight:500, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}><AlertTriangle size={14}/> This transaction has been deleted — receipt is voided</div>}
@@ -1970,3 +2086,303 @@ function ProductCategories({ categories, products, onSave }) {
     </div>
   );
 }
+
+// ─── SUBSCRIPTION PLANS SLIDER ─────────────────────────────────
+function PlanSlider({ currentPlan, onSelectPlan }) {
+  const plans = [
+    { id: "free", name: "Free Tier", price: 0, cap: 60, wallets: 2, perks: ["60 receipts / mo cap", "Basic Receipts", "MoMo Parser", "Max 2 Wallets"] },
+    { id: "growth", name: "Growth Plan", price: 23, cap: 1000, wallets: 4, perks: ["1,000 receipts / mo", "PDF Report Export", "Max 4 Wallets", "Branded Receipt Colors", "Priority WhatsApp Support"] },
+    { id: "business", name: "Business Plan", price: 39, cap: 1750, wallets: 5, perks: ["1,750 receipts / mo", "PDF + GRA Tax Reports", "Max 5 Wallets", "Branded Receipt Colors", "CSV Data Export", "Priority Support"] },
+    { id: "pro", name: "Pro / Unlimited", price: 59, cap: "Unlimited", wallets: "Unlimited", perks: ["Unlimited Receipts / mo", "PDF + GRA Tax Reports", "Unlimited Wallets", "Branded Receipt Colors", "CSV Data Export", "Custom Logo Branding", "Dedicated WhatsApp Manager"] }
+  ];
+
+  const [activeIndex, setActiveIndex] = useState(() => {
+    const idx = plans.findIndex(p => p.id === currentPlan);
+    return idx >= 0 ? idx : 0;
+  });
+
+  const next = () => setActiveIndex(prev => (prev + 1) % plans.length);
+  const prev = () => setActiveIndex(prev => (prev - 1 + plans.length) % plans.length);
+
+  const activePlan = plans[activeIndex];
+
+  return (
+    <div style={{ background:C.white, border:`1px solid ${C.border}`, borderRadius:14, padding:"20px 22px", position:"relative" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
+        <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:15, color:C.text }}>Subscription Plans</div>
+        <div style={{ display:"flex", gap:6 }}>
+          <button onClick={prev} style={{ background:"transparent", border:`1px solid ${C.border}`, color:C.text, borderRadius:6, width:28, height:28, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>&larr;</button>
+          <button onClick={next} style={{ background:"transparent", border:`1px solid ${C.border}`, color:C.text, borderRadius:6, width:28, height:28, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>&rarr;</button>
+        </div>
+      </div>
+
+      <div style={{ minHeight:210, position:"relative", overflow:"hidden" }}>
+        <div style={{ background: activePlan.id === currentPlan ? "rgba(249,115,22,0.05)" : "transparent", border: `1.5px solid ${activePlan.id === currentPlan ? C.orange : C.border}`, borderRadius:12, padding:"16px", position:"relative" }}>
+          {activePlan.id === currentPlan && (
+            <span style={{ position:"absolute", top:-10, left:20, background:C.orange, color:"#fff", fontSize:9, fontWeight:700, padding:"2px 8px", borderRadius:10 }}>ACTIVE PLAN</span>
+          )}
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:8 }}>
+            <div style={{ fontWeight:600, fontSize:16, color:C.text }}>{activePlan.name}</div>
+            <div style={{ fontWeight:700, fontSize:20, color:C.orange }}>GH₵ {activePlan.price}<span style={{ fontSize:11, fontWeight:400, color:C.muted }}>/mo</span></div>
+          </div>
+          <div style={{ fontSize:12, color:C.muted, marginBottom:10 }}>Limit: {activePlan.cap} transactions · {activePlan.wallets} wallets</div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"4px 10px", marginBottom:14 }}>
+            {activePlan.perks.map(p => (
+              <div key={p} style={{ fontSize:11, color:C.text, display:"flex", alignItems:"center", gap:4 }}>
+                <Check size={11} color={C.teal} strokeWidth={2.5}/> {p}
+              </div>
+            ))}
+          </div>
+          <Btn variant={activePlan.id === currentPlan ? "ghost" : "primary"} full size="sm" onClick={() => onSelectPlan(activePlan.id)} disabled={activePlan.id === currentPlan}>
+            {activePlan.id === currentPlan ? "Current Plan" : `Choose ${activePlan.name}`}
+          </Btn>
+        </div>
+      </div>
+
+      <div style={{ display:"flex", justifyContent:"center", gap:6, marginTop:12 }}>
+        {plans.map((p, idx) => (
+          <div key={p.id} onClick={() => setActiveIndex(idx)} style={{ width:8, height:8, borderRadius:"50%", background: idx === activeIndex ? C.orange : C.border, cursor:"pointer" }}/>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── PROFILE PAGE ─────────────────────────────────────────────
+function Profile({ user, business, setBusiness, isGuest, businessId, onSignOut }) {
+  const [bizName, setBizName] = useState(business.name || "");
+  const [bizPhone, setBizPhone] = useState(() => localStorage.getItem("profile_phone") || "");
+  const [bizIndustry, setBizIndustry] = useState(() => localStorage.getItem("profile_industry") || "");
+  const [logoColor, setLogoColor] = useState(business.logoColor || "#F97316");
+  const [logoBg, setLogoBg] = useState(business.logoBg || "#fff4ed");
+  const [saving, setSaving] = useState(false);
+
+  const colors = [
+    { label: "Orange (Default)", color: "#F97316", bg: "#fff4ed" },
+    { label: "Teal", color: "#0BADA8", bg: "#f0fdfa" },
+    { label: "Blue", color: "#2563eb", bg: "#eff6ff" },
+    { label: "Green", color: "#16a34a", bg: "#f0fdf4" },
+    { label: "Purple", color: "#7c3aed", bg: "#f5f3ff" }
+  ];
+
+  const handleSave = async () => {
+    setSaving(true);
+    localStorage.setItem("profile_phone", bizPhone);
+    localStorage.setItem("profile_industry", bizIndustry);
+
+    if (isGuest) {
+      setBusiness(b => ({ ...b, name: bizName, logoColor, logoBg }));
+      setSaving(false);
+      alert("Profile updated locally in guest mode!");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("businesses")
+        .update({
+          business_name: bizName,
+          logo_color: logoColor,
+          logo_bg: logoBg
+        })
+        .eq("id", businessId);
+
+      if (error) throw error;
+      setBusiness(b => ({ ...b, name: bizName, logoColor, logoBg }));
+      alert("Business profile updated successfully!");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update business profile. Please check your connection.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div style={{ maxWidth:540, margin:"0 auto" }}>
+      <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:20, color:C.text, marginBottom:20 }}>My Profile</div>
+      
+      <div style={card({ marginBottom:20 })}>
+        <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:16 }}>
+          <div style={{ width:60, height:60, borderRadius:30, background:"rgba(249,115,22,0.15)", color:"#F97316", display:"flex", alignItems:"center", justifyContent:"center", fontSize:24, fontWeight:600 }}>
+            {user?.name ? user.name[0].toUpperCase() : "U"}
+          </div>
+          <div>
+            <div style={{ fontSize:16, fontWeight:600, color:C.text }}>{user?.name || "Guest User"}</div>
+            <div style={{ fontSize:13, color:C.muted }}>{user?.email || "No email linked"}</div>
+          </div>
+        </div>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", background:C.light, padding:"10px 14px", borderRadius:10 }}>
+          <span style={{ fontSize:12, color:C.muted, fontWeight:500 }}>ACTIVE SUBSCRIPTION</span>
+          <span style={{ fontSize:12, fontWeight:700, color:C.orange, textTransform:"uppercase" }}>{(business.plan||'free')} Plan</span>
+        </div>
+      </div>
+
+      <div style={card({ marginBottom:20 })}>
+        <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:15, color:C.text, marginBottom:14 }}>Business Settings</div>
+        
+        <div style={{ marginBottom:12 }}>
+          <label style={label}>Business Name</label>
+          <input style={input} value={bizName} onChange={e => setBizName(e.target.value)} placeholder="e.g. Opare Enterprises"/>
+        </div>
+
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
+          <div>
+            <label style={label}>Phone Number</label>
+            <input style={input} value={bizPhone} onChange={e => setBizPhone(e.target.value)} placeholder="e.g. 0592040012"/>
+          </div>
+          <div>
+            <label style={label}>Industry</label>
+            <input style={input} value={bizIndustry} onChange={e => setBizIndustry(e.target.value)} placeholder="e.g. Retail, Services"/>
+          </div>
+        </div>
+
+        <div style={{ marginBottom:16 }}>
+          <label style={label}>Receipt Theme Colors (Pro Features)</label>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:10, marginTop:6 }}>
+            {colors.map(c => {
+              const active = logoColor === c.color;
+              return (
+                <div key={c.color} onClick={() => { setLogoColor(c.color); setLogoBg(c.bg); }} style={{ border:`2px solid ${active ? C.orange : "transparent"}`, borderRadius:10, padding:4, cursor:"pointer" }}>
+                  <div style={{ width:32, height:32, borderRadius:8, background:c.color, display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontSize:12, fontWeight:700 }}>
+                    {active && "✓"}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <Btn variant="primary" full onClick={handleSave} disabled={saving}>
+          <LIcon name="check" size={15}/> {saving ? "Saving changes..." : "Save changes"}
+        </Btn>
+      </div>
+
+      {!isGuest && (
+        <div style={{ textAlign:"center" }}>
+          <button onClick={onSignOut} style={{ background:"transparent", border:`1px solid ${C.border}`, color:"#ef4444", borderRadius:10, padding:"10px 20px", fontSize:13, fontWeight:500, cursor:"pointer", transition:"all 0.2s" }} onMouseOver={e=>e.currentTarget.style.background="#fef2f2"} onMouseOut={e=>e.currentTarget.style.background="transparent"}>
+            <LIcon name="trash" size={14} style={{ marginRight:6, verticalAlign:"middle" }}/> Sign Out Account
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── SETTINGS PAGE ────────────────────────────────────────────
+function Settings({ user, business, setBusiness, isGuest, businessId, transactions }) {
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("darkMode") === "true");
+  const [defaultMsg, setDefaultMsg] = useState(() => localStorage.getItem("settings_receipt_msg") || "Thank you for your business!");
+  const [taxRate, setTaxRate] = useState(() => localStorage.getItem("settings_default_tax") || "0");
+  const [showPoweredBy, setShowPoweredBy] = useState(() => localStorage.getItem("settings_powered_by") !== "false");
+
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.add("dark-mode");
+      localStorage.setItem("darkMode", "true");
+    } else {
+      document.body.classList.remove("dark-mode");
+      localStorage.setItem("darkMode", "false");
+    }
+  }, [darkMode]);
+
+  const handleSave = () => {
+    localStorage.setItem("settings_receipt_msg", defaultMsg);
+    localStorage.setItem("settings_default_tax", taxRate);
+    localStorage.setItem("settings_powered_by", showPoweredBy ? "true" : "false");
+    alert("Settings saved successfully!");
+  };
+
+  const handleExportCSV = () => {
+    if (!transactions || transactions.length === 0) {
+      alert("No transaction records available to export.");
+      return;
+    }
+    const headers = ["Receipt No", "Date", "Wallet ID", "Type", "Amount (GHS)", "Category", "Description", "Momo Ref"];
+    const rows = transactions.map(t => [
+      t.receiptNo,
+      t.date,
+      t.walletId,
+      t.type,
+      t.amount,
+      t.category,
+      t.description,
+      t.momoRef
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + [headers.join(","), ...rows.map(e => e.map(val => `"${val}"`).join(","))].join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `receiva_transactions_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  return (
+    <div style={{ maxWidth:540, margin:"0 auto" }}>
+      <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:20, color:C.text, marginBottom:20 }}>App Settings</div>
+
+      <div style={card({ marginBottom:20 })}>
+        <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:15, color:C.text, marginBottom:14 }}>Appearance</div>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+          <div>
+            <div style={{ fontSize:14, fontWeight:500, color:C.text }}>Dark Theme</div>
+            <div style={{ fontSize:11, color:C.muted }}>Toggle dark theme for night recording</div>
+          </div>
+          <div onClick={() => setDarkMode(!darkMode)} style={{ width:44, height:24, borderRadius:20, background: darkMode ? C.orange : "#d1d5db", position:"relative", cursor:"pointer", transition:"background 0.2s" }}>
+            <div style={{ width:20, height:20, borderRadius:"50%", background:"#fff", position:"absolute", top:2, left: darkMode ? 22 : 2, transition:"left 0.2s", boxShadow:"0 1px 3px rgba(0,0,0,0.2)" }}/>
+          </div>
+        </div>
+      </div>
+
+      <div style={card({ marginBottom:20 })}>
+        <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:15, color:C.text, marginBottom:14 }}>Receipt Preferences</div>
+        
+        <div style={{ marginBottom:12 }}>
+          <label style={label}>Default Thank-You Note</label>
+          <textarea style={{ ...input, minHeight:70, resize:"vertical" }} value={defaultMsg} onChange={e => setDefaultMsg(e.target.value)} placeholder="Message shown at footer of receipts"/>
+        </div>
+
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
+          <div>
+            <label style={label}>Default Tax Rate (%)</label>
+            <input style={input} type="number" value={taxRate} onChange={e => setTaxRate(e.target.value)} placeholder="e.g. 5"/>
+          </div>
+          <div style={{ display:"flex", flexDirection:"column", justifyContent:"center" }}>
+            <label style={label}>Signature Branding</label>
+            <div style={{ display:"flex", alignItems:"center", gap:8, height:"100%" }}>
+              <div onClick={() => setShowPoweredBy(!showPoweredBy)} style={{ width:40, height:22, borderRadius:20, background: showPoweredBy ? C.orange : "#d1d5db", position:"relative", cursor:"pointer", transition:"background 0.2s" }}>
+                <div style={{ width:18, height:18, borderRadius:"50%", background:"#fff", position:"absolute", top:2, left: showPoweredBy ? 20 : 2, transition:"left 0.2s", boxShadow:"0 1px 3px rgba(0,0,0,0.2)" }}/>
+              </div>
+              <span style={{ fontSize:12, color:C.text }}>Show "Powered by Receiva"</span>
+            </div>
+          </div>
+        </div>
+
+        <Btn variant="primary" full onClick={handleSave}>
+          <LIcon name="check" size={15}/> Save Preferences
+        </Btn>
+      </div>
+
+      <div style={card({ marginBottom:20 })}>
+        <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:15, color:C.text, marginBottom:14 }}>Data Portability</div>
+        <div style={{ fontSize:12, color:C.muted, marginBottom:14, lineHeight:1.5 }}>
+          Export all transactions saved in this account as a clean, standardized CSV file for spreadsheets and tax software.
+        </div>
+        <Btn variant="ghost" full onClick={handleExportCSV}>
+          <LIcon name="share" size={15}/> Export Data as CSV
+        </Btn>
+      </div>
+
+      <div style={{ textAlign:"center", fontSize:11, color:C.muted, marginTop:24 }}>
+        <div>Receiva Pro App · Version 1.2.0</div>
+        <div>Vercel Sandbox · Supabase Cloud Connected</div>
+      </div>
+    </div>
+  );
+}
+
