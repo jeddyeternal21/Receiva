@@ -1181,7 +1181,7 @@ function Transactions({ transactions, wallets, onAdd, onReceipt, onEdit }) {
   const shown = filter==="all" ? transactions : transactions.filter(t=>t.type===filter);
   return (
     <div>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:18 }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:18, flexWrap:"wrap", gap:10 }}>
         <div style={{ display:"flex", gap:8 }}>
           {["all","income","expense"].map(f=>(
             <button key={f} style={{ padding:"7px 16px", borderRadius:20, border:`1.5px solid ${filter===f ? C.orange : C.border}`, background: filter===f ? C.orange+"12" : C.white, color: filter===f ? C.orange : C.muted, fontSize:13, fontWeight:500, cursor:"pointer", fontFamily:"'Poppins',sans-serif" }} onClick={()=>setFilter(f)}>
@@ -1189,7 +1189,12 @@ function Transactions({ transactions, wallets, onAdd, onReceipt, onEdit }) {
             </button>
           ))}
         </div>
-        <Btn variant="primary" onClick={onAdd}><LIcon name="plus" size={15}/> Record Payment</Btn>
+        <div className="desktop-only">
+          <Btn variant="primary" onClick={onAdd}><LIcon name="plus" size={15}/> Record Payment</Btn>
+        </div>
+        <div className="mobile-only" style={{ width:"100%" }}>
+          <Btn variant="primary" full onClick={onAdd}><LIcon name="plus" size={15}/> Record Payment</Btn>
+        </div>
       </div>
       <div style={card({ padding:0, overflow:"hidden" })}>
         <TxTable transactions={shown} wallets={wallets} onReceipt={onReceipt} onEdit={onEdit} showWallet/>
@@ -1246,7 +1251,7 @@ function Reports({ transactions, income, expense, balance, isPro, onUpgrade }) {
   const maxCat = Math.max(1,...Object.values(byCat).map(c=>c.i+c.e));
   return (
     <div>
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:24 }}>
+      <div className="dash-stats-grid" style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:24 }}>
         {[[fmt(income),"Income",C.income],[fmt(expense),"Expenses",C.expense],[fmt(balance),"Net profit",balance>=0?"#2563eb":C.expense],[income>0?Math.round((balance/income)*100)+"%":"0%","Margin",C.orange]].map(([v,l,c])=>(
           <div key={l} style={card({ padding:"16px 18px" })}>
             <div style={{ fontSize:12, color:C.muted, marginBottom:5 }}>{l}</div>
@@ -1254,7 +1259,7 @@ function Reports({ transactions, income, expense, balance, isPro, onUpgrade }) {
           </div>
         ))}
       </div>
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
+      <div className="dash-charts-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
         <div style={card()}>
           <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:15, color:C.text, marginBottom:14 }}>By category</div>
           {Object.entries(byCat).map(([cat,vals])=>(
@@ -1699,7 +1704,7 @@ function ProductList({ products, categories, onAdd, onEdit }) {
       </div>
 
       {/* Stats row */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:20 }}>
+      <div className="dash-stats-grid" style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:20 }}>
         {[
           ["Total products", products.filter(p=>p.type==="product").length, C.teal],
           ["Services",       products.filter(p=>p.type==="service").length, C.orange],
@@ -1715,40 +1720,79 @@ function ProductList({ products, categories, onAdd, onEdit }) {
 
       {/* Table */}
       <div style={card({ padding:0, overflow:"hidden" })}>
-        <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr 80px", padding:"10px 16px", fontSize:11, color:C.muted, letterSpacing:"0.05em", textTransform:"uppercase", borderBottom:`1px solid ${C.border}` }}>
-          <span>Product</span><span>Category</span><span>Cost</span><span>Price</span><span>Stock</span><span>Action</span>
+        {/* DESKTOP TABLE */}
+        <div className="desktop-only">
+          <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr 80px", padding:"10px 16px", fontSize:11, color:C.muted, letterSpacing:"0.05em", textTransform:"uppercase", borderBottom:`1px solid ${C.border}` }}>
+            <span>Product</span><span>Category</span><span>Cost</span><span>Price</span><span>Stock</span><span>Action</span>
+          </div>
+          {filtered.length === 0 && (
+            <div style={{ textAlign:"center", padding:"40px", color:C.muted, fontSize:14 }}>No products found</div>
+          )}
+          {filtered.map(p => {
+            const cat = categories.find(c=>c.id===p.categoryId);
+            const mg  = margin(p);
+            return (
+              <div key={p.id} style={{ display:"grid", gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr 80px", padding:"12px 16px", borderBottom:`1px solid #f9fafb`, alignItems:"center", fontSize:13 }}>
+                <div>
+                  <div style={{ fontWeight:500, color:C.text }}>{p.name}</div>
+                  <div style={{ fontSize:11, color:C.muted, marginTop:1 }}>SKU: {p.sku} · <span style={{ color: p.type==="service"?C.orange:C.teal, fontWeight:500 }}>{p.type==="service"?"Service":"Product"}</span></div>
+                </div>
+                <div><span style={{ background:cat?cat.color+"14":"#f3f4f6", color:cat?.color||C.muted, padding:"2px 8px", borderRadius:20, fontSize:11, fontWeight:500 }}>{cat?.name||"—"}</span></div>
+                <div style={{ color:C.muted }}>{p.costPrice > 0 ? fmt(p.costPrice) : "—"}</div>
+                <div>
+                  <div style={{ fontWeight:600, color:C.income }}>{fmt(p.sellPrice)}</div>
+                  {mg !== null && <div style={{ fontSize:10, color:"#16a34a" }}>{mg}% margin</div>}
+                </div>
+                <div>
+                  {p.trackStock ? (
+                    <span style={{ fontWeight:600, color: p.stock < 10 ? "#ef4444" : C.text }}>{p.stock} units</span>
+                  ) : (
+                    <span style={{ color:C.muted, fontSize:12 }}>Service</span>
+                  )}
+                </div>
+                <div>
+                  <Btn variant="ghost" size="sm" onClick={()=>onEdit(p)} style={{ fontSize:11, padding:"5px 10px" }}>Edit</Btn>
+                </div>
+              </div>
+            );
+          })}
         </div>
-        {filtered.length === 0 && (
-          <div style={{ textAlign:"center", padding:"40px", color:C.muted, fontSize:14 }}>No products found</div>
-        )}
-        {filtered.map(p => {
-          const cat = categories.find(c=>c.id===p.categoryId);
-          const mg  = margin(p);
-          return (
-            <div key={p.id} style={{ display:"grid", gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr 80px", padding:"12px 16px", borderBottom:`1px solid #f9fafb`, alignItems:"center", fontSize:13 }}>
-              <div>
-                <div style={{ fontWeight:500, color:C.text }}>{p.name}</div>
-                <div style={{ fontSize:11, color:C.muted, marginTop:1 }}>SKU: {p.sku} · <span style={{ color: p.type==="service"?C.orange:C.teal, fontWeight:500 }}>{p.type==="service"?"Service":"Product"}</span></div>
+
+        {/* MOBILE STACKED CARDS */}
+        <div className="mobile-only" style={{ padding: "12px 16px" }}>
+          {filtered.length === 0 && (
+            <div style={{ textAlign:"center", padding:"40px", color:C.muted, fontSize:14 }}>No products found</div>
+          )}
+          {filtered.map(p => {
+            const cat = categories.find(c=>c.id===p.categoryId);
+            const mg  = margin(p);
+            return (
+              <div key={p.id} style={{ background:C.white, border:`1.5px solid ${C.border}`, borderRadius:14, padding:"14px", marginBottom:10, display:"flex", justifyContent:"space-between", alignItems:"center", boxShadow:"0 2px 6px rgba(0,0,0,0.01)" }}>
+                <div>
+                  <div style={{ fontWeight:600, color:C.text, fontSize:14 }}>{p.name}</div>
+                  <div style={{ fontSize:11, color:C.muted, marginTop:2 }}>SKU: {p.sku} · <span style={{ color: p.type==="service"?C.orange:C.teal, fontWeight:500 }}>{p.type==="service"?"Service":"Product"}</span></div>
+                  {cat && (
+                    <div style={{ marginTop:6 }}>
+                      <span style={{ background:cat.color+"14", color:cat.color, padding:"2px 8px", borderRadius:20, fontSize:10, fontWeight:500 }}>{cat.name}</span>
+                    </div>
+                  )}
+                </div>
+                <div style={{ textAlign:"right" }}>
+                  <div style={{ fontWeight:700, color:C.income, fontSize:14 }}>{fmt(p.sellPrice)}</div>
+                  {p.costPrice > 0 && <div style={{ fontSize:11, color:C.muted, marginTop:2 }}>Cost: {fmt(p.costPrice)}</div>}
+                  {p.trackStock ? (
+                    <div style={{ fontSize:11, fontWeight:600, color: p.stock < 10 ? "#ef4444" : "#16a34a", marginTop:2 }}>{p.stock} units</div>
+                  ) : (
+                    <div style={{ fontSize:11, color:C.muted, marginTop:2 }}>Service</div>
+                  )}
+                  <div style={{ marginTop:8 }}>
+                    <Btn variant="ghost" size="sm" onClick={()=>onEdit(p)} style={{ fontSize:11, padding:"4px 10px" }}>Edit</Btn>
+                  </div>
+                </div>
               </div>
-              <div><span style={{ background:cat?cat.color+"14":"#f3f4f6", color:cat?.color||C.muted, padding:"2px 8px", borderRadius:20, fontSize:11, fontWeight:500 }}>{cat?.name||"—"}</span></div>
-              <div style={{ color:C.muted }}>{p.costPrice > 0 ? fmt(p.costPrice) : "—"}</div>
-              <div>
-                <div style={{ fontWeight:600, color:C.income }}>{fmt(p.sellPrice)}</div>
-                {mg !== null && <div style={{ fontSize:10, color:"#16a34a" }}>{mg}% margin</div>}
-              </div>
-              <div>
-                {p.trackStock ? (
-                  <span style={{ fontWeight:600, color: p.stock < 10 ? "#ef4444" : C.text }}>{p.stock} units</span>
-                ) : (
-                  <span style={{ color:C.muted, fontSize:12 }}>Service</span>
-                )}
-              </div>
-              <div>
-                <Btn variant="ghost" size="sm" onClick={()=>onEdit(p)} style={{ fontSize:11, padding:"5px 10px" }}>Edit</Btn>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
       {/* CSV note */}
