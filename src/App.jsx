@@ -7,7 +7,7 @@ import {
   Smartphone, TabletSmartphone, Satellite, Building2, Banknote, Landmark,
   MessageCircle, Gift, FileText, BarChart2, Shield, ChevronDown,
   Menu, LogOut, Upload, Clipboard, AlertTriangle, PartyPopper,
-  HandCoins, ArrowUpFromLine, Cog, User
+  HandCoins, ArrowUpFromLine, Cog, User, TrendingUp, TrendingDown
 } from "lucide-react";
 
 // ─── CONSTANTS ────────────────────────────────────────────────
@@ -783,6 +783,21 @@ export default function App() {
         </div>
       </div>
 
+      {/* MOBILE BOTTOM NAV */}
+      <div className="mobile-bottom-nav">
+        {[
+          { key:"dashboard", label:"Dashboard", IconComp:Home },
+          { key:"reports", label:"Reports", IconComp:BarChart3 },
+          { key:"receipts", label:"Profile", IconComp:User },
+          { key:"add", label:"Quick-add", IconComp:Plus },
+        ].map(n=>(
+          <div key={n.key} onClick={()=>{ if(n.key==="add"){ setShowRecordPayment(true); } else { navigateTo(n.key); setMobileMenuOpen(false); } }} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:3, cursor:"pointer", padding:"6px 0", flex:1, color: n.key==="add" ? C.orange : page===n.key ? C.orange : C.muted, transition:"color 0.15s" }}>
+            <n.IconComp size={20} strokeWidth={page===n.key || n.key==="add" ? 2 : 1.5}/>
+            <span style={{ fontSize:10, fontWeight: page===n.key ? 600 : 400 }}>{n.label}</span>
+          </div>
+        ))}
+      </div>
+
       {showRecordPayment && <RecordPaymentModal onClose={()=>setShowRecordPayment(false)} onSave={addTransaction} wallets={wallets} business={business}/>}
       {showReceipt  && <ReceiptModal tx={showReceipt} business={business} isPro={isPro} onClose={()=>setShowReceipt(null)} isVoided={voidedReceipts.has(showReceipt.receiptNo)}/>}
       {showEditTransaction && <EditTransactionModal tx={showEditTransaction} onClose={()=>setShowEditTransaction(null)} onSave={updateTransaction} onDelete={deleteTransaction} wallets={wallets}/>}
@@ -796,69 +811,262 @@ export default function App() {
 // ─── DASHBOARD ────────────────────────────────────────────────
 function Dashboard({ transactions, income, expense, balance, wallets, business, user, onAdd, onReceipt, onEdit, isPro, isGuest, guestLeft }) {
   const recent = transactions.slice(0,5);
+  const hasTx = transactions.length > 0;
   const statCards = [
-    { label:"Total income",   value:fmt(income),   color:C.income  },
-    { label:"Total expenses", value:fmt(expense),  color:C.expense },
-    { label:"Net balance",    value:fmt(balance),  color: balance>=0 ? "#2563eb" : C.expense },
+    { label:"Total Income",   value:fmt(income),   color:C.income  },
+    { label:"Total Expenses", value:fmt(expense),  color:C.expense },
+    { label:"Net Balance",    value:fmt(balance),  color: balance>=0 ? "#2563eb" : C.expense },
     { label:"Transactions",   value:transactions.length, color:C.orange },
   ];
+
+  // ── Aggregate monthly data for charts ──
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug"];
+  const barMonths = ["Jan","Feb","Mar","Apr","May","Jun"];
+  const monthlyRev = new Array(8).fill(0);
+  const monthlyExp = new Array(8).fill(0);
+  transactions.forEach(t => {
+    const d = new Date(t.date);
+    const mi = d.getMonth();
+    if (mi < 8) {
+      if (t.type === "income") monthlyRev[mi] += t.amount;
+      else monthlyExp[mi] += t.amount;
+    }
+  });
+  const lineMaxVal = hasTx ? Math.max(1, ...monthlyRev, ...monthlyExp) : 25000;
+  const barMaxVal  = hasTx ? Math.max(1, ...monthlyRev.slice(0,6), ...monthlyExp.slice(0,6)) : 2500000;
+
+  // Y-axis helpers
+  const lineYLabels = ["25,00k","20,00k","15,00k","10,00k","5,00k"];
+  const lineYValues = [25000,20000,15000,10000,5000];
+  const barYLabels  = ["2500k","2000k","1500k","1000k","500k"];
+  const barYValues  = [2500000,2000000,1500000,1000000,500000];
+
+  // SVG layout constants
+  const svgW = 520, svgH = 260;
+  const padL = 56, padR = 16, padT = 16, padB = 40;
+  const plotW = svgW - padL - padR;
+  const plotH = svgH - padT - padB;
+
+  const toLineY = (v) => padT + plotH - (v / (lineYValues[0] || 1)) * plotH;
+  const toLineX = (i) => padL + (i / (months.length - 1)) * plotW;
+
+  const lineRevPoints = months.map((_,i) => `${toLineX(i)},${toLineY(hasTx ? monthlyRev[i] : 0)}`).join(" ");
+  const lineExpPoints = months.map((_,i) => `${toLineX(i)},${toLineY(hasTx ? monthlyExp[i] : 0)}`).join(" ");
+
+  // Bar chart layout
+  const bSvgW = 520, bSvgH = 260;
+  const bPadL = 56, bPadR = 16, bPadT = 16, bPadB = 40;
+  const bPlotW = bSvgW - bPadL - bPadR;
+  const bPlotH = bSvgH - bPadT - bPadB;
+  const bGroupW = bPlotW / barMonths.length;
+  const barW = bGroupW * 0.28;
+  const barGap = 4;
+
+  const toBarY = (v) => bPadT + bPlotH - (v / (barYValues[0] || 1)) * bPlotH;
+
+  // Tab style helper
+  const tabStyle = (active) => ({
+    padding: "3px 10px", fontSize: 10, fontWeight: active ? 600 : 400,
+    color: active ? C.orange : C.muted, background: active ? C.orange + "14" : "transparent",
+    borderRadius: 4, border: "none", cursor: "pointer", fontFamily: "'Poppins',sans-serif",
+    letterSpacing: "0.03em"
+  });
+
   return (
-    <div>
-      <div style={{ marginBottom:22 }}>
-        <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:24, color:C.text, marginBottom:3 }}>Good day, {user?.name?.split(' ')[0] || 'there'} <HandCoins size={24} style={{display:"inline",verticalAlign:"middle",marginLeft:4}}/></div>
-        <div style={{ fontSize:14, color:C.muted }}>Here's your financial snapshot for May 2026</div>
-      </div>
+    <>
+      {/* ── DESKTOP DASHBOARD ── */}
+      <div className="desktop-only">
+        {/* HEADER */}
+        <div style={{ marginBottom:22 }}>
+          <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:24, color:C.text, marginBottom:3 }}>Good day, {user?.name?.split(' ')[0] || 'there'} <HandCoins size={24} style={{display:"inline",verticalAlign:"middle",marginLeft:4}}/></div>
+          <div style={{ fontSize:14, color:C.muted }}>Here's your financial snapshot for May 2026</div>
+        </div>
 
-      {/* STATS */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:20 }}>
-        {statCards.map(sc=>(
-          <div key={sc.label} style={card({ padding:"16px 18px" })}>
-            <div style={{ fontSize:12, color:C.muted, marginBottom:6 }}>{sc.label}</div>
-            <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:22, color:sc.color }}>{sc.value}</div>
-          </div>
-        ))}
-      </div>
+        {/* STATS CARDS */}
+        <div className="dash-stats-grid" style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:22 }}>
+          {statCards.map(sc=>(
+            <div key={sc.label} style={card({ padding:"18px 20px" })}>
+              <div style={{ fontSize:12, color:C.muted, marginBottom:6, letterSpacing:"0.03em", textTransform:"uppercase", fontWeight:500 }}>{sc.label}</div>
+              <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:24, color:sc.color }}>{sc.value}</div>
+            </div>
+          ))}
+        </div>
 
-      {/* WALLETS SUMMARY */}
-      <div style={{ marginBottom:20 }}>
-        <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:16, color:C.text, marginBottom:12 }}>Your wallets</div>
-        <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
-          {wallets.map(w=>{
-            const preset = WALLET_PRESETS.find(p=>p.id===w.presetId)||WALLET_PRESETS[0];
-            const wTx = transactions.filter(t=>t.walletId===w.id);
-            const wBal = wTx.filter(t=>t.type==="income").reduce((s,t)=>s+t.amount,0) - wTx.filter(t=>t.type==="expense").reduce((s,t)=>s+t.amount,0);
-            return (
-              <div key={w.id} style={{ background:preset.bg, border:`1.5px solid ${preset.color}33`, borderRadius:12, padding:"14px 18px", minWidth:160 }}>
-                <div style={{ marginBottom:4 }}><WalletIcon presetId={w.presetId} size={18} color={preset.color}/></div>
-                <div style={{ fontSize:12, color:C.muted, marginBottom:2 }}>{w.name}</div>
-                <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:18, color:preset.color }}>{fmt(wBal)}</div>
+        {/* CHARTS ROW */}
+        <div className="dash-charts-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14, marginBottom:22 }}>
+          {/* ── LEFT: P&L Line Chart ── */}
+          <div style={card({ padding:"18px 20px" })}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
+              <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:14, color:C.text, letterSpacing:"0.04em", textTransform:"uppercase" }}>P&L Unit Analytics</div>
+              <div style={{ display:"flex", gap:2 }}>
+                <button style={tabStyle(true)}>YEAR</button>
+                <button style={tabStyle(false)}>Month</button>
+                <button style={tabStyle(false)}>2001</button>
               </div>
-            );
-          })}
+            </div>
+            <svg viewBox={`0 0 ${svgW} ${svgH}`} width="100%" style={{ display:"block" }}>
+              {/* Grid lines */}
+              {lineYValues.map((v, i) => {
+                const y = toLineY(v);
+                return <g key={i}>
+                  <line x1={padL} y1={y} x2={svgW - padR} y2={y} stroke={C.border} strokeWidth="0.7" strokeDasharray="4 3"/>
+                  <text x={padL - 8} y={y + 4} textAnchor="end" fontSize="10" fill={C.muted} fontFamily="'Poppins',sans-serif">{lineYLabels[i]}</text>
+                </g>;
+              })}
+              {/* Baseline */}
+              <line x1={padL} y1={padT + plotH} x2={svgW - padR} y2={padT + plotH} stroke={C.border} strokeWidth="1"/>
+              {/* X-axis labels */}
+              {months.map((m,i) => (
+                <text key={m} x={toLineX(i)} y={svgH - 10} textAnchor="middle" fontSize="10" fill={C.muted} fontFamily="'Poppins',sans-serif">{m}</text>
+              ))}
+              {/* Revenue line */}
+              <polyline points={lineRevPoints} fill="none" stroke={C.orange} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              {/* Expense line */}
+              <polyline points={lineExpPoints} fill="none" stroke={C.teal} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              {/* Data dots - Revenue */}
+              {months.map((_,i) => (
+                <circle key={"rv"+i} cx={toLineX(i)} cy={toLineY(hasTx ? monthlyRev[i] : 0)} r="3.5" fill={C.orange} stroke={C.white} strokeWidth="1.5"/>
+              ))}
+              {/* Data dots - Expense */}
+              {months.map((_,i) => (
+                <circle key={"ex"+i} cx={toLineX(i)} cy={toLineY(hasTx ? monthlyExp[i] : 0)} r="3.5" fill={C.teal} stroke={C.white} strokeWidth="1.5"/>
+              ))}
+            </svg>
+            {/* Legend */}
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:20, marginTop:10 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, color:C.muted }}>
+                <span style={{ display:"inline-block", width:18, height:3, borderRadius:2, background:C.orange }}/>Revenue
+              </div>
+              <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, color:C.muted }}>
+                <span style={{ display:"inline-block", width:18, height:3, borderRadius:2, background:C.teal }}/>Expenses
+              </div>
+            </div>
+          </div>
+
+          {/* ── RIGHT: Bar Chart ── */}
+          <div style={card({ padding:"18px 20px" })}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
+              <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:14, color:C.text, letterSpacing:"0.04em", textTransform:"uppercase" }}>Unit Average Revenue</div>
+            </div>
+            <svg viewBox={`0 0 ${bSvgW} ${bSvgH}`} width="100%" style={{ display:"block" }}>
+              {/* Grid lines */}
+              {barYValues.map((v, i) => {
+                const y = toBarY(v);
+                return <g key={i}>
+                  <line x1={bPadL} y1={y} x2={bSvgW - bPadR} y2={y} stroke={C.border} strokeWidth="0.7" strokeDasharray="4 3"/>
+                  <text x={bPadL - 8} y={y + 4} textAnchor="end" fontSize="10" fill={C.muted} fontFamily="'Poppins',sans-serif">{barYLabels[i]}</text>
+                </g>;
+              })}
+              {/* Baseline */}
+              <line x1={bPadL} y1={bPadT + bPlotH} x2={bSvgW - bPadR} y2={bPadT + bPlotH} stroke={C.border} strokeWidth="1"/>
+              {/* X-axis labels */}
+              {barMonths.map((m,i) => (
+                <text key={m} x={bPadL + bGroupW * i + bGroupW / 2} y={bSvgH - 10} textAnchor="middle" fontSize="10" fill={C.muted} fontFamily="'Poppins',sans-serif">{m}</text>
+              ))}
+              {/* Bars */}
+              {barMonths.map((_,i) => {
+                const cx = bPadL + bGroupW * i + bGroupW / 2;
+                const revH = hasTx ? (monthlyRev[i] / barYValues[0]) * bPlotH : 0;
+                const expH = hasTx ? (monthlyExp[i] / barYValues[0]) * bPlotH : 0;
+                return <g key={i}>
+                  <rect x={cx - barW - barGap / 2} y={bPadT + bPlotH - revH} width={barW} height={Math.max(revH, 0)} rx="3" fill={C.orange} opacity="0.85"/>
+                  <rect x={cx + barGap / 2} y={bPadT + bPlotH - expH} width={barW} height={Math.max(expH, 0)} rx="3" fill={C.teal} opacity="0.85"/>
+                </g>;
+              })}
+            </svg>
+            {/* Legend */}
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:20, marginTop:10 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, color:C.muted }}>
+                <span style={{ display:"inline-block", width:12, height:12, borderRadius:3, background:C.orange, opacity:0.85 }}/>Revenue
+              </div>
+              <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, color:C.muted }}>
+                <span style={{ display:"inline-block", width:12, height:12, borderRadius:3, background:C.teal, opacity:0.85 }}/>Expenses
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* WELCOME / EMPTY STATE */}
+        {wallets.length===0 && (
+          <div style={{ ...card({ padding:"48px 20px", marginBottom:22 }), textAlign:"center" }}>
+            <div style={{ marginBottom:12 }}><HandCoins size={40} color={C.orange}/></div>
+            <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:18, color:"#111827", marginBottom:8 }}>Welcome to Receiva</div>
+            <div style={{ fontSize:14, color:"#6b7280", maxWidth:340, margin:"0 auto 20px" }}>Start by adding your first wallet — your MTN MoMo, Telecel Cash, or any account you receive payments on.</div>
+          </div>
+        )}
+
+        {/* QUICK ACTIONS */}
+        <div style={{ display:"flex", gap:10, marginBottom:22 }}>
+          <Btn variant="primary" onClick={onAdd}><LIcon name="plus" size={15}/> Record Payment</Btn>
+          {isGuest && <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:13, color:C.muted }}><LIcon name="receipt" size={14}/> {guestLeft} free receipts left</div>}
+        </div>
+
+        {/* RECENT TRANSACTIONS */}
+        <div style={card()}>
+          <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:15, color:C.text, marginBottom:14 }}>Recent transactions</div>
+          <TxTable transactions={recent} wallets={[]} onReceipt={onReceipt} onEdit={onEdit} showWallet/>
         </div>
       </div>
 
-      {/* QUICK ACTIONS */}
-      <div style={{ display:"flex", gap:10, marginBottom:22 }}>
-        <Btn variant="primary" onClick={onAdd}><LIcon name="plus" size={15}/> Record Payment</Btn>
-        {isGuest && <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:13, color:C.muted }}><LIcon name="receipt" size={14}/> {guestLeft} free receipts left</div>}
-      </div>
-
-      {/* EMPTY STATE */}
-      {wallets.length===0 && (
-        <div style={{ textAlign:"center", padding:"48px 20px", background:"#fff", borderRadius:14, border:"1px solid #e5e7eb" }}>
-          <div style={{ marginBottom:12 }}><HandCoins size={40} color={C.orange}/></div>
-          <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:18, color:"#111827", marginBottom:8 }}>Welcome to Receiva</div>
-          <div style={{ fontSize:14, color:"#6b7280", marginBottom:20, maxWidth:340, margin:"0 auto 20px" }}>Start by adding your first wallet — your MTN MoMo, Telecel Cash, or any account you receive payments on.</div>
+      {/* ── MOBILE DASHBOARD ── */}
+      <div className="mobile-only">
+        {/* Mobile Header with Receiva. Logo */}
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:18 }}>
+          <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:22, color:C.text }}>Receiva<span style={{ color:C.orange }}>.</span></div>
+          {isGuest && (
+            <div style={{ background:C.orange+"18", border:`1.5px solid ${C.orange}33`, borderRadius:20, padding:"4px 12px", fontSize:11, color:C.orange, fontWeight:600 }}>
+              Guest mode
+            </div>
+          )}
         </div>
-      )}
 
-      {/* RECENT */}
-      <div style={card()}>
-        <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:15, color:C.text, marginBottom:14 }}>Recent transactions</div>
-        <TxTable transactions={recent} wallets={[]} onReceipt={onReceipt} onEdit={onEdit} showWallet/>
+        {/* Mobile Guest Mode Card */}
+        {isGuest && (
+          <div style={{ background:C.white, border:`1.5px solid ${C.border}`, borderRadius:16, padding:"16px", marginBottom:20, boxShadow:"0 2px 8px rgba(0,0,0,0.03)" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
+              <div style={{ background:C.orange+"18", borderRadius:8, width:32, height:32, display:"flex", alignItems:"center", justifyContent:"center", color:C.orange }}><User size={16}/></div>
+              <div>
+                <div style={{ fontSize:13, fontWeight:600, color:C.text }}>Guest Session</div>
+                <div style={{ fontSize:11, color:C.muted }}>{guestLeft} free receipts remaining</div>
+              </div>
+            </div>
+            <div style={{ fontSize:12, color:C.muted, marginBottom:14, lineHeight:1.5 }}>
+              Your transactions are currently saved in your browser storage. Create a free account to secure them.
+            </div>
+            {/* Center the large orange button: Try 5 free receipts — no signup needed */}
+            <div style={{ textAlign:"center" }}>
+              <button onClick={onAdd} style={{ width:"100%", padding:"12px", background:C.orange, color:"#fff", border:"none", borderRadius:10, fontSize:13, fontWeight:600, cursor:"pointer", transition:"background 0.2s" }} onMouseOver={e=>e.currentTarget.style.background="#ea6a08"} onMouseOut={e=>e.currentTarget.style.background=C.orange}>
+                Try 5 free receipts — no signup needed
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Crisp Cards for summary data points */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:20 }}>
+          {statCards.map(sc=>(
+            <div key={sc.label} style={{ background:C.white, border:`1px solid ${C.border}`, borderRadius:14, padding:"12px 14px", boxShadow:"0 2px 6px rgba(0,0,0,0.02)" }}>
+              <div style={{ fontSize:11, color:C.muted, marginBottom:4, fontWeight:500, textTransform:"uppercase", letterSpacing:"0.03em" }}>{sc.label}</div>
+              <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:18, color:sc.color }}>{sc.value}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Stacked Transactions Cards */}
+        <div style={{ marginBottom:14 }}>
+          <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:14, color:C.text, marginBottom:10, textTransform:"uppercase", letterSpacing:"0.03em" }}>Recent Transactions</div>
+          {recent.length === 0 ? (
+            <div style={{ background:C.white, border:`1px solid ${C.border}`, borderRadius:16, padding:"32px 16px", textAlign:"center" }}>
+              <div style={{ marginBottom:10 }}><HandCoins size={32} color={C.orange}/></div>
+              <div style={{ fontSize:14, fontWeight:600, color:C.text, marginBottom:4 }}>Welcome to Receiva</div>
+              <div style={{ fontSize:12, color:C.muted, maxWidth:240, margin:"0 auto" }}>Record your first payment to see transaction summary cards here.</div>
+            </div>
+          ) : (
+            <TxTable transactions={recent} wallets={[]} onReceipt={onReceipt} onEdit={onEdit} showWallet/>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -913,30 +1121,56 @@ function TxTable({ transactions, wallets, onReceipt, onEdit, showWallet=false })
   if (!transactions.length) return <div style={{ textAlign:"center", padding:"32px", color:C.muted, fontSize:14 }}>No transactions yet</div>;
   return (
     <div>
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 90px 110px 120px", padding:"8px 14px", fontSize:11, color:C.muted, letterSpacing:"0.05em", textTransform:"uppercase", borderBottom:`1px solid ${C.border}` }}>
-        <span>Description</span><span>Category</span><span>Method</span><span>Amount</span><span>Actions</span>
+      {/* DESKTOP TABLE */}
+      <div className="desktop-only">
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 90px 110px 120px", padding:"8px 14px", fontSize:11, color:C.muted, letterSpacing:"0.05em", textTransform:"uppercase", borderBottom:`1px solid ${C.border}` }}>
+          <span>Description</span><span>Category</span><span>Method</span><span>Amount</span><span>Actions</span>
+        </div>
+        {transactions.map(tx=>{
+          const wallet = wallets.find ? wallets.find(w=>w.id===tx.walletId) : null;
+          const preset = wallet ? WALLET_PRESETS.find(p=>p.id===wallet?.presetId) : null;
+          return (
+            <div key={tx.id} style={{ display:"grid", gridTemplateColumns:"1fr 1fr 90px 110px 120px", padding:"11px 14px", borderBottom:`1px solid #f9fafb`, alignItems:"center", fontSize:13 }}>
+              <div>
+                <div style={{ color:C.text, fontWeight:500 }}>{tx.description}</div>
+                <div style={{ color:C.muted, fontSize:11, marginTop:1 }}>{tx.date}</div>
+              </div>
+              <div><Badge color={tx.type==="income" ? C.income : C.expense}>{tx.category}</Badge></div>
+              <div style={{ fontSize:12, color:C.muted }}>{tx.method}</div>
+              <div style={{ fontWeight:700, color: tx.type==="income" ? C.income : C.expense }}>
+                {tx.type==="income" ? "+" : "-"}{fmt(tx.amount)}
+              </div>
+              <div style={{ display:"flex", gap:4 }}>
+                {onEdit && <Btn variant="ghost" size="sm" onClick={()=>onEdit(tx)} style={{ fontSize:11, padding:"5px 8px" }}><LIcon name="edit" size={12}/> Edit</Btn>}
+                {tx.type==="income" && <Btn variant="ghost" size="sm" onClick={()=>onReceipt(tx)} style={{ fontSize:11, padding:"5px 8px" }}><LIcon name="eye" size={12}/></Btn>}
+              </div>
+            </div>
+          );
+        })}
       </div>
-      {transactions.map(tx=>{
-        const wallet = wallets.find ? wallets.find(w=>w.id===tx.walletId) : null;
-        const preset = wallet ? WALLET_PRESETS.find(p=>p.id===wallet?.presetId) : null;
-        return (
-          <div key={tx.id} style={{ display:"grid", gridTemplateColumns:"1fr 1fr 90px 110px 120px", padding:"11px 14px", borderBottom:`1px solid #f9fafb`, alignItems:"center", fontSize:13 }}>
-            <div>
-              <div style={{ color:C.text, fontWeight:500 }}>{tx.description}</div>
-              <div style={{ color:C.muted, fontSize:11, marginTop:1 }}>{tx.date}</div>
+
+      {/* MOBILE STACKED CARDS */}
+      <div className="mobile-only">
+        {transactions.map(tx=>{
+          const isIncome = tx.type === "income";
+          const amountColor = isIncome ? C.income : C.expense;
+          const IconComp = isIncome ? TrendingUp : TrendingDown;
+          return (
+            <div key={tx.id} style={{ background:C.white, borderRadius:14, padding:"14px", marginBottom:10, border:`1px solid ${C.border}`, display:"flex", justifyContent:"space-between", alignItems:"center", boxShadow:"0 2px 6px rgba(0,0,0,0.02)" }} onClick={() => onEdit && onEdit(tx)}>
+              <div>
+                <div style={{ fontSize:13, fontWeight:600, color:C.text }}>{tx.description}</div>
+                <div style={{ fontSize:11, color:C.muted, marginTop:2 }}>{tx.date} • {tx.category} • {tx.method}</div>
+              </div>
+              <div style={{ textAlign:"right", display:"flex", alignItems:"center", gap:6 }}>
+                <span style={{ fontSize:14, fontWeight:700, color:amountColor }}>
+                  {isIncome ? "+" : "-"}{fmt(tx.amount)}
+                </span>
+                <IconComp size={15} color={amountColor}/>
+              </div>
             </div>
-            <div><Badge color={tx.type==="income" ? C.income : C.expense}>{tx.category}</Badge></div>
-            <div style={{ fontSize:12, color:C.muted }}>{tx.method}</div>
-            <div style={{ fontWeight:700, color: tx.type==="income" ? C.income : C.expense }}>
-              {tx.type==="income" ? "+" : "-"}{fmt(tx.amount)}
-            </div>
-            <div style={{ display:"flex", gap:4 }}>
-              {onEdit && <Btn variant="ghost" size="sm" onClick={()=>onEdit(tx)} style={{ fontSize:11, padding:"5px 8px" }}><LIcon name="edit" size={12}/> Edit</Btn>}
-              {tx.type==="income" && <Btn variant="ghost" size="sm" onClick={()=>onReceipt(tx)} style={{ fontSize:11, padding:"5px 8px" }}><LIcon name="eye" size={12}/></Btn>}
-            </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -1,12 +1,53 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: #080e18; }
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+body { background: #080e18; font-family: 'Poppins', sans-serif; }
+
+/* ─── MOBILE BOTTOM NAV ─────────────────────────────────────── */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  background: #ffffff;
+  border-top: 1px solid #e5e7eb;
+  padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
 }
 
-body {
-  font-family: 'Poppins', sans-serif;
-  /* your other existing body styles */
+/* ─── RESPONSIVE: MOBILE ─────────────────────────────────────── */
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+  }
+
+  /* Add padding at the bottom of content so it doesn't get hidden behind the nav */
+  .content-pad {
+    padding-bottom: 80px !important;
+  }
+
+  /* Stats cards: 2 columns on mobile */
+  .dash-stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Charts: stack vertically on mobile */
+  .dash-charts-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ─── DESKTOP ONLY & MOBILE ONLY HELPER CLASSES ─────────────── */
+.mobile-only {
+  display: none !important;
+}
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+  .mobile-only {
+    display: block !important;
+  }
 }
