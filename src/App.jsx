@@ -43,7 +43,7 @@ const DEMO_PRODUCT_CATS = [];
 
 const DEMO_PRODUCTS = [];
 
-const DEMO_BUSINESS = { name:"My Business", owner:"", phone:"", industry:"", plan:"free", logoColor:"#F97316", logoBg:"#fff4ed" };
+const DEMO_BUSINESS = { name:"My Business", owner:"", phone:"", industry:"", plan:"free", logoColor:"#10B981", logoBg:"rgba(16,185,129,0.1)" };
 
 // ─── GHANA MOMO PARSER ────────────────────────────────────────
 function detectNetwork(text) {
@@ -334,8 +334,8 @@ function LoginPage({ onLogin, onGuest }) {
         .feat-card { background: #1E2025; border: 1px solid #2e3036; border-radius: 12px; padding: 12px 8px; text-align: center; }
         .plans-row { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; }
         .plan-card { background: #fff; border: 1.5px solid #e5e7eb; border-radius: 14px; padding: 14px; min-width: 140px; flex-shrink: 0; position: relative; }
-        .plan-card.hot { background: rgba(249,115,22,0.06); border-color: rgba(249,115,22,0.4); }
-        .popular-tag { position: absolute; top: -9px; left: 50%; transform: translateX(-50%); background: #F97316; color: #fff; font-size: 9px; font-weight: 700; padding: 2px 10px; border-radius: 20px; white-space: nowrap; }
+        .plan-card.hot { background: rgba(16, 185, 129, 0.06); border-color: rgba(16, 185, 129, 0.4); }
+        .popular-tag { position: absolute; top: -9px; left: 50%; transform: translateX(-50%); background: #10B981; color: #fff; font-size: 9px; font-weight: 700; padding: 2px 10px; border-radius: 20px; white-space: nowrap; }
         .footer-note { text-align: center; margin-top: 14px; font-size: 11px; color: #94A3B8; }
       `}</style>
 
@@ -1435,16 +1435,18 @@ function Reports({ transactions, income, expense, balance, isPro, onUpgrade, bus
             </div>
           ))}
         </div>
-        <div style={card()}>
-          <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:15, color:C.text, marginBottom:14 }}>PDF Export & Tax Report</div>
-          {isPro ? (
-            <div style={{ fontSize:14, color:C.muted, display:"flex", alignItems:"center", gap:6, marginBottom:16 }}><Check size={14} color="#16a34a"/> Your monthly PDF report is ready to download.</div>
-          ) : (
-            <div style={{ background:"#fff4ed", border:`1px solid ${C.orange}33`, borderRadius:10, padding:"16px", marginBottom:16 }}>
-              <div style={{ fontSize:14, color:C.text, marginBottom:6, display:"flex", alignItems:"center", gap:6 }}><LIcon name="lock" size={14}/> Pro feature</div>
-              <div style={{ fontSize:13, color:C.muted }}>PDF export, GRA-ready tax breakdown, and advanced payroll tracking.</div>
-            </div>
-          )}
+        <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+          <div style={card()}>
+            <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:15, color:C.text, marginBottom:14 }}>PDF Export & Tax Report</div>
+            {isPro ? (
+              <div style={{ fontSize:14, color:C.muted, display:"flex", alignItems:"center", gap:6 }}><Check size={14} color="#16a34a"/> Your monthly PDF report is ready to download.</div>
+            ) : (
+              <div style={{ background:"rgba(16, 185, 129, 0.08)", border:"1px solid rgba(16, 185, 129, 0.20)", borderRadius:10, padding:"16px" }}>
+                <div style={{ fontSize:14, color:C.text, marginBottom:6, display:"flex", alignItems:"center", gap:6 }}><LIcon name="lock" size={14}/> Pro feature</div>
+                <div style={{ fontSize:13, color:C.muted }}>PDF export, GRA-ready tax breakdown, and advanced payroll tracking.</div>
+              </div>
+            )}
+          </div>
           <PlanSlider currentPlan={business.plan} onSelectPlan={handleSelectPlan}/>
         </div>
       </div>
@@ -2086,14 +2088,14 @@ function AddEditProduct({ product, categories, onSave, onCancel }) {
 function ProductCategories({ categories, products, onSave }) {
   const [cats, setCats]     = useState(categories);
   const [newName, setNewName] = useState("");
-  const [newColor, setNewColor] = useState("#F97316");
+  const [newColor, setNewColor] = useState("#10B981");
   const [editId, setEditId] = useState(null);
   const [editName, setEditName] = useState("");
 
   const addCat = () => {
     if (!newName.trim()) return;
     const updated = [...cats, { id:genId(), name:newName.trim(), color:newColor }];
-    setCats(updated); onSave(updated); setNewName(""); setNewColor("#F97316");
+    setCats(updated); onSave(updated); setNewName(""); setNewColor("#10B981");
   };
 
   const deleteCat = (id) => {
@@ -2185,7 +2187,7 @@ function PlanSlider({ currentPlan, onSelectPlan }) {
       </div>
 
       <div style={{ minHeight:210, position:"relative", overflow:"hidden" }}>
-        <div style={{ background: activePlan.id === currentPlan ? "rgba(249,115,22,0.05)" : "transparent", border: `1.5px solid ${activePlan.id === currentPlan ? C.orange : C.border}`, borderRadius:12, padding:"16px", position:"relative" }}>
+        <div style={{ background: activePlan.id === currentPlan ? "rgba(16, 185, 129, 0.05)" : "transparent", border: `1.5px solid ${activePlan.id === currentPlan ? C.orange : C.border}`, borderRadius:12, padding:"16px", position:"relative" }}>
           {activePlan.id === currentPlan && (
             <span style={{ position:"absolute", top:-10, left:20, background:C.orange, color:"#fff", fontSize:9, fontWeight:700, padding:"2px 8px", borderRadius:10 }}>ACTIVE PLAN</span>
           )}
