@@ -92,39 +92,54 @@ function parseGhanaMoMo(text) {
   return { network, amount, txId, date, time, sender, fee, balance, elevy, description:"", category:"Sales", verification:verifyTxId(txId,network) };
 }
 
-function ReceivaLogo({ size = 28 }) {
+function ReceivaLogo({ size = 28, stroke = "#FFFFFF" }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width={size} height={size * 1.6} viewBox="0 0 100 160" fill="none" xmlns="http://www.w3.org/2000/svg">
       {/* Smartphone silhouette frame with folded corner */}
       <path
-        d="M 9 3 H 20 L 25 8 V 27 A 2 2 0 0 1 23 29 H 9 A 2 2 0 0 1 7 27 V 5 A 2 2 0 0 1 9 3 Z"
-        stroke="#FFFFFF"
-        strokeWidth="2"
+        d="M 25 10 H 70 L 90 30 V 135 A 15 15 0 0 1 75 150 H 25 A 15 15 0 0 1 10 135 V 25 A 15 15 0 0 1 25 10 Z"
+        fill="#FBF9F6"
+        stroke={stroke}
+        strokeWidth="5"
         strokeLinejoin="round"
       />
       {/* Fold corner triangle */}
       <path
-        d="M 20 3 V 8 H 25 Z"
-        fill="#1B4332"
-        stroke="#FFFFFF"
-        strokeWidth="1"
+        d="M 70 10 L 70 20 A 10 10 0 0 0 80 30 L 90 30 Z"
+        fill="#C5C8C9"
+        stroke={stroke}
+        strokeWidth="3.5"
         strokeLinejoin="round"
       />
-      {/* Horizontal data lines */}
-      <line x1="11" y1="18" x2="21" y2="18" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="11" y1="22" x2="18" y2="22" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="11" y1="25" x2="16" y2="25" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" />
-      {/* Forest green feather quill crossing over */}
+      {/* Camera notch / pill */}
+      <rect x="38" y="16" width="24" height="6" rx="3" fill="#000000" />
+      
+      {/* Horizontal data lines / pill outlines on the left */}
+      <rect x="18" y="48" width="26" height="7" rx="3.5" stroke="#CCCCCC" strokeWidth="2" fill="none" />
+      <rect x="18" y="60" width="26" height="7" rx="3.5" stroke="#CCCCCC" strokeWidth="2" fill="none" />
+      <rect x="18" y="72" width="26" height="7" rx="3.5" stroke="#CCCCCC" strokeWidth="2" fill="none" />
+      
+      {/* Forest Green Quill Body */}
       <path
-        d="M 10 23 C 13 18.5 17 14.5 23 8 C 21 11.5 15.5 18 10 23 Z"
-        fill="#1B4332"
+        d="M 22 75 Q 48 50 82 34 C 70 46 50 64 22 75 Z"
+        fill="#045c38"
       />
+      {/* Stem / quill line */}
       <path
-        d="M 10 23 C 14 19 19 14 23 8"
-        stroke="#10B981"
-        strokeWidth="1.5"
+        d="M 20 78 C 30 70 55 50 84 32"
+        stroke="#000000"
+        strokeWidth="1.8"
         strokeLinecap="round"
       />
+      
+      {/* Chart baseline at the bottom */}
+      <line x1="22" y1="135" x2="78" y2="135" stroke="#000000" strokeWidth="3.5" strokeLinecap="round" />
+      
+      {/* 4 chart bars */}
+      <rect x="28" y="117" width="9" height="18" rx="2" fill="#045c38" />
+      <rect x="40" y="103" width="9" height="32" rx="2" fill="#045c38" />
+      <rect x="52" y="85" width="9" height="50" rx="2" fill="#045c38" />
+      <rect x="64" y="110" width="9" height="25" rx="2" fill="#B91C1C" />
     </svg>
   );
 }
@@ -156,12 +171,13 @@ const C = {
   white:   "var(--c-white)",
   sidebar: "var(--c-sidebar)",
   sidebarBorder: "var(--c-sidebarBorder)",
+  navActiveBg: "var(--c-nav-active-bg)",
 };
 
 // ─── SHARED UI ────────────────────────────────────────────────
 const card  = (extra={}) => ({ background:C.white, border:`1px solid ${C.border}`, borderRadius:14, padding:"20px 22px", ...extra });
 const label = { fontSize:12, color:C.muted, marginBottom:5, display:"block", letterSpacing:"0.04em", fontWeight:500 };
-const input = { background:"#121214", border:`1px solid ${C.border}`, borderRadius:8, padding:"10px 14px", color:C.text, fontSize:14, fontFamily:"'Poppins',sans-serif", outline:"none", width:"100%", boxSizing:"border-box", transition:"border-color 0.2s" };
+const input = { background:C.white, border:`1.5px solid ${C.border}`, borderRadius:8, padding:"10px 14px", color:C.text, fontSize:14, fontFamily:"'Poppins',sans-serif", outline:"none", width:"100%", boxSizing:"border-box", transition:"border-color 0.2s" };
 const formRow = { display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:12 };
 
 function Btn({ children, onClick, variant="primary", full=false, size="md", href, style={}, disabled=false }) {
@@ -206,7 +222,7 @@ function ModalHeader({ title, onClose }) {
 function WalletPill({ wallet, active, onClick }) {
   const preset = WALLET_PRESETS.find(p=>p.id===wallet.presetId) || WALLET_PRESETS[0];
   return (
-    <div onClick={onClick} style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 14px", borderRadius:20, cursor:"pointer", background: active ? preset.color+"18" : "#121214", border:`1.5px solid ${active ? preset.color : "#2e3036"}`, transition:"all 0.15s", whiteSpace:"nowrap" }}>
+    <div onClick={onClick} style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 14px", borderRadius:20, cursor:"pointer", background: active ? preset.color+"18" : "var(--c-light)", border:`1.5px solid ${active ? preset.color : "var(--c-border)"}`, transition:"all 0.15s", whiteSpace:"nowrap" }}>
       <WalletIcon presetId={wallet.presetId} size={14} color={active ? preset.color : undefined}/>
       <span style={{ fontSize:13, fontWeight:500, color: active ? preset.color : C.muted }}>{wallet.name}</span>
     </div>
@@ -633,14 +649,14 @@ export default function App() {
       const childActive = n.children.some(c=>c.key===page);
       return (
         <div>
-          <div onClick={()=>setProductsExpanded(e=>!e)} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, padding: mobile?"14px 20px":"11px 20px", cursor:"pointer", fontSize:14, color: childActive ? "#FFFFFF" : C.muted, background: childActive ? "rgba(255, 255, 255, 0.08)" : "transparent", borderLeft: mobile?"none":`2px solid ${childActive ? "#FFFFFF" : "transparent"}`, transition:"all 0.15s", fontWeight: childActive ? 500 : 400 }}>
+          <div onClick={()=>setProductsExpanded(e=>!e)} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, padding: mobile?"14px 20px":"11px 20px", cursor:"pointer", fontSize:14, color: childActive ? C.text : C.muted, background: childActive ? C.navActiveBg : "transparent", borderLeft: mobile?"none":`2px solid ${childActive ? C.text : "transparent"}`, transition:"all 0.15s", fontWeight: childActive ? 500 : 400 }}>
             <div style={{ display:"flex", alignItems:"center", gap:10 }}><LIcon name={n.icon} size={16}/>{n.label}</div>
             <ChevronDown size={12} style={{ transition:"transform 0.2s", transform: productsExpanded?"rotate(180deg)":"rotate(0)" }}/>
           </div>
           {productsExpanded && (
-            <div style={{ background:"rgba(18, 18, 20, 0.2)", borderLeft: mobile?"none":"2px solid #2e3036", marginLeft: mobile?0:20 }}>
+            <div style={{ background:"var(--c-light)", borderLeft: mobile?"none":"2px solid var(--c-border)", marginLeft: mobile?0:20 }}>
               {n.children.map(c=>(
-                <div key={c.key} onClick={()=>{ onNavigate(c.key); }} style={{ padding: mobile?"12px 20px 12px 36px":"9px 20px 9px 28px", cursor:"pointer", fontSize:13, color: page===c.key ? "#FFFFFF" : C.muted, background: page===c.key ? "rgba(255, 255, 255, 0.05)":"transparent", fontWeight: page===c.key?500:400, transition:"all 0.15s" }}>
+                <div key={c.key} onClick={()=>{ onNavigate(c.key); }} style={{ padding: mobile?"12px 20px 12px 36px":"9px 20px 9px 28px", cursor:"pointer", fontSize:13, color: page===c.key ? C.text : C.muted, background: page===c.key ? C.navActiveBg :"transparent", fontWeight: page===c.key?500:400, transition:"all 0.15s" }}>
                   {c.label}
                 </div>
               ))}
@@ -651,7 +667,7 @@ export default function App() {
     }
     const active = page===n.key;
     return (
-      <div onClick={()=>onNavigate(n.key)} style={{ display:"flex", alignItems:"center", gap:10, padding: mobile?"14px 20px":"11px 20px", cursor:"pointer", fontSize:14, color: active ? "#FFFFFF" : C.muted, background: active ? "rgba(255, 255, 255, 0.08)" : "transparent", borderLeft: mobile?"none":`2px solid ${active ? "#FFFFFF" : "transparent"}`, transition:"all 0.15s", fontWeight: active ? 500 : 400 }}>
+      <div onClick={()=>onNavigate(n.key)} style={{ display:"flex", alignItems:"center", gap:10, padding: mobile?"14px 20px":"11px 20px", cursor:"pointer", fontSize:14, color: active ? C.text : C.muted, background: active ? C.navActiveBg : "transparent", borderLeft: mobile?"none":`2px solid ${active ? C.text : "transparent"}`, transition:"all 0.15s", fontWeight: active ? 500 : 400 }}>
         <LIcon name={n.icon} size={16}/>{n.label}
       </div>
     );
@@ -677,13 +693,17 @@ export default function App() {
           --c-teal: #10B981;
           --c-income: #10B981;
           --c-expense: #ef4444;
-          --c-text: #FFFFFF;
-          --c-muted: #94A3B8;
-          --c-light: #121214;
-          --c-border: #2e3036;
-          --c-white: #1E2025;
-          --c-sidebar: #1E2025;
-          --c-sidebarBorder: #2e3036;
+          --c-text: #121214;
+          --c-muted: #64748B;
+          --c-light: #F3F4F6;
+          --c-border: #E2E8F0;
+          --c-white: #FFFFFF;
+          --c-sidebar: #FFFFFF;
+          --c-sidebarBorder: #E2E8F0;
+          --c-nav-active-bg: rgba(18, 18, 20, 0.06);
+        }
+        body {
+          background-color: var(--c-light) !important;
         }
         body.dark-mode {
           --c-orange: #10B981;
@@ -698,6 +718,7 @@ export default function App() {
           --c-white: #1E2025;
           --c-sidebar: #1E2025;
           --c-sidebarBorder: #2e3036;
+          --c-nav-active-bg: rgba(255, 255, 255, 0.08);
           background-color: #121214 !important;
         }
         body, input, button, select, textarea { font-family: 'Poppins', sans-serif; transition: background-color 0.2s, border-color 0.2s, color 0.2s; }
@@ -764,16 +785,16 @@ export default function App() {
         {/* DESKTOP SIDEBAR */}
         <div className="desktop-sidebar" style={{ width:220, background:C.white, borderRight:`1px solid ${C.sidebarBorder}`, display:"flex", flexDirection:"column", padding:"24px 0", flexShrink:0, boxShadow:"2px 0 8px rgba(0,0,0,0.04)" }}>
           <div style={{ padding:"0 20px 22px", borderBottom:`1px solid ${C.border}`, marginBottom:8, display: "flex", alignItems: "center", gap: 8 }}>
-            <ReceivaLogo size={28} />
-            <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:22, color:"#FFFFFF" }}>Receiva</div>
+            <ReceivaLogo size={28} stroke={C.text} />
+            <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:22, color:C.text }}>Receiva</div>
           </div>
           <div style={{ padding:"0 20px", marginBottom:14 }}>
             <div style={{ fontSize:11, color:"#94A3B8", letterSpacing:"0.1em", textTransform:"uppercase", fontStyle:"italic" }}>Financial records</div>
           </div>
 
           {isGuest && (
-            <div style={{ margin:"0 12px 12px", background:"rgba(255, 255, 255, 0.04)", border:`1px solid #2e3036`, borderRadius:10, padding:"10px 12px" }}>
-              <div style={{ fontSize:12, fontWeight:600, color:"#FFFFFF", marginBottom:3 }}>Guest mode</div>
+            <div style={{ margin:"0 12px 12px", background:"var(--c-light)", border:`1.5px solid ${C.border}`, borderRadius:10, padding:"10px 12px" }}>
+              <div style={{ fontSize:12, fontWeight:600, color:C.text, marginBottom:3 }}>Guest mode</div>
               <div style={{ fontSize:11, color:C.muted, marginBottom:8 }}>{FREE_RECEIPT_LIMIT - guestCount} free receipts left</div>
               <Btn variant="primary" full size="sm" onClick={()=>setAuthState("login")}><ArrowUpFromLine size={13}/> Sign up free</Btn>
             </div>
@@ -799,8 +820,8 @@ export default function App() {
             {!isGuest && (
               <>
                 <div style={{ fontSize:11, color:C.muted, marginBottom:4 }}>{txUsed} / {isPro ? "∞" : txCap} transactions</div>
-                <div style={{ height:4, background:"#2e3036", borderRadius:2 }}>
-                  <div style={{ height:"100%", width:`${Math.min((txUsed/txCap)*100,100)}%`, background:"#FFFFFF", borderRadius:2 }}/>
+                <div style={{ height:4, background:C.border, borderRadius:2 }}>
+                  <div style={{ height:"100%", width:`${Math.min((txUsed/txCap)*100,100)}%`, background:C.orange, borderRadius:2 }}/>
                 </div>
               </>
             )}
@@ -813,14 +834,14 @@ export default function App() {
             <div className="mobile-drawer">
               <div style={{ padding:"20px 20px 16px", borderBottom:`1px solid ${C.border}`, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <ReceivaLogo size={24} />
-                  <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:20, color:"#FFFFFF" }}>Receiva</div>
+                  <ReceivaLogo size={24} stroke={C.text} />
+                  <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:20, color:C.text }}>Receiva</div>
                 </div>
                 <button onClick={()=>setMobileMenuOpen(false)} style={{ background:"transparent", border:"none", cursor:"pointer", color:C.muted, padding:4 }}><X size={20}/></button>
               </div>
               {isGuest && (
-                <div style={{ margin:"12px 12px 0", background:"rgba(255, 255, 255, 0.04)", border:`1px solid #2e3036`, borderRadius:10, padding:"10px 12px" }}>
-                  <div style={{ fontSize:12, fontWeight:600, color:"#FFFFFF", marginBottom:3 }}>Guest mode</div>
+                <div style={{ margin:"12px 12px 0", background:"var(--c-light)", border:`1.5px solid ${C.border}`, borderRadius:10, padding:"10px 12px" }}>
+                  <div style={{ fontSize:12, fontWeight:600, color:C.text, marginBottom:3 }}>Guest mode</div>
                   <div style={{ fontSize:11, color:C.muted, marginBottom:8 }}>{FREE_RECEIPT_LIMIT - guestCount} free receipts left</div>
                   <Btn variant="primary" full size="sm" onClick={()=>{ setAuthState("login"); setMobileMenuOpen(false); }}><ArrowUpFromLine size={13}/> Sign up free</Btn>
                 </div>
@@ -858,7 +879,7 @@ export default function App() {
                     <select
                       value={activeWallet||"all"}
                       onChange={e=>setActiveWallet(e.target.value==="all"?null:e.target.value)}
-                      style={{ padding:"7px 32px 7px 12px", borderRadius:20, border:`1.5px solid #2e3036`, background:activeWallet?"rgba(255, 255, 255, 0.08)":"#121214", color:activeWallet?"#FFFFFF":C.muted, fontSize:12, fontWeight:500, cursor:"pointer", fontFamily:"'Poppins',sans-serif", outline:"none", appearance:"none", backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat:"no-repeat", backgroundPosition:"right 10px center" }}
+                      style={{ padding:"7px 32px 7px 12px", borderRadius:20, border:`1.5px solid ${C.border}`, background:activeWallet?"var(--c-nav-active-bg)":"var(--c-light)", color:C.text, fontSize:12, fontWeight:500, cursor:"pointer", fontFamily:"'Poppins',sans-serif", outline:"none", appearance:"none", backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat:"no-repeat", backgroundPosition:"right 10px center" }}
                     >
                       <option value="all">All wallets</option>
                       {wallets.map(w=>{
@@ -870,7 +891,7 @@ export default function App() {
                 </div>
               )}
               <a href="https://wa.me/233205597508" target="_blank" rel="noreferrer" title="WhatsApp support" style={{ width:32, height:32, borderRadius:"50%", background:"#25D36618", border:"1.5px solid #25D36644", display:"flex", alignItems:"center", justifyContent:"center", textDecoration:"none" }}><MessageCircle size={15} color="#25D366" strokeWidth={1.8}/></a>
-              <div style={{ width:32, height:32, borderRadius:"50%", background:"rgba(255, 255, 255, 0.08)", border:`1.5px solid #2e3036`, display:"flex", alignItems:"center", justifyContent:"center", color:"#FFFFFF", fontSize:13, fontWeight:700 }}>
+              <div style={{ width:32, height:32, borderRadius:"50%", background:"var(--c-nav-active-bg)", border:`1.5px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"center", color:C.text, fontSize:13, fontWeight:700 }}>
                 {isGuest ? <User size={14}/> : (user?.name?.[0]?.toUpperCase() || <User size={14}/>)}
               </div>
               {!isGuest && (
@@ -894,7 +915,7 @@ export default function App() {
             {page==="add-product"  && <AddEditProduct product={editingProduct} categories={productCategories} onSave={p=>{ if(editingProduct){ setProducts(prev=>prev.map(x=>x.id===p.id?p:x)); } else { setProducts(prev=>[...prev,{...p,id:genId()}]); } setEditingProduct(null); navigateTo("product-list"); }} onCancel={()=>{ setEditingProduct(null); navigateTo("product-list"); }}/>}
             {page==="categories"   && <ProductCategories categories={productCategories} products={products} onSave={setProductCategories}/>}
             {page==="profile"      && <Profile user={user} business={business} setBusiness={setBusiness} isGuest={isGuest} businessId={businessId} onSignOut={handleSignOut}/>}
-            {page==="settings"     && <Settings user={user} business={business} setBusiness={setBusiness} isGuest={isGuest} businessId={businessId} transactions={transactions}/>}
+            {page==="settings"     && <Settings user={user} business={business} setBusiness={setBusiness} isGuest={isGuest} businessId={businessId} transactions={transactions} darkMode={darkMode} setDarkMode={setDarkMode}/>}
           </div>
         </div>
       </div>
@@ -907,7 +928,7 @@ export default function App() {
           { key:"add", label:"Quick-add", IconComp:Plus },
           { key:"profile", label:"Profile", IconComp:User },
         ].map(n=>(
-          <div key={n.key} onClick={()=>{ if(n.key==="add"){ setShowRecordPayment(true); } else { navigateTo(n.key); setMobileMenuOpen(false); } }} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:3, cursor:"pointer", padding:"6px 0", flex:1, color: n.key==="add" ? "#10B981" : page===n.key ? "#FFFFFF" : C.muted, transition:"color 0.15s" }}>
+          <div key={n.key} onClick={()=>{ if(n.key==="add"){ setShowRecordPayment(true); } else { navigateTo(n.key); setMobileMenuOpen(false); } }} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:3, cursor:"pointer", padding:"6px 0", flex:1, color: n.key==="add" ? "#10B981" : page===n.key ? C.text : C.muted, transition:"color 0.15s" }}>
             <n.IconComp size={20} strokeWidth={page===n.key || n.key==="add" ? 2 : 1.5}/>
             <span style={{ fontSize:10, fontWeight: page===n.key ? 600 : 400 }}>{n.label}</span>
           </div>
@@ -1106,7 +1127,7 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
         {wallets.length===0 && (
           <div style={{ ...card({ padding:"48px 20px", marginBottom:22 }), textAlign:"center" }}>
             <div style={{ marginBottom:12 }}><HandCoins size={40} color="#94A3B8"/></div>
-            <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:18, color:"#FFFFFF", marginBottom:8 }}>Welcome to Receiva</div>
+            <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:18, color:C.text, marginBottom:8 }}>Welcome to Receiva</div>
             <div style={{ fontSize:14, color:"#94A3B8", maxWidth:340, margin:"0 auto 20px" }}>Start by adding your first wallet — your MTN MoMo, Telecel Cash, or any account you receive payments on.</div>
           </div>
         )}
@@ -1129,7 +1150,7 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
         {/* Mobile Header with Receiva Logo */}
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:18 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <ReceivaLogo size={24} />
+            <ReceivaLogo size={24} stroke={C.text} />
             <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:22, color:C.text }}>Receiva</div>
           </div>
           {isGuest && (
@@ -1141,15 +1162,15 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
 
         {/* Mobile Guest Mode Card */}
         {isGuest && (
-          <div style={{ background:"#1E2025", border:"1px solid #2e3036", borderRadius:16, padding:"16px", marginBottom:20, boxShadow:"0 2px 8px rgba(0,0,0,0.15)" }}>
+          <div style={{ background:C.white, border:`1px solid ${C.border}`, borderRadius:16, padding:"16px", marginBottom:20, boxShadow:"0 2px 8px rgba(0,0,0,0.05)" }}>
             <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
-              <div style={{ background:"rgba(255,255,255,0.08)", borderRadius:8, width:32, height:32, display:"flex", alignItems:"center", justifyContent:"center", color:"#FFFFFF" }}><User size={16}/></div>
+              <div style={{ background:"var(--c-nav-active-bg)", borderRadius:8, width:32, height:32, display:"flex", alignItems:"center", justifyContent:"center", color:C.text }}><User size={16}/></div>
               <div>
                 <div style={{ fontSize:13, fontWeight:600, color:C.text }}>Guest Session</div>
                 <div style={{ fontSize:11, color:C.muted }}>{guestLeft} free receipts remaining</div>
               </div>
             </div>
-            <div style={{ fontSize:12, color:"#94A3B8", marginBottom:14, lineHeight:1.5 }}>
+            <div style={{ fontSize:12, color:C.muted, marginBottom:14, lineHeight:1.5 }}>
               Your transactions are currently saved in your browser storage. Create a free account to secure them.
             </div>
             {/* Center the large green button */}
@@ -2317,21 +2338,10 @@ function Profile({ user, business, setBusiness, isGuest, businessId, onSignOut }
 }
 
 // ─── SETTINGS PAGE ────────────────────────────────────────────
-function Settings({ user, business, setBusiness, isGuest, businessId, transactions }) {
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("darkMode") === "true");
+function Settings({ user, business, setBusiness, isGuest, businessId, transactions, darkMode, setDarkMode }) {
   const [defaultMsg, setDefaultMsg] = useState(() => localStorage.getItem("settings_receipt_msg") || "Thank you for your business!");
   const [taxRate, setTaxRate] = useState(() => localStorage.getItem("settings_default_tax") || "0");
   const [showPoweredBy, setShowPoweredBy] = useState(() => localStorage.getItem("settings_powered_by") !== "false");
-
-  useEffect(() => {
-    if (darkMode) {
-      document.body.classList.add("dark-mode");
-      localStorage.setItem("darkMode", "true");
-    } else {
-      document.body.classList.remove("dark-mode");
-      localStorage.setItem("darkMode", "false");
-    }
-  }, [darkMode]);
 
   const handleSave = () => {
     localStorage.setItem("settings_receipt_msg", defaultMsg);
