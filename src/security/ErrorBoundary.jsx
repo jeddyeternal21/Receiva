@@ -41,32 +41,32 @@ export class ErrorBoundary extends Component {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#f9fafb",
+          background: "#121214",
           fontFamily: "'Poppins', sans-serif",
           padding: 20,
         }}>
           <div style={{
-            background: "#fff",
+            background: "#1E2025",
             borderRadius: 18,
             padding: "40px 36px",
             maxWidth: 420,
             width: "100%",
             textAlign: "center",
-            boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
-            border: "1px solid #e5e7eb",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.15)",
+            border: "1px solid #2e3036",
           }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
             <div style={{
               fontSize: 20,
               fontWeight: 700,
-              color: "#111827",
+              color: "#FFFFFF",
               marginBottom: 8,
             }}>
               Something went wrong
             </div>
             <div style={{
               fontSize: 14,
-              color: "#6b7280",
+              color: "#94A3B8",
               lineHeight: 1.6,
               marginBottom: 24,
             }}>
@@ -76,7 +76,7 @@ export class ErrorBoundary extends Component {
             <button
               onClick={this.handleReload}
               style={{
-                background: "#F97316",
+                background: "#10B981",
                 color: "#fff",
                 border: "none",
                 borderRadius: 10,
@@ -87,13 +87,15 @@ export class ErrorBoundary extends Component {
                 fontFamily: "'Poppins', sans-serif",
                 transition: "background 0.15s",
               }}
+              onMouseOver={e=>e.currentTarget.style.background="#059669"}
+              onMouseOut={e=>e.currentTarget.style.background="#10B981"}
             >
               Reload Receiva
             </button>
             <div style={{
               marginTop: 16,
               fontSize: 11,
-              color: "#d1d5db",
+              color: "#94A3B8",
             }}>
               Error ref: {this.state.errorId}
             </div>

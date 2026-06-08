@@ -92,6 +92,43 @@ function parseGhanaMoMo(text) {
   return { network, amount, txId, date, time, sender, fee, balance, elevy, description:"", category:"Sales", verification:verifyTxId(txId,network) };
 }
 
+function ReceivaLogo({ size = 28 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Smartphone silhouette frame with folded corner */}
+      <path
+        d="M 9 3 H 20 L 25 8 V 27 A 2 2 0 0 1 23 29 H 9 A 2 2 0 0 1 7 27 V 5 A 2 2 0 0 1 9 3 Z"
+        stroke="#FFFFFF"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      {/* Fold corner triangle */}
+      <path
+        d="M 20 3 V 8 H 25 Z"
+        fill="#1B4332"
+        stroke="#FFFFFF"
+        strokeWidth="1"
+        strokeLinejoin="round"
+      />
+      {/* Horizontal data lines */}
+      <line x1="11" y1="18" x2="21" y2="18" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="11" y1="22" x2="18" y2="22" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="11" y1="25" x2="16" y2="25" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" />
+      {/* Forest green feather quill crossing over */}
+      <path
+        d="M 10 23 C 13 18.5 17 14.5 23 8 C 21 11.5 15.5 18 10 23 Z"
+        fill="#1B4332"
+      />
+      <path
+        d="M 10 23 C 14 19 19 14 23 8"
+        stroke="#10B981"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 // ─── ICON MAPPING (Lucide React) ─────────────────────────────
 const LI = {
   home: Home, tx: ArrowLeftRight, receipt: Receipt, wallet: Wallet,
@@ -124,7 +161,7 @@ const C = {
 // ─── SHARED UI ────────────────────────────────────────────────
 const card  = (extra={}) => ({ background:C.white, border:`1px solid ${C.border}`, borderRadius:14, padding:"20px 22px", ...extra });
 const label = { fontSize:12, color:C.muted, marginBottom:5, display:"block", letterSpacing:"0.04em", fontWeight:500 };
-const input = { background:"#f9fafb", border:`1px solid ${C.border}`, borderRadius:8, padding:"10px 14px", color:C.text, fontSize:14, fontFamily:"'Poppins',sans-serif", outline:"none", width:"100%", boxSizing:"border-box", transition:"border-color 0.2s" };
+const input = { background:"#121214", border:`1px solid ${C.border}`, borderRadius:8, padding:"10px 14px", color:C.text, fontSize:14, fontFamily:"'Poppins',sans-serif", outline:"none", width:"100%", boxSizing:"border-box", transition:"border-color 0.2s" };
 const formRow = { display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:12 };
 
 function Btn({ children, onClick, variant="primary", full=false, size="md", href, style={}, disabled=false }) {
@@ -169,7 +206,7 @@ function ModalHeader({ title, onClose }) {
 function WalletPill({ wallet, active, onClick }) {
   const preset = WALLET_PRESETS.find(p=>p.id===wallet.presetId) || WALLET_PRESETS[0];
   return (
-    <div onClick={onClick} style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 14px", borderRadius:20, cursor:"pointer", background: active ? preset.color+"18" : "#f3f4f6", border:`1.5px solid ${active ? preset.color : "transparent"}`, transition:"all 0.15s", whiteSpace:"nowrap" }}>
+    <div onClick={onClick} style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 14px", borderRadius:20, cursor:"pointer", background: active ? preset.color+"18" : "#121214", border:`1.5px solid ${active ? preset.color : "#2e3036"}`, transition:"all 0.15s", whiteSpace:"nowrap" }}>
       <WalletIcon presetId={wallet.presetId} size={14} color={active ? preset.color : undefined}/>
       <span style={{ fontSize:13, fontWeight:500, color: active ? preset.color : C.muted }}>{wallet.name}</span>
     </div>
@@ -250,56 +287,58 @@ function LoginPage({ onLogin, onGuest }) {
       <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
       <style>{`
         * { font-family: 'Poppins', sans-serif; box-sizing: border-box; }
-        body { margin: 0; background: #f9fafb; }
-        .login-page { min-height: 100vh; display: flex; flex-direction: column; background: #f9fafb; }
-        .login-nav { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; background: #fff; border-bottom: 1px solid #e5e7eb; }
+        body { margin: 0; background: #121214; }
+        .login-page { min-height: 100vh; display: flex; flex-direction: column; background: #121214; }
+        .login-nav { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; background: #1E2025; border-bottom: 1px solid #2e3036; }
         .login-body { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 20px 16px 40px; overflow-y: auto; }
         .login-inner { width: 100%; max-width: 420px; }
         .hero { text-align: center; margin-bottom: 24px; }
-        .badge-pill { display: inline-flex; align-items: center; gap: 6px; background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.25); border-radius: 20px; padding: 5px 12px; font-size: 11px; color: #F97316; font-weight: 500; margin-bottom: 12px; }
-        .hero-title { font-size: clamp(22px, 6vw, 28px); font-weight: 600; color: #111827; line-height: 1.25; margin-bottom: 8px; }
-        .hero-sub { font-size: 13px; color: #6b7280; line-height: 1.7; max-width: 300px; margin: 0 auto; }
-        .auth-card { background: #fff; border-radius: 20px; padding: 22px 18px; box-shadow: 0 4px 24px rgba(0,0,0,0.07); border: 1px solid #e5e7eb; margin-bottom: 14px; }
-        .tab-row { display: flex; background: #f3f4f6; border-radius: 10px; padding: 3px; margin-bottom: 18px; }
+        .badge-pill { display: inline-flex; align-items: center; gap: 6px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); border-radius: 20px; padding: 5px 12px; font-size: 11px; color: #10B981; font-weight: 500; margin-bottom: 12px; }
+        .hero-title { font-size: clamp(22px, 6vw, 28px); font-weight: 600; color: #FFFFFF; line-height: 1.25; margin-bottom: 8px; }
+        .hero-sub { font-size: 13px; color: #94A3B8; line-height: 1.7; max-width: 300px; margin: 0 auto; }
+        .auth-card { background: #1E2025; border-radius: 20px; padding: 22px 18px; box-shadow: 0 4px 24px rgba(0,0,0,0.15); border: 1px solid #2e3036; margin-bottom: 14px; }
+        .tab-row { display: flex; background: #121214; border-radius: 10px; padding: 3px; margin-bottom: 18px; }
         .tab-btn { flex: 1; padding: 10px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.15s; }
-        .tab-btn.active { background: #fff; color: #111827; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-        .tab-btn.inactive { background: transparent; color: #6b7280; }
+        .tab-btn.active { background: #1E2025; color: #FFFFFF; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+        .tab-btn.inactive { background: transparent; color: #94A3B8; }
         .field { margin-bottom: 12px; }
-        .field label { display: block; font-size: 11px; color: #6b7280; font-weight: 500; margin-bottom: 5px; letter-spacing: 0.04em; }
-        .field input { width: 100%; padding: 12px 14px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 16px; outline: none; background: #f9fafb; color: #111827; transition: border-color 0.2s; }
-        .field input:focus { border-color: rgba(249,115,22,0.5); background: #fff; }
+        .field label { display: block; font-size: 11px; color: #94A3B8; font-weight: 500; margin-bottom: 5px; letter-spacing: 0.04em; }
+        .field input { width: 100%; padding: 12px 14px; border: 1px solid #2e3036; border-radius: 10px; font-size: 16px; outline: none; background: #121214; color: #FFFFFF; transition: border-color 0.2s; }
+        .field input:focus { border-color: rgba(16,185,129,0.5); background: #121214; }
         .err-box { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; font-size: 13px; color: #b91c1c; }
-        .btn-main { width: 100%; padding: 14px; background: #F97316; color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-        .btn-main:hover { background: #ea6a08; }
+        .btn-main { width: 100%; padding: 14px; background: #10B981; color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+        .btn-main:hover { background: #059669; }
         .btn-main:disabled { opacity: 0.6; cursor: not-allowed; }
         .divider { display: flex; align-items: center; gap: 10px; margin: 14px 0; }
-        .divider span { font-size: 12px; color: #9ca3af; }
-        .divider-line { flex: 1; height: 1px; background: #e5e7eb; }
-        .btn-ghost { width: 100%; padding: 12px; background: transparent; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px; color: #6b7280; cursor: pointer; transition: all 0.15s; }
-        .btn-ghost:hover { border-color: #F97316; color: #F97316; background: rgba(249,115,22,0.04); }
+        .divider span { font-size: 12px; color: #94A3B8; }
+        .divider-line { flex: 1; height: 1px; background: #2e3036; }
+        .btn-ghost { width: 100%; padding: 12px; background: transparent; border: 1.5px solid #2e3036; border-radius: 10px; font-size: 13px; color: #94A3B8; cursor: pointer; transition: all 0.15s; }
+        .btn-ghost:hover { border-color: #10B981; color: #10B981; background: rgba(16,185,129,0.04); }
         .features-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
-        .feat-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px 8px; text-align: center; }
+        .feat-card { background: #1E2025; border: 1px solid #2e3036; border-radius: 12px; padding: 12px 8px; text-align: center; }
         .plans-row { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; }
         .plan-card { background: #fff; border: 1.5px solid #e5e7eb; border-radius: 14px; padding: 14px; min-width: 140px; flex-shrink: 0; position: relative; }
         .plan-card.hot { background: rgba(249,115,22,0.06); border-color: rgba(249,115,22,0.4); }
         .popular-tag { position: absolute; top: -9px; left: 50%; transform: translateX(-50%); background: #F97316; color: #fff; font-size: 9px; font-weight: 700; padding: 2px 10px; border-radius: 20px; white-space: nowrap; }
-        .footer-note { text-align: center; margin-top: 14px; font-size: 11px; color: #9ca3af; }
+        .footer-note { text-align: center; margin-top: 14px; font-size: 11px; color: #94A3B8; }
       `}</style>
 
       <div className="login-page">
         {/* NAV */}
         <div className="login-nav">
-          <div style={{ fontWeight:700, fontSize:20, color:"#111827" }}>Receiva<span style={{ color:"#F97316" }}>.</span></div>
-          <div style={{ fontSize:11, color:"#6b7280" }}>Financial records for Ghana</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <ReceivaLogo size={28} />
+            <div style={{ fontWeight:700, fontSize:20, color:"#FFFFFF", fontFamily: "'Poppins', sans-serif" }}>Receiva</div>
+          </div>
+          <div style={{ fontSize:11, color:"#94A3B8" }}>Financial records for Ghana</div>
         </div>
 
         <div className="login-body">
           <div className="login-inner">
-
             {/* HERO */}
             <div className="hero">
               <div className="badge-pill"><Shield size={14} strokeWidth={1.8} style={{marginRight:4}}/> Built for Ghana businesses</div>
-              <div className="hero-title">Your business records,<br/><span style={{ color:"#F97316" }}>organised.</span></div>
+              <div className="hero-title">Your business records,<br/><span style={{ color:"#10B981" }}>organised.</span></div>
               <div className="hero-sub">Turn MoMo SMS into professional receipts. Track income and expenses in one place.</div>
             </div>
 
@@ -347,14 +386,12 @@ function LoginPage({ onLogin, onGuest }) {
             <div className="features-row">
               {[[Receipt,"Receipts","Instant"],[Smartphone,"MoMo","Parser"],[BarChart2,"Reports","Monthly"]].map(([IconComp,title,sub])=>(
                 <div key={title} className="feat-card">
-                  <div style={{ marginBottom:4 }}><IconComp size={22} strokeWidth={1.8}/></div>
-                  <div style={{ fontSize:12, fontWeight:500, color:"#111827" }}>{title}</div>
-                  <div style={{ fontSize:10, color:"#6b7280" }}>{sub}</div>
+                  <div style={{ marginBottom:4, color: "#10B981" }}><IconComp size={22} strokeWidth={1.8}/></div>
+                  <div style={{ fontSize:12, fontWeight:500, color:"#FFFFFF" }}>{title}</div>
+                  <div style={{ fontSize:10, color:"#94A3B8" }}>{sub}</div>
                 </div>
               ))}
             </div>
-
-
 
             <div className="footer-note"><Lock size={12} strokeWidth={1.8} style={{marginRight:4,verticalAlign:"middle"}}/> Encrypted · Cancel anytime · Ghana-built</div>
           </div>
@@ -387,7 +424,7 @@ export default function App() {
   const [wallets, setWallets]                   = useState([]);
   const [activeWallet, setActiveWallet]         = useState(null);
   const [transactions, setTransactions]         = useState([]);
-  const [business, setBusiness]                 = useState({ name:"My Business", owner:"", phone:"", industry:"", plan:"free", logoColor:"#F97316", logoBg:"#fff4ed" });
+  const [business, setBusiness]                 = useState({ name:"My Business", owner:"", phone:"", industry:"", plan:"free", logoColor:"#10B981", logoBg:"rgba(16,185,129,0.1)" });
   const [guestCount, setGuestCount]             = useState(0);
   const [showRecordPayment, setShowRecordPayment] = useState(false);
   const [showReceipt, setShowReceipt]           = useState(null);
@@ -411,7 +448,7 @@ export default function App() {
     try {
       let { data: bizData, error: bizErr } = await supabase.from("businesses").select("*").eq("owner_id", userId).single();
       if (bizErr && bizErr.code === "PGRST116") {
-        const { data: newBiz, error: createErr } = await supabase.from("businesses").insert({ owner_id:userId, business_name:"My Business", plan:"free", logo_color:"#F97316", logo_bg:"#fff4ed" }).select().single();
+        const { data: newBiz, error: createErr } = await supabase.from("businesses").insert({ owner_id:userId, business_name:"My Business", plan:"free", logo_color:"#10B981", logo_bg:"rgba(16,185,129,0.1)" }).select().single();
         if (createErr) throw createErr;
         bizData = newBiz;
       } else if (bizErr) throw bizErr;
@@ -425,11 +462,11 @@ export default function App() {
         const { data: newW } = await supabase.from("wallets").insert(defaults).select();
         mappedWallets.push(...(newW||[]).map(w=>({ id:w.id, presetId:w.preset_id, name:w.name, number:"", balance:0 })));
       }
-      setBusiness(b => ({ ...b, name: bizData.business_name || "My Business", logoColor: bizData.logo_color || "#F97316", logoBg: bizData.logo_bg || "#fff4ed", plan: bizData.plan || "free" }));
+      setBusiness(b => ({ ...b, name: bizData.business_name || "My Business", logoColor: bizData.logo_color || "#10B981", logoBg: bizData.logo_bg || "rgba(16,185,129,0.1)", plan: bizData.plan || "free" }));
       setWallets(mappedWallets);
       setTransactions(mappedTx);
       setProducts([]);
-      setProductCategories([{ id:"c1", name:"Products", color:"#2563eb" },{ id:"c2", name:"Services", color:"#F97316" }]);
+      setProductCategories([{ id:"c1", name:"Products", color:"#2563eb" },{ id:"c2", name:"Services", color:"#10B981" }]);
     } catch(err) {
       console.error("loadUserData error:", err);
       setDataError("Could not load your data. Check your connection and refresh.");
@@ -478,13 +515,14 @@ export default function App() {
 
   const handleLogin = (u) => { setUser(u); setAuthState("app"); if(u.id) loadUserData(u.id); };
   const handleGuest = () => { setWallets([]); setTransactions([]); setAuthState("guest"); };
-  const handleSignOut = async () => { await supabase.auth.signOut(); setUser(null); setWallets([]); setTransactions([]); setBusinessId(null); setBusiness({ name:'My Business', owner:'', phone:'', industry:'', plan:'free', logoColor:'#F97316', logoBg:'#fff4ed' }); setAuthState("login"); };
+  const handleSignOut = async () => { await supabase.auth.signOut(); setUser(null); setWallets([]); setTransactions([]); setBusinessId(null); setBusiness({ name:'My Business', owner:'', phone:'', industry:'', plan:'free', logoColor:'#10B981', logoBg:'rgba(16,185,129,0.1)' }); setAuthState("login"); };
 
   if (authState === "loading") return (
-    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#f9fafb", fontFamily:"'Poppins',sans-serif" }}>
-      <div style={{ textAlign:"center" }}>
-        <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:24, color:"#111827", marginBottom:8 }}>Receiva<span style={{ color:"#F97316" }}>.</span></div>
-        <div style={{ fontSize:13, color:"#6b7280" }}>Loading...</div>
+    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#121214", fontFamily:"'Poppins',sans-serif" }}>
+      <div style={{ textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:12 }}>
+        <ReceivaLogo size={48} />
+        <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:24, color:"#FFFFFF" }}>Receiva</div>
+        <div style={{ fontSize:13, color:"#94A3B8" }}>Loading...</div>
       </div>
     </div>
   );
@@ -595,14 +633,14 @@ export default function App() {
       const childActive = n.children.some(c=>c.key===page);
       return (
         <div>
-          <div onClick={()=>setProductsExpanded(e=>!e)} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, padding: mobile?"14px 20px":"11px 20px", cursor:"pointer", fontSize:14, color: childActive ? C.orange : C.muted, background: childActive ? C.orange+"10" : "transparent", borderLeft: mobile?"none":`2px solid ${childActive ? C.orange : "transparent"}`, transition:"all 0.15s", fontWeight: childActive ? 500 : 400 }}>
+          <div onClick={()=>setProductsExpanded(e=>!e)} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, padding: mobile?"14px 20px":"11px 20px", cursor:"pointer", fontSize:14, color: childActive ? "#FFFFFF" : C.muted, background: childActive ? "rgba(255, 255, 255, 0.08)" : "transparent", borderLeft: mobile?"none":`2px solid ${childActive ? "#FFFFFF" : "transparent"}`, transition:"all 0.15s", fontWeight: childActive ? 500 : 400 }}>
             <div style={{ display:"flex", alignItems:"center", gap:10 }}><LIcon name={n.icon} size={16}/>{n.label}</div>
             <ChevronDown size={12} style={{ transition:"transform 0.2s", transform: productsExpanded?"rotate(180deg)":"rotate(0)" }}/>
           </div>
           {productsExpanded && (
-            <div style={{ background:"#fafafa", borderLeft: mobile?"none":"2px solid #f0f0f0", marginLeft: mobile?0:20 }}>
+            <div style={{ background:"rgba(18, 18, 20, 0.2)", borderLeft: mobile?"none":"2px solid #2e3036", marginLeft: mobile?0:20 }}>
               {n.children.map(c=>(
-                <div key={c.key} onClick={()=>{ onNavigate(c.key); }} style={{ padding: mobile?"12px 20px 12px 36px":"9px 20px 9px 28px", cursor:"pointer", fontSize:13, color: page===c.key ? C.orange : C.muted, background: page===c.key ? C.orange+"08":"transparent", fontWeight: page===c.key?500:400, transition:"all 0.15s" }}>
+                <div key={c.key} onClick={()=>{ onNavigate(c.key); }} style={{ padding: mobile?"12px 20px 12px 36px":"9px 20px 9px 28px", cursor:"pointer", fontSize:13, color: page===c.key ? "#FFFFFF" : C.muted, background: page===c.key ? "rgba(255, 255, 255, 0.05)":"transparent", fontWeight: page===c.key?500:400, transition:"all 0.15s" }}>
                   {c.label}
                 </div>
               ))}
@@ -613,7 +651,7 @@ export default function App() {
     }
     const active = page===n.key;
     return (
-      <div onClick={()=>onNavigate(n.key)} style={{ display:"flex", alignItems:"center", gap:10, padding: mobile?"14px 20px":"11px 20px", cursor:"pointer", fontSize:14, color: active ? C.orange : C.muted, background: active ? C.orange+"10" : "transparent", borderLeft: mobile?"none":`2px solid ${active ? C.orange : "transparent"}`, transition:"all 0.15s", fontWeight: active ? 500 : 400 }}>
+      <div onClick={()=>onNavigate(n.key)} style={{ display:"flex", alignItems:"center", gap:10, padding: mobile?"14px 20px":"11px 20px", cursor:"pointer", fontSize:14, color: active ? "#FFFFFF" : C.muted, background: active ? "rgba(255, 255, 255, 0.08)" : "transparent", borderLeft: mobile?"none":`2px solid ${active ? "#FFFFFF" : "transparent"}`, transition:"all 0.15s", fontWeight: active ? 500 : 400 }}>
         <LIcon name={n.icon} size={16}/>{n.label}
       </div>
     );
@@ -634,33 +672,33 @@ export default function App() {
       <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet"/>
       <style>{`
         :root {
-          --c-orange: #F97316;
-          --c-orangeD: #ea6a08;
-          --c-teal: #0BADA8;
-          --c-income: #0BADA8;
+          --c-orange: #10B981;
+          --c-orangeD: #059669;
+          --c-teal: #10B981;
+          --c-income: #10B981;
           --c-expense: #ef4444;
-          --c-text: #111827;
-          --c-muted: #6b7280;
-          --c-light: #f9fafb;
-          --c-border: #e5e7eb;
-          --c-white: #ffffff;
-          --c-sidebar: #ffffff;
-          --c-sidebarBorder: #f0f0f0;
+          --c-text: #FFFFFF;
+          --c-muted: #94A3B8;
+          --c-light: #121214;
+          --c-border: #2e3036;
+          --c-white: #1E2025;
+          --c-sidebar: #1E2025;
+          --c-sidebarBorder: #2e3036;
         }
         body.dark-mode {
-          --c-orange: #f97316;
-          --c-orangeD: #ea6a08;
-          --c-teal: #14b8a6;
-          --c-income: #14b8a6;
-          --c-expense: #f43f5e;
-          --c-text: #f3f4f6;
-          --c-muted: #9ca3af;
-          --c-light: #0d1527;
-          --c-border: #334155;
-          --c-white: #1e293b;
-          --c-sidebar: #1e293b;
-          --c-sidebarBorder: #334155;
-          background-color: #0d1527 !important;
+          --c-orange: #10B981;
+          --c-orangeD: #059669;
+          --c-teal: #10B981;
+          --c-income: #10B981;
+          --c-expense: #ef4444;
+          --c-text: #FFFFFF;
+          --c-muted: #94A3B8;
+          --c-light: #121214;
+          --c-border: #2e3036;
+          --c-white: #1E2025;
+          --c-sidebar: #1E2025;
+          --c-sidebarBorder: #2e3036;
+          background-color: #121214 !important;
         }
         body, input, button, select, textarea { font-family: 'Poppins', sans-serif; transition: background-color 0.2s, border-color 0.2s, color 0.2s; }
         @media(max-width:768px){
@@ -694,30 +732,30 @@ export default function App() {
         body.dark-mode .auth-card,
         body.dark-mode .plan-card,
         body.dark-mode .feat-card {
-          background: #1e293b !important;
-          border-color: #334155 !important;
+          background: #1E2025 !important;
+          border-color: #2e3036 !important;
         }
         body.dark-mode .tab-row {
-          background: #0d1527 !important;
+          background: #121214 !important;
         }
         body.dark-mode .tab-btn.active {
-          background: #1e293b !important;
-          color: #f3f4f6 !important;
+          background: #1E2025 !important;
+          color: #FFFFFF !important;
         }
         body.dark-mode input,
         body.dark-mode textarea,
         body.dark-mode select {
-          background: #0d1527 !important;
-          border-color: #334155 !important;
-          color: #f3f4f6 !important;
+          background: #121214 !important;
+          border-color: #2e3036 !important;
+          color: #FFFFFF !important;
         }
         body.dark-mode .mobile-bottom-nav {
-          background: #1e293b !important;
-          border-top-color: #334155 !important;
+          background: #1E2025 !important;
+          border-top-color: #2e3036 !important;
         }
         body.dark-mode .mobile-topbar {
-          background: #1e293b !important;
-          border-bottom-color: #334155 !important;
+          background: #1E2025 !important;
+          border-bottom-color: #2e3036 !important;
         }
       `}</style>
 
@@ -725,14 +763,17 @@ export default function App() {
 
         {/* DESKTOP SIDEBAR */}
         <div className="desktop-sidebar" style={{ width:220, background:C.white, borderRight:`1px solid ${C.sidebarBorder}`, display:"flex", flexDirection:"column", padding:"24px 0", flexShrink:0, boxShadow:"2px 0 8px rgba(0,0,0,0.04)" }}>
-          <div style={{ padding:"0 20px 22px", borderBottom:`1px solid ${C.border}`, marginBottom:8 }}>
-            <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:22, color:C.text }}>Receiva<span style={{ color:C.orange }}>.</span></div>
-            <div style={{ fontSize:11, color:C.orange, letterSpacing:"0.1em", textTransform:"uppercase", fontStyle:"italic" }}>Financial records</div>
+          <div style={{ padding:"0 20px 22px", borderBottom:`1px solid ${C.border}`, marginBottom:8, display: "flex", alignItems: "center", gap: 8 }}>
+            <ReceivaLogo size={28} />
+            <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:22, color:"#FFFFFF" }}>Receiva</div>
+          </div>
+          <div style={{ padding:"0 20px", marginBottom:14 }}>
+            <div style={{ fontSize:11, color:"#94A3B8", letterSpacing:"0.1em", textTransform:"uppercase", fontStyle:"italic" }}>Financial records</div>
           </div>
 
           {isGuest && (
-            <div style={{ margin:"0 12px 12px", background:C.orange+"12", border:`1px solid ${C.orange}33`, borderRadius:10, padding:"10px 12px" }}>
-              <div style={{ fontSize:12, fontWeight:600, color:C.orange, marginBottom:3 }}>Guest mode</div>
+            <div style={{ margin:"0 12px 12px", background:"rgba(255, 255, 255, 0.04)", border:`1px solid #2e3036`, borderRadius:10, padding:"10px 12px" }}>
+              <div style={{ fontSize:12, fontWeight:600, color:"#FFFFFF", marginBottom:3 }}>Guest mode</div>
               <div style={{ fontSize:11, color:C.muted, marginBottom:8 }}>{FREE_RECEIPT_LIMIT - guestCount} free receipts left</div>
               <Btn variant="primary" full size="sm" onClick={()=>setAuthState("login")}><ArrowUpFromLine size={13}/> Sign up free</Btn>
             </div>
@@ -742,15 +783,15 @@ export default function App() {
 
           {/* WhatsApp Support */}
           <div style={{ margin:"12px 12px 0" }}>
-            <a href="https://wa.me/233205597508" target="_blank" rel="noreferrer" style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 12px", background:"#25D36614", border:"1px solid #25D36633", borderRadius:10, textDecoration:"none", color:"#166534", fontSize:12, fontWeight:500 }}>
+            <a href="https://wa.me/233205597508" target="_blank" rel="noreferrer" style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 12px", background:"#25D36614", border:"1px solid #25D36633", borderRadius:10, textDecoration:"none", color:"#25D366", fontSize:12, fontWeight:500 }}>
               <MessageCircle size={16} strokeWidth={1.8}/> Chat with support
             </a>
           </div>
 
           <div style={{ marginTop:"auto", padding:"16px 18px 0" }}>
             {!isPro && (
-              <div style={{ background:`linear-gradient(135deg,${C.orange}18,${C.orange}08)`, border:`1px solid ${C.orange}30`, borderRadius:10, padding:"12px 14px", marginBottom:10 }}>
-                <div style={{ fontSize:11, color:C.orange, fontWeight:600, marginBottom:2, display:"flex", alignItems:"center", gap:5 }}><LIcon name="star" size={11}/> Upgrade to Pro</div>
+              <div style={{ background:"rgba(16, 185, 129, 0.04)", border:`1px solid rgba(16, 185, 129, 0.20)`, borderRadius:10, padding:"12px 14px", marginBottom:10 }}>
+                <div style={{ fontSize:11, color:"#10B981", fontWeight:600, marginBottom:2, display:"flex", alignItems:"center", gap:5 }}><LIcon name="star" size={11}/> Upgrade to Pro</div>
                 <div style={{ fontSize:11, color:C.muted, marginBottom:8 }}>Logo receipts · PDF · More</div>
                 <Btn variant="primary" full size="sm" onClick={()=>setShowUpgrade(true)}>Upgrade — GH₵ 23/mo</Btn>
               </div>
@@ -758,8 +799,8 @@ export default function App() {
             {!isGuest && (
               <>
                 <div style={{ fontSize:11, color:C.muted, marginBottom:4 }}>{txUsed} / {isPro ? "∞" : txCap} transactions</div>
-                <div style={{ height:4, background:"#f0f0f0", borderRadius:2 }}>
-                  <div style={{ height:"100%", width:`${Math.min((txUsed/txCap)*100,100)}%`, background:C.orange, borderRadius:2 }}/>
+                <div style={{ height:4, background:"#2e3036", borderRadius:2 }}>
+                  <div style={{ height:"100%", width:`${Math.min((txUsed/txCap)*100,100)}%`, background:"#FFFFFF", borderRadius:2 }}/>
                 </div>
               </>
             )}
@@ -771,12 +812,15 @@ export default function App() {
           <div className="mobile-overlay">
             <div className="mobile-drawer">
               <div style={{ padding:"20px 20px 16px", borderBottom:`1px solid ${C.border}`, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:20, color:C.text }}>Receiva<span style={{ color:C.orange }}>.</span></div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <ReceivaLogo size={24} />
+                  <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:20, color:"#FFFFFF" }}>Receiva</div>
+                </div>
                 <button onClick={()=>setMobileMenuOpen(false)} style={{ background:"transparent", border:"none", cursor:"pointer", color:C.muted, padding:4 }}><X size={20}/></button>
               </div>
               {isGuest && (
-                <div style={{ margin:"12px 12px 0", background:C.orange+"12", border:`1px solid ${C.orange}33`, borderRadius:10, padding:"10px 12px" }}>
-                  <div style={{ fontSize:12, fontWeight:600, color:C.orange, marginBottom:3 }}>Guest mode</div>
+                <div style={{ margin:"12px 12px 0", background:"rgba(255, 255, 255, 0.04)", border:`1px solid #2e3036`, borderRadius:10, padding:"10px 12px" }}>
+                  <div style={{ fontSize:12, fontWeight:600, color:"#FFFFFF", marginBottom:3 }}>Guest mode</div>
                   <div style={{ fontSize:11, color:C.muted, marginBottom:8 }}>{FREE_RECEIPT_LIMIT - guestCount} free receipts left</div>
                   <Btn variant="primary" full size="sm" onClick={()=>{ setAuthState("login"); setMobileMenuOpen(false); }}><ArrowUpFromLine size={13}/> Sign up free</Btn>
                 </div>
@@ -814,7 +858,7 @@ export default function App() {
                     <select
                       value={activeWallet||"all"}
                       onChange={e=>setActiveWallet(e.target.value==="all"?null:e.target.value)}
-                      style={{ padding:"7px 32px 7px 12px", borderRadius:20, border:`1.5px solid ${C.border}`, background:activeWallet?C.orange+"12":"#f3f4f6", color:activeWallet?C.orange:C.muted, fontSize:12, fontWeight:500, cursor:"pointer", fontFamily:"'Poppins',sans-serif", outline:"none", appearance:"none", backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat:"no-repeat", backgroundPosition:"right 10px center" }}
+                      style={{ padding:"7px 32px 7px 12px", borderRadius:20, border:`1.5px solid #2e3036`, background:activeWallet?"rgba(255, 255, 255, 0.08)":"#121214", color:activeWallet?"#FFFFFF":C.muted, fontSize:12, fontWeight:500, cursor:"pointer", fontFamily:"'Poppins',sans-serif", outline:"none", appearance:"none", backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat:"no-repeat", backgroundPosition:"right 10px center" }}
                     >
                       <option value="all">All wallets</option>
                       {wallets.map(w=>{
@@ -826,7 +870,7 @@ export default function App() {
                 </div>
               )}
               <a href="https://wa.me/233205597508" target="_blank" rel="noreferrer" title="WhatsApp support" style={{ width:32, height:32, borderRadius:"50%", background:"#25D36618", border:"1.5px solid #25D36644", display:"flex", alignItems:"center", justifyContent:"center", textDecoration:"none" }}><MessageCircle size={15} color="#25D366" strokeWidth={1.8}/></a>
-              <div style={{ width:32, height:32, borderRadius:"50%", background:C.orange+"18", border:`1.5px solid ${C.orange}44`, display:"flex", alignItems:"center", justifyContent:"center", color:C.orange, fontSize:13, fontWeight:700 }}>
+              <div style={{ width:32, height:32, borderRadius:"50%", background:"rgba(255, 255, 255, 0.08)", border:`1.5px solid #2e3036`, display:"flex", alignItems:"center", justifyContent:"center", color:"#FFFFFF", fontSize:13, fontWeight:700 }}>
                 {isGuest ? <User size={14}/> : (user?.name?.[0]?.toUpperCase() || <User size={14}/>)}
               </div>
               {!isGuest && (
@@ -863,7 +907,7 @@ export default function App() {
           { key:"add", label:"Quick-add", IconComp:Plus },
           { key:"profile", label:"Profile", IconComp:User },
         ].map(n=>(
-          <div key={n.key} onClick={()=>{ if(n.key==="add"){ setShowRecordPayment(true); } else { navigateTo(n.key); setMobileMenuOpen(false); } }} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:3, cursor:"pointer", padding:"6px 0", flex:1, color: n.key==="add" ? C.orange : page===n.key ? C.orange : C.muted, transition:"color 0.15s" }}>
+          <div key={n.key} onClick={()=>{ if(n.key==="add"){ setShowRecordPayment(true); } else { navigateTo(n.key); setMobileMenuOpen(false); } }} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:3, cursor:"pointer", padding:"6px 0", flex:1, color: n.key==="add" ? "#10B981" : page===n.key ? "#FFFFFF" : C.muted, transition:"color 0.15s" }}>
             <n.IconComp size={20} strokeWidth={page===n.key || n.key==="add" ? 2 : 1.5}/>
             <span style={{ fontSize:10, fontWeight: page===n.key ? 600 : 400 }}>{n.label}</span>
           </div>
@@ -887,8 +931,8 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
   const statCards = [
     { label:"Total Income",   value:fmt(income),   color:C.income  },
     { label:"Total Expenses", value:fmt(expense),  color:C.expense },
-    { label:"Net Balance",    value:fmt(balance),  color: balance>=0 ? "#2563eb" : C.expense },
-    { label:"Transactions",   value:transactions.length, color:C.orange },
+    { label:"Net Balance",    value:fmt(balance),  color: balance>=0 ? "#10B981" : C.expense },
+    { label:"Transactions",   value:transactions.length, color:C.text },
   ];
 
   // ── Aggregate monthly data for charts ──
@@ -939,7 +983,7 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
   // Tab style helper
   const tabStyle = (active) => ({
     padding: "3px 10px", fontSize: 10, fontWeight: active ? 600 : 400,
-    color: active ? C.orange : C.muted, background: active ? C.orange + "14" : "transparent",
+    color: active ? "#FFFFFF" : C.muted, background: active ? "rgba(255, 255, 255, 0.08)" : "transparent",
     borderRadius: 4, border: "none", cursor: "pointer", fontFamily: "'Poppins',sans-serif",
     letterSpacing: "0.03em"
   });
@@ -992,25 +1036,25 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
                 <text key={m} x={toLineX(i)} y={svgH - 10} textAnchor="middle" fontSize="10" fill={C.muted} fontFamily="'Poppins',sans-serif">{m}</text>
               ))}
               {/* Revenue line */}
-              <polyline points={lineRevPoints} fill="none" stroke={C.orange} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <polyline points={lineRevPoints} fill="none" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
               {/* Expense line */}
-              <polyline points={lineExpPoints} fill="none" stroke={C.teal} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <polyline points={lineExpPoints} fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
               {/* Data dots - Revenue */}
               {months.map((_,i) => (
-                <circle key={"rv"+i} cx={toLineX(i)} cy={toLineY(hasTx ? monthlyRev[i] : 0)} r="3.5" fill={C.orange} stroke={C.white} strokeWidth="1.5"/>
+                <circle key={"rv"+i} cx={toLineX(i)} cy={toLineY(hasTx ? monthlyRev[i] : 0)} r="3.5" fill="#10B981" stroke={C.white} strokeWidth="1.5"/>
               ))}
               {/* Data dots - Expense */}
               {months.map((_,i) => (
-                <circle key={"ex"+i} cx={toLineX(i)} cy={toLineY(hasTx ? monthlyExp[i] : 0)} r="3.5" fill={C.teal} stroke={C.white} strokeWidth="1.5"/>
+                <circle key={"ex"+i} cx={toLineX(i)} cy={toLineY(hasTx ? monthlyExp[i] : 0)} r="3.5" fill="#ef4444" stroke={C.white} strokeWidth="1.5"/>
               ))}
             </svg>
             {/* Legend */}
             <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:20, marginTop:10 }}>
               <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, color:C.muted }}>
-                <span style={{ display:"inline-block", width:18, height:3, borderRadius:2, background:C.orange }}/>Revenue
+                <span style={{ display:"inline-block", width:18, height:3, borderRadius:2, background:"#10B981" }}/>Revenue
               </div>
               <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, color:C.muted }}>
-                <span style={{ display:"inline-block", width:18, height:3, borderRadius:2, background:C.teal }}/>Expenses
+                <span style={{ display:"inline-block", width:18, height:3, borderRadius:2, background:"#ef4444" }}/>Expenses
               </div>
             </div>
           </div>
@@ -1041,18 +1085,18 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
                 const revH = hasTx ? (monthlyRev[i] / barYValues[0]) * bPlotH : 0;
                 const expH = hasTx ? (monthlyExp[i] / barYValues[0]) * bPlotH : 0;
                 return <g key={i}>
-                  <rect x={cx - barW - barGap / 2} y={bPadT + bPlotH - revH} width={barW} height={Math.max(revH, 0)} rx="3" fill={C.orange} opacity="0.85"/>
-                  <rect x={cx + barGap / 2} y={bPadT + bPlotH - expH} width={barW} height={Math.max(expH, 0)} rx="3" fill={C.teal} opacity="0.85"/>
+                  <rect x={cx - barW - barGap / 2} y={bPadT + bPlotH - revH} width={barW} height={Math.max(revH, 0)} rx="3" fill="#10B981" opacity="0.85"/>
+                  <rect x={cx + barGap / 2} y={bPadT + bPlotH - expH} width={barW} height={Math.max(expH, 0)} rx="3" fill="#ef4444" opacity="0.85"/>
                 </g>;
               })}
             </svg>
             {/* Legend */}
             <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:20, marginTop:10 }}>
               <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, color:C.muted }}>
-                <span style={{ display:"inline-block", width:12, height:12, borderRadius:3, background:C.orange, opacity:0.85 }}/>Revenue
+                <span style={{ display:"inline-block", width:12, height:12, borderRadius:3, background:"#10B981", opacity:0.85 }}/>Revenue
               </div>
               <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, color:C.muted }}>
-                <span style={{ display:"inline-block", width:12, height:12, borderRadius:3, background:C.teal, opacity:0.85 }}/>Expenses
+                <span style={{ display:"inline-block", width:12, height:12, borderRadius:3, background:"#ef4444", opacity:0.85 }}/>Expenses
               </div>
             </div>
           </div>
@@ -1061,9 +1105,9 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
         {/* WELCOME / EMPTY STATE */}
         {wallets.length===0 && (
           <div style={{ ...card({ padding:"48px 20px", marginBottom:22 }), textAlign:"center" }}>
-            <div style={{ marginBottom:12 }}><HandCoins size={40} color={C.orange}/></div>
-            <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:18, color:"#111827", marginBottom:8 }}>Welcome to Receiva</div>
-            <div style={{ fontSize:14, color:"#6b7280", maxWidth:340, margin:"0 auto 20px" }}>Start by adding your first wallet — your MTN MoMo, Telecel Cash, or any account you receive payments on.</div>
+            <div style={{ marginBottom:12 }}><HandCoins size={40} color="#94A3B8"/></div>
+            <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:18, color:"#FFFFFF", marginBottom:8 }}>Welcome to Receiva</div>
+            <div style={{ fontSize:14, color:"#94A3B8", maxWidth:340, margin:"0 auto 20px" }}>Start by adding your first wallet — your MTN MoMo, Telecel Cash, or any account you receive payments on.</div>
           </div>
         )}
 
@@ -1082,11 +1126,14 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
 
       {/* ── MOBILE DASHBOARD ── */}
       <div className="mobile-only">
-        {/* Mobile Header with Receiva. Logo */}
+        {/* Mobile Header with Receiva Logo */}
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:18 }}>
-          <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:22, color:C.text }}>Receiva<span style={{ color:C.orange }}>.</span></div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <ReceivaLogo size={24} />
+            <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:22, color:C.text }}>Receiva</div>
+          </div>
           {isGuest && (
-            <div style={{ background:C.orange+"18", border:`1.5px solid ${C.orange}33`, borderRadius:20, padding:"4px 12px", fontSize:11, color:C.orange, fontWeight:600 }}>
+            <div style={{ background:"rgba(255,255,255,0.04)", border:"1.5px solid #2e3036", borderRadius:20, padding:"4px 12px", fontSize:11, color:"#FFFFFF", fontWeight:600 }}>
               Guest mode
             </div>
           )}
@@ -1094,20 +1141,20 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
 
         {/* Mobile Guest Mode Card */}
         {isGuest && (
-          <div style={{ background:C.white, border:`1.5px solid ${C.border}`, borderRadius:16, padding:"16px", marginBottom:20, boxShadow:"0 2px 8px rgba(0,0,0,0.03)" }}>
+          <div style={{ background:"#1E2025", border:"1px solid #2e3036", borderRadius:16, padding:"16px", marginBottom:20, boxShadow:"0 2px 8px rgba(0,0,0,0.15)" }}>
             <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
-              <div style={{ background:C.orange+"18", borderRadius:8, width:32, height:32, display:"flex", alignItems:"center", justifyContent:"center", color:C.orange }}><User size={16}/></div>
+              <div style={{ background:"rgba(255,255,255,0.08)", borderRadius:8, width:32, height:32, display:"flex", alignItems:"center", justifyContent:"center", color:"#FFFFFF" }}><User size={16}/></div>
               <div>
                 <div style={{ fontSize:13, fontWeight:600, color:C.text }}>Guest Session</div>
                 <div style={{ fontSize:11, color:C.muted }}>{guestLeft} free receipts remaining</div>
               </div>
             </div>
-            <div style={{ fontSize:12, color:C.muted, marginBottom:14, lineHeight:1.5 }}>
+            <div style={{ fontSize:12, color:"#94A3B8", marginBottom:14, lineHeight:1.5 }}>
               Your transactions are currently saved in your browser storage. Create a free account to secure them.
             </div>
-            {/* Center the large orange button: Try 5 free receipts — no signup needed */}
+            {/* Center the large green button */}
             <div style={{ textAlign:"center" }}>
-              <button onClick={onAdd} style={{ width:"100%", padding:"12px", background:C.orange, color:"#fff", border:"none", borderRadius:10, fontSize:13, fontWeight:600, cursor:"pointer", transition:"background 0.2s" }} onMouseOver={e=>e.currentTarget.style.background="#ea6a08"} onMouseOut={e=>e.currentTarget.style.background=C.orange}>
+              <button onClick={onAdd} style={{ width:"100%", padding:"12px", background:"#10B981", color:"#fff", border:"none", borderRadius:10, fontSize:13, fontWeight:600, cursor:"pointer", transition:"background 0.2s" }} onMouseOver={e=>e.currentTarget.style.background="#059669"} onMouseOut={e=>e.currentTarget.style.background="#10B981"}>
                 Try 5 free receipts — no signup needed
               </button>
             </div>
@@ -1129,9 +1176,9 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
           <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:14, color:C.text, marginBottom:10, textTransform:"uppercase", letterSpacing:"0.03em" }}>Recent Transactions</div>
           {recent.length === 0 ? (
             <div style={{ background:C.white, border:`1px solid ${C.border}`, borderRadius:16, padding:"32px 16px", textAlign:"center" }}>
-              <div style={{ marginBottom:10 }}><HandCoins size={32} color={C.orange}/></div>
+              <div style={{ marginBottom:10 }}><HandCoins size={32} color="#94A3B8"/></div>
               <div style={{ fontSize:14, fontWeight:600, color:C.text, marginBottom:4 }}>Welcome to Receiva</div>
-              <div style={{ fontSize:12, color:C.muted, maxWidth:240, margin:"0 auto" }}>Record your first payment to see transaction summary cards here.</div>
+              <div style={{ fontSize:12, color:"#94A3B8", maxWidth:240, margin:"0 auto" }}>Record your first payment to see transaction summary cards here.</div>
             </div>
           ) : (
             <TxTable transactions={recent} wallets={[]} onReceipt={onReceipt} onEdit={onEdit} showWallet/>
@@ -1553,35 +1600,35 @@ function RecordPaymentModal({ onClose, onSave, wallets, business }) {
 // ─── RECEIPT MODAL ────────────────────────────────────────────
 function ReceiptModal({ tx, business, isPro, onClose, isVoided }) {
   const rNo = useRef(genRNo()).current;
-  const accentColor = isPro ? (business.logoColor||C.orange) : "#1B5F8C";
-  const accentBg    = isPro ? (business.logoBg||"#fff4ed")   : "#f0f7ff";
+  const accentColor = isPro ? (business.logoColor||"#1B4332") : "#1B4332";
+  const accentBg    = isPro ? (business.logoBg||"rgba(27, 67, 50, 0.08)")   : "rgba(27, 67, 50, 0.08)";
   const waText = `Receipt from ${business.name}\n--------------------------\nReceipt No: ${tx.receiptNo||rNo}\nDate: ${tx.date}\nDescription: ${tx.description}\nAmount: GH₵ ${tx.amount}\nPayment: ${tx.method}${tx.momoRef?`\nMoMo Ref: ${tx.momoRef}`:""}\n--------------------------\nPowered by Receiva`;
   return (
     <Modal onClose={onClose} maxWidth={460}>
       <ModalHeader title="Receipt" onClose={onClose}/>
-      {isPro && <div style={{ background:C.orange+"12", borderRadius:8, padding:"8px 12px", marginBottom:14, fontSize:12, color:C.orange, fontWeight:500, display:"flex", alignItems:"center", gap:6 }}><Star size={14} fill={C.orange}/> Pro — branded with your logo colors</div>}
+      {isPro && <div style={{ background:"rgba(16, 185, 129, 0.1)", borderRadius:8, padding:"8px 12px", marginBottom:14, fontSize:12, color:"#10B981", fontWeight:500, display:"flex", alignItems:"center", gap:6 }}><Star size={14} fill="#10B981"/> Pro — branded with your logo colors</div>}
       {/* RECEIPT CARD */}
-      <div style={{ background:"#fff", border:`1px solid ${isVoided?"#fca5a5":C.border}`, borderRadius:14, padding:"26px 28px", marginBottom:16, position:"relative", overflow:"hidden" }}>
+      <div style={{ background:"#FDFBF7", border:`1px solid ${isVoided?"#fca5a5":"#E2E8F0"}`, borderRadius:14, padding:"26px 28px", marginBottom:16, position:"relative", overflow:"hidden" }}>
         {isVoided && <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%) rotate(-30deg)", fontSize:48, fontWeight:900, color:"rgba(239,68,68,0.18)", letterSpacing:8, textTransform:"uppercase", whiteSpace:"nowrap", pointerEvents:"none", zIndex:1, fontFamily:"'Poppins',sans-serif" }}>VOIDED</div>}
         <div style={{ borderBottom:`2px solid ${accentColor}`, paddingBottom:14, marginBottom:16 }}>
           <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:20, color:accentColor }}>{business.name}</div>
-          {isPro && <div style={{ fontSize:11, color:C.muted, marginTop:2, fontStyle:"italic" }}>Official Receipt · Pro</div>}
-          {!isPro && <div style={{ fontSize:11, color:C.muted, marginTop:2 }}>Official Receipt</div>}
+          {isPro && <div style={{ fontSize:11, color:"#64748B", marginTop:2, fontStyle:"italic" }}>Official Receipt · Pro</div>}
+          {!isPro && <div style={{ fontSize:11, color:"#64748B", marginTop:2 }}>Official Receipt</div>}
         </div>
-        <div style={{ display:"flex", justifyContent:"space-between", marginBottom:18, fontSize:12, color:C.muted }}>
-          <div><strong style={{ color:C.text }}>No:</strong> {tx.receiptNo||rNo}</div>
-          <div><strong style={{ color:C.text }}>Date:</strong> {tx.date}</div>
+        <div style={{ display:"flex", justifyContent:"space-between", marginBottom:18, fontSize:12, color:"#64748B" }}>
+          <div><strong style={{ color:"#121214" }}>No:</strong> {tx.receiptNo||rNo}</div>
+          <div><strong style={{ color:"#121214" }}>Date:</strong> {tx.date}</div>
         </div>
         <div style={{ background:accentBg, borderRadius:8, padding:"12px 14px", marginBottom:16 }}>
-          <div style={{ fontWeight:500, color:C.text, marginBottom:3 }}>{tx.description}</div>
-          <div style={{ fontSize:12, color:C.muted }}>{tx.category} · {tx.method}</div>
+          <div style={{ fontWeight:500, color:"#121214", marginBottom:3 }}>{tx.description}</div>
+          <div style={{ fontSize:12, color:"#64748B" }}>{tx.category} · {tx.method}</div>
           {tx.momoRef && <div style={{ fontSize:11, color:accentColor, marginTop:4, fontFamily:"monospace" }}>Ref: {tx.momoRef}</div>}
         </div>
-        <div style={{ borderTop:`1px solid ${C.border}`, paddingTop:12, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-          <span style={{ color:C.muted, fontSize:14 }}>Total paid</span>
+        <div style={{ borderTop:"1px solid #E2E8F0", paddingTop:12, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+          <span style={{ color:"#64748B", fontSize:14 }}>Total paid</span>
           <span style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:24, color:accentColor }}>{fmt(tx.amount)}</span>
         </div>
-        <div style={{ marginTop:16, textAlign:"center", fontSize:10, color:"#9ca3af", borderTop:`1px solid #e5e7eb`, paddingTop:10 }}>
+        <div style={{ marginTop:16, textAlign:"center", fontSize:10, color:"#9ca3af", borderTop:"1px solid #E2E8F0", paddingTop:10 }}>
           {localStorage.getItem("settings_receipt_msg") || "Thank you for your business!"}
           {localStorage.getItem("settings_powered_by") !== "false" && ` · Powered by Receiva${isPro ? " Pro" : ""}`}
         </div>
@@ -2153,15 +2200,15 @@ function Profile({ user, business, setBusiness, isGuest, businessId, onSignOut }
   const [bizName, setBizName] = useState(business.name || "");
   const [bizPhone, setBizPhone] = useState(() => localStorage.getItem("profile_phone") || "");
   const [bizIndustry, setBizIndustry] = useState(() => localStorage.getItem("profile_industry") || "");
-  const [logoColor, setLogoColor] = useState(business.logoColor || "#F97316");
-  const [logoBg, setLogoBg] = useState(business.logoBg || "#fff4ed");
+  const [logoColor, setLogoColor] = useState(business.logoColor || "#10B981");
+  const [logoBg, setLogoBg] = useState(business.logoBg || "rgba(16,185,129,0.1)");
   const [saving, setSaving] = useState(false);
 
   const colors = [
-    { label: "Orange (Default)", color: "#F97316", bg: "#fff4ed" },
+    { label: "Green (Default)", color: "#10B981", bg: "rgba(16,185,129,0.1)" },
     { label: "Teal", color: "#0BADA8", bg: "#f0fdfa" },
     { label: "Blue", color: "#2563eb", bg: "#eff6ff" },
-    { label: "Green", color: "#16a34a", bg: "#f0fdf4" },
+    { label: "Forest Green", color: "#1B4332", bg: "rgba(27, 67, 50, 0.08)" },
     { label: "Purple", color: "#7c3aed", bg: "#f5f3ff" }
   ];
 
@@ -2204,7 +2251,7 @@ function Profile({ user, business, setBusiness, isGuest, businessId, onSignOut }
       
       <div style={card({ marginBottom:20 })}>
         <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:16 }}>
-          <div style={{ width:60, height:60, borderRadius:30, background:"rgba(249,115,22,0.15)", color:"#F97316", display:"flex", alignItems:"center", justifyContent:"center", fontSize:24, fontWeight:600 }}>
+          <div style={{ width:60, height:60, borderRadius:30, background:"rgba(16,185,129,0.15)", color:"#10B981", display:"flex", alignItems:"center", justifyContent:"center", fontSize:24, fontWeight:600 }}>
             {user?.name ? user.name[0].toUpperCase() : "U"}
           </div>
           <div>
