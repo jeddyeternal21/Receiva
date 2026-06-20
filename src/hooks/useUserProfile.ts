@@ -21,28 +21,70 @@ export function useUserProfile() {
         return;
       }
 
+      const DEV_EMAIL = "jeddyeternal21@gmail.com";
+
       // 2. Fetch the corresponding profile and join with the shop details
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select(`
-          id,
-          full_name,
-          role,
-          shop_id,
-          shop:shops (
+      let profileData: any = null;
+      let profileError: any = null;
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select(`
             id,
-            name,
-            current_tier,
-            base_currency,
-            created_at
-          )
-        `)
-        .eq('id', user.id)
-        .single();
+            full_name,
+            role,
+            shop_id,
+            shop:shops (
+              id,
+              name,
+              current_tier,
+              base_currency,
+              created_at
+            )
+          `)
+          .eq('id', user.id)
+          .single();
+        profileData = data;
+        profileError = error;
+      } catch (err) {
+        profileError = err;
+      }
 
-      if (profileError) throw profileError;
+      if (profileError && user.email !== DEV_EMAIL) {
+        throw profileError;
+      }
 
-      setProfile(profileData as unknown as ProfileWithShop);
+      let finalProfile: ProfileWithShop | null = null;
+      if (profileData) {
+        finalProfile = profileData as unknown as ProfileWithShop;
+      } else if (user.email === DEV_EMAIL) {
+        // Fallback profile if it doesn't exist in DB yet
+        finalProfile = {
+          id: user.id,
+          full_name: 'Developer Admin',
+          role: 'owner',
+          shop_id: 'dev-shop-id',
+          shop: null
+        };
+      }
+
+      // Apply developer bypass overrides
+      if (finalProfile && user.email === DEV_EMAIL) {
+        finalProfile.role = 'owner';
+        if (!finalProfile.shop) {
+          finalProfile.shop = {
+            id: finalProfile.shop_id || 'dev-shop-id',
+            name: 'Developer Shop',
+            current_tier: 'enterprise',
+            base_currency: 'GHS',
+            created_at: new Date().toISOString()
+          };
+        } else {
+          finalProfile.shop.current_tier = 'enterprise';
+        }
+      }
+
+      setProfile(finalProfile);
     } catch (err: any) {
       setError(err instanceof Error ? err : new Error(err?.message || 'An unknown error occurred while fetching user profile.'));
     } finally {

@@ -20,6 +20,7 @@ import {
 // ─── CONSTANTS ────────────────────────────────────────────────
 const CATEGORIES = ["Sales","Service fee","Rent","Supplies","Transport","Salary","Utilities","MoMo transfer","Other"];
 const FREE_RECEIPT_LIMIT = 5;
+const DEV_EMAIL = "jeddyeternal21@gmail.com";
 const today = () => new Date().toISOString().split("T")[0];
 const genId  = () => Math.random().toString(36).slice(2,9);
 const genRNo = () => `RCV-${Date.now().toString().slice(-6)}`;
@@ -468,12 +469,18 @@ export default function App() {
   const [deletedTransactions, setDeletedTransactions] = useState([]);
 
   // ── Load all user data from Supabase ──
-  const loadUserData = async (userId) => {
+  const loadUserData = async (userId, userEmail = null) => {
     setDataLoading(true);
     try {
+      if (!userEmail) {
+        const { data: { session } } = await supabase.auth.getSession();
+        userEmail = session?.user?.email;
+      }
+      const isDev = userEmail === DEV_EMAIL;
+
       let { data: bizData, error: bizErr } = await supabase.from("businesses").select("*").eq("owner_id", userId).single();
       if (bizErr && bizErr.code === "PGRST116") {
-        const { data: newBiz, error: createErr } = await supabase.from("businesses").insert({ owner_id:userId, business_name:"My Business", plan:"free", logo_color:"#10B981", logo_bg:"rgba(16,185,129,0.1)" }).select().single();
+        const { data: newBiz, error: createErr } = await supabase.from("businesses").insert({ owner_id:userId, business_name:"My Business", plan: isDev ? "enterprise" : "free", logo_color:"#10B981", logo_bg:"rgba(16,185,129,0.1)" }).select().single();
         if (createErr) throw createErr;
         bizData = newBiz;
       } else if (bizErr) throw bizErr;
@@ -487,7 +494,7 @@ export default function App() {
         const { data: newW } = await supabase.from("wallets").insert(defaults).select();
         mappedWallets.push(...(newW||[]).map(w=>({ id:w.id, presetId:w.preset_id, name:w.name, number:"", balance:0 })));
       }
-      setBusiness(b => ({ ...b, name: bizData.business_name || "My Business", logoColor: bizData.logo_color || "#10B981", logoBg: bizData.logo_bg || "rgba(16,185,129,0.1)", plan: bizData.plan || "free" }));
+      setBusiness(b => ({ ...b, name: bizData.business_name || "My Business", logoColor: bizData.logo_color || "#10B981", logoBg: bizData.logo_bg || "rgba(16,185,129,0.1)", plan: isDev ? "enterprise" : (bizData.plan || "free") }));
       setWallets(mappedWallets);
       setTransactions(mappedTx);
       // Resolve shopId
@@ -495,9 +502,13 @@ export default function App() {
       try {
         const { data: profileData } = await supabase
           .from("profiles")
-          .select("shop_id")
+          .select("shop_id, role")
           .eq("id", userId)
           .single();
+
+        const dbRole = profileData?.role || "owner";
+        const finalRole = isDev ? "owner" : dbRole;
+        setUser(u => u ? { ...u, role: finalRole, plan: isDev ? "enterprise" : u.plan } : null);
 
         if (profileData && profileData.shop_id) {
           shopId = profileData.shop_id;
@@ -508,7 +519,7 @@ export default function App() {
           } else {
             const { data: newShop } = await supabase
               .from("shops")
-              .insert({ name: bizData.business_name || "My Business", current_tier: "free" })
+              .insert({ name: bizData.business_name || "My Business", current_tier: isDev ? "enterprise" : "free" })
               .select()
               .single();
             if (newShop) shopId = newShop.id;
@@ -518,7 +529,7 @@ export default function App() {
             await supabase.from("profiles").upsert({
               id: userId,
               full_name: bizData.business_name || "Owner",
-              role: "owner",
+              role: finalRole,
               shop_id: shopId
             });
           }
@@ -560,15 +571,17 @@ export default function App() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
+        const isDev = session.user.email === DEV_EMAIL;
         const u = {
           name:  session.user.user_metadata?.full_name || session.user.email.split("@")[0],
           email: session.user.email,
-          plan:  "free",
+          plan:  isDev ? "enterprise" : "free",
+          role:  isDev ? "owner" : "attendant",
           id:    session.user.id,
         };
         setUser(u);
         setAuthState("app");
-        loadUserData(session.user.id);
+        loadUserData(session.user.id, session.user.email);
       } else {
         setAuthState("login");
       }
@@ -576,15 +589,17 @@ export default function App() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
+        const isDev = session.user.email === DEV_EMAIL;
         const u = {
           name:  session.user.user_metadata?.full_name || session.user.email.split("@")[0],
           email: session.user.email,
-          plan:  "free",
+          plan:  isDev ? "enterprise" : "free",
+          role:  isDev ? "owner" : "attendant",
           id:    session.user.id,
         };
         setUser(u);
         setAuthState("app");
-        loadUserData(session.user.id);
+        loadUserData(session.user.id, session.user.email);
       } else {
         setUser(null);
         setAuthState("login");
@@ -594,7 +609,17 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleLogin = (u) => { setUser(u); setAuthState("app"); if(u.id) loadUserData(u.id); };
+  const handleLogin = (u) => {
+    const isDev = u.email === DEV_EMAIL;
+    const updatedU = {
+      ...u,
+      plan: isDev ? "enterprise" : u.plan,
+      role: isDev ? "owner" : u.role
+    };
+    setUser(updatedU);
+    setAuthState("app");
+    if(u.id) loadUserData(u.id, u.email);
+  };
   const handleGuest = () => { setWallets([]); setTransactions([]); setAuthState("guest"); };
   const handleSignOut = async () => { await supabase.auth.signOut(); setUser(null); setWallets([]); setTransactions([]); setBusinessId(null); setBusiness({ name:'My Business', owner:'', phone:'', industry:'', plan:'free', logoColor:'#10B981', logoBg:'rgba(16,185,129,0.1)' }); setAuthState("login"); };
 
@@ -611,12 +636,12 @@ export default function App() {
   if (authState === "login") return <LoginPage onLogin={handleLogin} onGuest={handleGuest}/>;
 
   const isGuest    = authState === "guest";
-  const isPro      = user?.plan === "pro" || business?.plan === "pro" || business?.plan === "growth" || business?.plan === "business";
+  const isPro      = user?.plan === "pro" || business?.plan === "pro" || business?.plan === "growth" || business?.plan === "business" || business?.plan === "enterprise" || user?.email === DEV_EMAIL;
   const txFiltered = activeWallet ? transactions.filter(t=>t.walletId===activeWallet) : transactions;
   const income     = txFiltered.filter(t=>t.type==="income").reduce((s,t)=>s+t.amount,0);
   const expense    = txFiltered.filter(t=>t.type==="expense").reduce((s,t)=>s+t.amount,0);
   const balance    = income - expense;
-  const txCap      = business?.plan === "pro" ? Infinity :
+  const txCap      = (business?.plan === "pro" || business?.plan === "enterprise") ? Infinity :
                      business?.plan === "business" ? 1750 :
                      business?.plan === "growth" ? 1000 : 60;
   const txUsed     = transactions.length;
@@ -767,7 +792,7 @@ export default function App() {
   };
 
   const addWallet = async (w) => {
-    const walletLimit = business?.plan === "pro" ? Infinity :
+    const walletLimit = (business?.plan === "pro" || business?.plan === "enterprise") ? Infinity :
                         business?.plan === "business" ? 5 :
                         business?.plan === "growth" ? 4 : 2;
     if (wallets.length >= walletLimit) {
@@ -781,6 +806,8 @@ export default function App() {
     setShowAddWallet(false);
   };
 
+  const isEnterprise = business?.plan === "enterprise" || user?.email === DEV_EMAIL;
+
   const allNav = [
     { key:"dashboard",    label:"Dashboard",   icon:"home"    },
     { key:"wallets",      label:"Wallets",      icon:"wallet"  },
@@ -793,11 +820,13 @@ export default function App() {
       { key:"categories",      label:"Categories"      },
     ]},
     { key:"profile",      label:"Profile",      icon:"user"    },
-    { key:"billing",      label:"Billing Desk", icon:"receipt" },
-    { key:"ledger",       label:"Credit Book",  icon:"wallet" },
-    { key:"intake",       label:"OCR Intake",   icon:"box" },
-    { key:"console",      label:"Enterprise",   icon:"report" },
-    { key:"terminal",     label:"AI Accountant",icon:"settings" },
+    ...(isEnterprise ? [
+      { key:"billing",      label:"Billing Desk", icon:"receipt" },
+      { key:"ledger",       label:"Credit Book",  icon:"wallet" },
+      { key:"intake",       label:"OCR Intake",   icon:"box" },
+      { key:"console",      label:"Enterprise",   icon:"report" },
+      { key:"terminal",     label:"AI Accountant",icon:"settings" }
+    ] : []),
     { key:"settings",     label:"Settings",     icon:"settings" },
   ];
 
@@ -1075,7 +1104,7 @@ export default function App() {
             {page==="categories"   && <ProductCategories categories={productCategories} products={products} onSave={setProductCategories}/>}
             {page==="profile"      && <Profile user={user} business={business} setBusiness={setBusiness} isGuest={isGuest} businessId={businessId} onSignOut={handleSignOut}/>}
             {page==="settings"     && <Settings user={user} business={business} setBusiness={setBusiness} isGuest={isGuest} businessId={businessId} transactions={transactions} darkMode={darkMode} setDarkMode={setDarkMode}/>}
-            {page==="billing"      && <InvoiceForm products={products} onSave={handleSaveInvoice} />}
+            {page==="billing"      && <InvoiceForm products={products} onSave={handleSaveInvoice} isEnterprise={isEnterprise} />}
             {page==="ledger"       && <CreditBook invoices={invoices} shopName={business.name} />}
             {page==="intake"       && <InvoiceScannerDropzone onConfirmIntake={handleConfirmIntake} supabaseUrl={import.meta.env.VITE_SUPABASE_URL} />}
             {page==="console"      && <ConsolidatedDashboard invoices={invoices} products={products} />}

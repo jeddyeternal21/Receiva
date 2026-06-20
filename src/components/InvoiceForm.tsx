@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Product } from '../types';
 import { useOfflineSync } from '../providers/OfflineSyncProvider';
+import { VoiceInputTrigger } from './VoiceInputTrigger';
 
 // Rich fallback mock data if no products are passed in
 const MOCK_PRODUCTS: Product[] = [
@@ -36,12 +37,14 @@ interface InvoiceFormProps {
   products?: Product[];
   onSave?: (invoiceHeader: any, lineItems: InvoiceLineItemState[]) => void;
   isSaving?: boolean;
+  isEnterprise?: boolean;
 }
 
 export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   products = MOCK_PRODUCTS,
   onSave,
   isSaving = false,
+  isEnterprise = false,
 }) => {
   // Form Header States
   const { isOnline, queueOfflineInvoice } = useOfflineSync();
@@ -137,6 +140,47 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
     setTelcoTransactionId('');
     setExtraNotes('');
     setLineItems([{ product_id: '', quantity: 1, unit_price: 0 }]);
+  };
+
+  const handleDictationComplete = (transcript: string) => {
+    setFormError(null);
+    const text = transcript.toLowerCase().trim();
+    
+    // Parse voice input (e.g. "Add 3 Jasmine Rice" or "3 Voltic")
+    const match = text.match(/(?:add\s+)?(\d+)\s+(.+)/);
+    if (match) {
+      const qty = parseInt(match[1]) || 1;
+      const searchName = match[2].trim();
+      
+      // Find matching product by name (case-insensitive substring match)
+      const foundProduct = products.find(p => 
+        p.item_name.toLowerCase().includes(searchName)
+      );
+      
+      if (foundProduct) {
+        // Add to line items
+        // If the first row is empty, update it. Otherwise add a new row.
+        if (lineItems.length === 1 && !lineItems[0].product_id) {
+          setLineItems([{
+            product_id: foundProduct.id,
+            quantity: qty,
+            unit_price: foundProduct.selling_price
+          }]);
+        } else {
+          setLineItems([...lineItems, {
+            product_id: foundProduct.id,
+            quantity: qty,
+            unit_price: foundProduct.selling_price
+          }]);
+        }
+        setToast(`Added ${qty} x ${foundProduct.item_name}`);
+        setTimeout(() => setToast(null), 3000);
+      } else {
+        setFormError(`Could not find a product matching "${searchName}"`);
+      }
+    } else {
+      setFormError(`Could not parse voice input: "${transcript}". Try saying "Add 3 Jasmine Rice"`);
+    }
   };
 
   // Form validator and compiler
@@ -366,19 +410,24 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
 
           {/* Line Items Card */}
           <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 space-y-6">
-            <div className="flex justify-between items-center border-b border-gray-100 pb-4">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 border-b border-gray-100 pb-4">
               <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                 <Layers className="w-5 h-5 text-gray-400" />
                 Dynamic Line Items
               </h2>
-              <button
-                type="button"
-                onClick={addLineItem}
-                className="inline-flex items-center gap-1 text-xs font-bold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100/80 px-3 py-1.5 rounded-lg border border-green-200 transition-all"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Add Item
-              </button>
+              <div className="flex items-center gap-3">
+                {isEnterprise && (
+                  <VoiceInputTrigger onDictationComplete={handleDictationComplete} />
+                )}
+                <button
+                  type="button"
+                  onClick={addLineItem}
+                  className="inline-flex items-center gap-1 text-xs font-bold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100/80 px-3 py-1.5 rounded-lg border border-green-200 transition-all"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Item
+                </button>
+              </div>
             </div>
 
             <div className="space-y-4">
