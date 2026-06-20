@@ -1,6 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "./supabase";
 import { sanitizeTransaction } from "./security/sanitize.js";
+import { useOfflineSync } from "./providers/OfflineSyncProvider";
+import { InvoiceForm } from "./components/InvoiceForm";
+import { CreditBook } from "./components/CreditBook";
+import { InvoiceScannerDropzone } from "./components/InvoiceScannerDropzone";
+import { ConsolidatedDashboard } from "./components/ConsolidatedDashboard";
+import { AiAccountantTerminal } from "./components/AiAccountantTerminal";
+import { useBackgroundSync } from "./hooks/useBackgroundSync";
 import {
   Home, Wallet, ArrowLeftRight, Receipt, BarChart3, Package,
   Plus, Share2, Check, X, Eye, Clock, Lock, Star, Pencil, Trash2,
@@ -422,6 +429,7 @@ function LoginPage({ onLogin, onGuest }) {
 // MAIN APP
 // ═══════════════════════════════════════════════════════════════
 export default function App() {
+  useBackgroundSync();
   const [authState, setAuthState]               = useState("loading");
   const [user, setUser]                         = useState(null);
   const [page, setPage]                         = useState("dashboard");
@@ -453,6 +461,7 @@ export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen]     = useState(false);
   const [productsExpanded, setProductsExpanded] = useState(false);
   const [products, setProducts]                 = useState([]);
+  const [invoices, setInvoices]                 = useState([]);
   const [productCategories, setProductCategories] = useState([]);
   const [showEditTransaction, setShowEditTransaction] = useState(null);
   const [voidedReceipts, setVoidedReceipts] = useState(new Set());
@@ -481,7 +490,63 @@ export default function App() {
       setBusiness(b => ({ ...b, name: bizData.business_name || "My Business", logoColor: bizData.logo_color || "#10B981", logoBg: bizData.logo_bg || "rgba(16,185,129,0.1)", plan: bizData.plan || "free" }));
       setWallets(mappedWallets);
       setTransactions(mappedTx);
-      setProducts([]);
+      // Resolve shopId
+      let shopId = null;
+      try {
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("shop_id")
+          .eq("id", userId)
+          .single();
+
+        if (profileData && profileData.shop_id) {
+          shopId = profileData.shop_id;
+        } else {
+          const { data: existingShops } = await supabase.from("shops").select("id").limit(1);
+          if (existingShops && existingShops.length > 0) {
+            shopId = existingShops[0].id;
+          } else {
+            const { data: newShop } = await supabase
+              .from("shops")
+              .insert({ name: bizData.business_name || "My Business", current_tier: "free" })
+              .select()
+              .single();
+            if (newShop) shopId = newShop.id;
+          }
+
+          if (shopId) {
+            await supabase.from("profiles").upsert({
+              id: userId,
+              full_name: bizData.business_name || "Owner",
+              role: "owner",
+              shop_id: shopId
+            });
+          }
+        }
+      } catch (profileErr) {
+        console.warn("Could not fetch/setup profiles and shops:", profileErr);
+      }
+
+      if (shopId) {
+        const { data: prodData } = await supabase
+          .from("products")
+          .select("*")
+          .eq("shop_id", shopId)
+          .order("item_name", { ascending: true });
+        
+        const { data: invoiceData } = await supabase
+          .from("invoices")
+          .select("*")
+          .eq("shop_id", shopId)
+          .order("created_at", { ascending: false });
+
+        setProducts(prodData || []);
+        setInvoices(invoiceData || []);
+      } else {
+        setProducts([]);
+        setInvoices([]);
+      }
+      
       setProductCategories([{ id:"c1", name:"Products", color:"#2563eb" },{ id:"c2", name:"Services", color:"#10B981" }]);
     } catch(err) {
       console.error("loadUserData error:", err);
@@ -564,6 +629,95 @@ export default function App() {
     setShowReceipt(tx);
   };
 
+  const handleSaveInvoice = async (invoiceHeader, lineItems) => {
+    try {
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("shop_id")
+        .eq("id", user.id)
+        .single();
+      
+      const shopId = profileData?.shop_id;
+      if (!shopId) {
+        throw new Error("No branch/shop profile assigned to your account.");
+      }
+
+      const { data: invoiceData, error: invoiceError } = await supabase
+        .from('invoices')
+        .insert({
+          shop_id: shopId,
+          customer_name: invoiceHeader.customer_name,
+          customer_phone: invoiceHeader.customer_phone,
+          total_amount: invoiceHeader.total_amount,
+          payment_status: invoiceHeader.payment_status,
+          telco_transaction_id: invoiceHeader.telco_transaction_id,
+          due_date: invoiceHeader.due_date,
+          extra_notes: invoiceHeader.extra_notes,
+        })
+        .select()
+        .single();
+
+      if (invoiceError) throw invoiceError;
+      if (!invoiceData) throw new Error('Invoice insertion succeeded but returned no row ID.');
+
+      const dbInvoiceId = invoiceData.id;
+
+      const lineItemsPayload = lineItems.map((line) => ({
+        invoice_id: dbInvoiceId,
+        product_id: line.product_id,
+        quantity: line.quantity,
+        unit_price: line.unit_price,
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('invoice_items')
+        .insert(lineItemsPayload);
+
+      if (itemsError) {
+        await supabase.from('invoices').delete().eq('id', dbInvoiceId);
+        throw itemsError;
+      }
+
+      alert('Invoice saved successfully to database!');
+      if (user?.id) {
+        loadUserData(user.id);
+      }
+    } catch (err) {
+      console.error('Failed to save invoice:', err);
+      alert('Failed to save invoice: ' + err.message);
+    }
+  };
+
+  const handleConfirmIntake = async (ocrResult) => {
+    if (isGuest) {
+      setProducts(prev => prev.map(p => {
+        const matchingOcr = ocrResult.items.find(item => item.item_name.toLowerCase() === p.item_name.toLowerCase());
+        if (matchingOcr) {
+          return { ...p, stock_remaining: (p.stock_remaining || 0) + matchingOcr.quantity };
+        }
+        return p;
+      }));
+    } else {
+      try {
+        for (const item of ocrResult.items) {
+          const matched = products.find(p => p.item_name.toLowerCase() === item.item_name.toLowerCase());
+          if (matched) {
+            const { error } = await supabase
+              .from('products')
+              .update({ stock_remaining: (matched.stock_remaining || 0) + item.quantity })
+              .eq('id', matched.id);
+            if (error) throw error;
+          }
+        }
+        alert('Stock Intake Confirmed! Inventory records updated successfully.');
+        if (user?.id) loadUserData(user.id);
+      } catch (err) {
+        console.error('Failed to update stock from OCR:', err);
+        alert('Failed to update stock levels: ' + err.message);
+      }
+    }
+  };
+
   const addTransaction = async (rawTx) => {
     let tx;
     try { tx = sanitizeTransaction(rawTx); } catch (e) { alert(e.message); return; }
@@ -639,6 +793,11 @@ export default function App() {
       { key:"categories",      label:"Categories"      },
     ]},
     { key:"profile",      label:"Profile",      icon:"user"    },
+    { key:"billing",      label:"Billing Desk", icon:"receipt" },
+    { key:"ledger",       label:"Credit Book",  icon:"wallet" },
+    { key:"intake",       label:"OCR Intake",   icon:"box" },
+    { key:"console",      label:"Enterprise",   icon:"report" },
+    { key:"terminal",     label:"AI Accountant",icon:"settings" },
     { key:"settings",     label:"Settings",     icon:"settings" },
   ];
 
@@ -916,6 +1075,11 @@ export default function App() {
             {page==="categories"   && <ProductCategories categories={productCategories} products={products} onSave={setProductCategories}/>}
             {page==="profile"      && <Profile user={user} business={business} setBusiness={setBusiness} isGuest={isGuest} businessId={businessId} onSignOut={handleSignOut}/>}
             {page==="settings"     && <Settings user={user} business={business} setBusiness={setBusiness} isGuest={isGuest} businessId={businessId} transactions={transactions} darkMode={darkMode} setDarkMode={setDarkMode}/>}
+            {page==="billing"      && <InvoiceForm products={products} onSave={handleSaveInvoice} />}
+            {page==="ledger"       && <CreditBook invoices={invoices} shopName={business.name} />}
+            {page==="intake"       && <InvoiceScannerDropzone onConfirmIntake={handleConfirmIntake} supabaseUrl={import.meta.env.VITE_SUPABASE_URL} />}
+            {page==="console"      && <ConsolidatedDashboard invoices={invoices} products={products} />}
+            {page==="terminal"     && <AiAccountantTerminal shopName={business.name} supabaseUrl={import.meta.env.VITE_SUPABASE_URL} />}
           </div>
         </div>
       </div>
@@ -947,6 +1111,7 @@ export default function App() {
 
 // ─── DASHBOARD ────────────────────────────────────────────────
 function Dashboard({ transactions, income, expense, balance, wallets, business, user, onAdd, onReceipt, onEdit, isPro, isGuest, guestLeft }) {
+  const { isOnline } = useOfflineSync();
   const recent = transactions.slice(0,5);
   const hasTx = transactions.length > 0;
   const statCards = [
@@ -1015,8 +1180,30 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
       <div className="desktop-only">
         {/* HEADER */}
         <div style={{ marginBottom:22 }}>
-          <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:24, color:C.text, marginBottom:3 }}>Good day, {user?.name?.split(' ')[0] || 'there'} <HandCoins size={24} style={{display:"inline",verticalAlign:"middle",marginLeft:4}}/></div>
-          <div style={{ fontSize:14, color:C.muted }}>Here's your financial snapshot for May 2026</div>
+          {isOnline ? (
+            <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm flex items-center justify-between transition-all duration-300">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Good morning, {user?.name?.split(' ')[0] || 'Jedidiah'}! Let's make today profitable.</h2>
+                <p className="text-sm text-gray-500 mt-1">Here's your store's financial snapshot.</p>
+              </div>
+              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                Live Sync Active
+              </div>
+            </div>
+          ) : (
+            <div className="bg-amber-50 border border-amber-250 rounded-2xl p-6 shadow-sm flex items-start gap-4 transition-all duration-300 animate-pulse">
+              <div className="p-2 bg-amber-500 text-white rounded-xl">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-amber-900">You are currently offline</h2>
+                <p className="text-sm text-amber-700 mt-1">
+                  Receiva is saving your sales safely to local memory and will auto-sync when connection returns.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* STATS CARDS */}
@@ -1159,6 +1346,20 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
             </div>
           )}
         </div>
+
+        {!isOnline && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-5 shadow-sm flex items-start gap-3 transition-all duration-300 animate-pulse">
+            <div className="p-1.5 bg-amber-500 text-white rounded-xl flex-shrink-0">
+              <AlertTriangle className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-xs font-bold text-amber-900">You are currently offline</h2>
+              <p className="text-[11px] text-amber-700 mt-0.5">
+                Receiva is saving your sales safely to local memory and will auto-sync when connection returns.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Mobile Guest Mode Card */}
         {isGuest && (
@@ -2344,6 +2545,7 @@ function Settings({ user, business, setBusiness, isGuest, businessId, transactio
   const [defaultMsg, setDefaultMsg] = useState(() => localStorage.getItem("settings_receipt_msg") || "Thank you for your business!");
   const [taxRate, setTaxRate] = useState(() => localStorage.getItem("settings_default_tax") || "0");
   const [showPoweredBy, setShowPoweredBy] = useState(() => localStorage.getItem("settings_powered_by") !== "false");
+  const [isUpdatingPlan, setIsUpdatingPlan] = useState(false);
 
   const handleSave = () => {
     localStorage.setItem("settings_receipt_msg", defaultMsg);
@@ -2381,65 +2583,282 @@ function Settings({ user, business, setBusiness, isGuest, businessId, transactio
     document.body.removeChild(link);
   };
 
-  return (
-    <div style={{ maxWidth:540, margin:"0 auto" }}>
-      <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:20, color:C.text, marginBottom:20 }}>App Settings</div>
+  const handleUpdatePlan = async (newPlan) => {
+    if (isGuest || !businessId) {
+      setBusiness(prev => ({ ...prev, plan: newPlan }));
+      alert(`Plan updated locally to ${newPlan.toUpperCase()}!`);
+      return;
+    }
 
-      <div style={card({ marginBottom:20 })}>
-        <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:15, color:C.text, marginBottom:14 }}>Appearance</div>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-          <div>
-            <div style={{ fontSize:14, fontWeight:500, color:C.text }}>Dark Theme</div>
-            <div style={{ fontSize:11, color:C.muted }}>Toggle dark theme for night recording</div>
-          </div>
-          <div onClick={() => setDarkMode(!darkMode)} style={{ width:44, height:24, borderRadius:20, background: darkMode ? C.orange : "#d1d5db", position:"relative", cursor:"pointer", transition:"background 0.2s" }}>
-            <div style={{ width:20, height:20, borderRadius:"50%", background:"#fff", position:"absolute", top:2, left: darkMode ? 22 : 2, transition:"left 0.2s", boxShadow:"0 1px 3px rgba(0,0,0,0.2)" }}/>
-          </div>
+    setIsUpdatingPlan(true);
+    try {
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("shop_id")
+        .eq("id", user.id)
+        .single();
+      
+      const shopId = profileData?.shop_id;
+      if (shopId) {
+        const { error: shopError } = await supabase
+          .from("shops")
+          .update({ current_tier: newPlan })
+          .eq("id", shopId);
+        
+        if (shopError) throw shopError;
+      }
+
+      const { error: bizError } = await supabase
+        .from("businesses")
+        .update({ plan: newPlan })
+        .eq("id", businessId);
+
+      if (bizError) throw bizError;
+
+      setBusiness(prev => ({ ...prev, plan: newPlan }));
+      alert(`Subscription successfully updated to ${newPlan.toUpperCase()}!`);
+    } catch (err) {
+      console.error("Failed to update plan:", err);
+      alert("Failed to update subscription plan: " + err.message);
+    } finally {
+      setIsUpdatingPlan(false);
+    }
+  };
+
+  const currentPlan = business.plan || 'free';
+
+  const planOptions = [
+    {
+      id: 'freelancer',
+      name: 'Freelancer',
+      price: 'GHS 23',
+      features: [
+        'Single User Access',
+        'Basic Sales Logging',
+        'Digital Receipts (Branded)',
+        'GRA-friendly monthly summaries'
+      ]
+    },
+    {
+      id: 'business',
+      name: 'Business',
+      price: 'GHS 45',
+      features: [
+        'Multi-user Attendant accounts',
+        'Inventory Stock Tracking & Alerts',
+        'Momo & Multi-Wallet Support',
+        'PDF Export & Reports'
+      ]
+    },
+    {
+      id: 'enterprise',
+      name: 'Enterprise',
+      price: 'GHS 89',
+      features: [
+        'Multi-Branch Tracking',
+        'Bulletproof Attendant Lockouts',
+        'Deep Financial Analytics',
+        '"The AI Accountant" Natural Language Chat',
+        'Automated Credit Recovery Copywriter'
+      ]
+    }
+  ];
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-8 space-y-8 font-sans">
+      <div className="text-center md:text-left">
+        <h1 className="text-3xl font-extrabold tracking-tight text-gray-950">App Settings</h1>
+        <p className="text-gray-500 mt-1 text-sm">Manage your business details, preferences, and subscription tier.</p>
+      </div>
+
+      {/* Subscription Grid Card (Full Width) */}
+      <div className="bg-white border border-gray-150 rounded-3xl shadow-sm p-6 md:p-8 space-y-6">
+        <div>
+          <h3 className="text-lg font-extrabold text-gray-950 flex items-center gap-2">
+            <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+            Subscription Plan
+          </h3>
+          <p className="text-xs text-gray-500 mt-1">Scale your store branches and capabilities with our tiered subscription levels.</p>
+        </div>
+
+        {/* Responsive Plans List */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {planOptions.map((plan) => {
+            const isActive = currentPlan === plan.id;
+            const isEnterprise = plan.id === 'enterprise';
+
+            return (
+              <div 
+                key={plan.id}
+                className={`bg-white border rounded-2xl p-6 flex flex-col justify-between transition-all relative overflow-hidden ${
+                  isActive 
+                    ? 'border-green-500 shadow-md ring-1 ring-green-500/20' 
+                    : 'border-gray-150 hover:border-gray-250 shadow-sm'
+                }`}
+              >
+                {/* Active Tag */}
+                {isActive && (
+                  <div className="absolute top-0 right-0 bg-green-500 text-white text-[9px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">
+                    Current Plan
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-base font-extrabold text-gray-950">{plan.name}</h4>
+                    <div className="flex items-baseline gap-1 mt-2">
+                      <span className="text-2xl font-black text-gray-950">{plan.price}</span>
+                      <span className="text-xs text-gray-400 font-semibold">/ month</span>
+                    </div>
+                  </div>
+
+                  <hr className="border-gray-100" />
+
+                  <ul className="space-y-2.5 text-xs text-gray-600">
+                    {plan.features.map((feature, i) => (
+                      <li key={i} className="flex gap-2 items-start">
+                        <Check className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="leading-tight">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="pt-6 mt-auto">
+                  <button
+                    type="button"
+                    disabled={isActive || isUpdatingPlan}
+                    onClick={() => handleUpdatePlan(plan.id)}
+                    className={`w-full py-2.5 px-4 text-xs font-bold rounded-xl transition-all cursor-pointer text-center ${
+                      isActive
+                        ? 'bg-green-50 text-green-700 border border-green-200 cursor-default'
+                        : isEnterprise
+                          ? 'bg-gray-900 hover:bg-gray-800 text-white shadow-sm'
+                          : 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-250 shadow-sm'
+                    } disabled:opacity-50`}
+                  >
+                    {isActive ? 'Active Plan' : isUpdatingPlan ? 'Updating...' : `Select ${plan.name}`}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      <div style={card({ marginBottom:20 })}>
-        <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:15, color:C.text, marginBottom:14 }}>Receipt Preferences</div>
-        
-        <div style={{ marginBottom:12 }}>
-          <label style={label}>Default Thank-You Note</label>
-          <textarea style={{ ...input, minHeight:70, resize:"vertical" }} value={defaultMsg} onChange={e => setDefaultMsg(e.target.value)} placeholder="Message shown at footer of receipts"/>
-        </div>
-
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
-          <div>
-            <label style={label}>Default Tax Rate (%)</label>
-            <input style={input} type="number" value={taxRate} onChange={e => setTaxRate(e.target.value)} placeholder="e.g. 5"/>
-          </div>
-          <div style={{ display:"flex", flexDirection:"column", justifyContent:"center" }}>
-            <label style={label}>Signature Branding</label>
-            <div style={{ display:"flex", alignItems:"center", gap:8, height:"100%" }}>
-              <div onClick={() => setShowPoweredBy(!showPoweredBy)} style={{ width:40, height:22, borderRadius:20, background: showPoweredBy ? C.orange : "#d1d5db", position:"relative", cursor:"pointer", transition:"background 0.2s" }}>
-                <div style={{ width:18, height:18, borderRadius:"50%", background:"#fff", position:"absolute", top:2, left: showPoweredBy ? 20 : 2, transition:"left 0.2s", boxShadow:"0 1px 3px rgba(0,0,0,0.2)" }}/>
+      {/* Side-by-Side Settings Sections */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        {/* Left Col: Receipt Preferences & Appearance */}
+        <div className="space-y-8">
+          {/* Appearance card */}
+          <div className="bg-white border border-gray-150 rounded-3xl shadow-sm p-6 space-y-4">
+            <h3 className="text-base font-extrabold text-gray-950">Appearance</h3>
+            <div className="flex justify-between items-center bg-gray-50 p-4 rounded-2xl border border-gray-100">
+              <div>
+                <span className="block text-xs font-bold text-gray-850">Dark Theme</span>
+                <span className="text-[10px] text-gray-455">Toggle dark theme for night recording</span>
               </div>
-              <span style={{ fontSize:12, color:C.text }}>Show "Powered by Receiva"</span>
+              <div 
+                onClick={() => setDarkMode(!darkMode)} 
+                className={`w-12 h-6 rounded-full p-0.5 cursor-pointer transition-colors duration-200 ease-in-out ${
+                  darkMode ? 'bg-green-500' : 'bg-gray-200'
+                }`}
+              >
+                <div 
+                  className={`w-5 h-5 rounded-full bg-white shadow-sm transform transition-transform duration-200 ease-in-out ${
+                    darkMode ? 'translate-x-6' : 'translate-x-0'
+                  }`}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Receipt preferences card */}
+          <div className="bg-white border border-gray-150 rounded-3xl shadow-sm p-6 space-y-4">
+            <h3 className="text-base font-extrabold text-gray-950">Receipt Preferences</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                  Default Thank-You Note
+                </label>
+                <textarea 
+                  rows={2}
+                  className="w-full px-4 py-2.5 text-xs rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all bg-gray-50"
+                  value={defaultMsg} 
+                  onChange={e => setDefaultMsg(e.target.value)} 
+                  placeholder="Message shown at footer of receipts"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                    Default Tax Rate (%)
+                  </label>
+                  <input 
+                    type="number" 
+                    className="w-full px-4 py-2.5 text-xs rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all bg-gray-50"
+                    value={taxRate} 
+                    onChange={e => setTaxRate(e.target.value)} 
+                    placeholder="e.g. 5"
+                  />
+                </div>
+                
+                <div className="flex flex-col justify-end">
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                    Signature Branding
+                  </label>
+                  <div className="flex items-center gap-2 bg-gray-50 p-2 px-3 rounded-xl border border-gray-100 h-[38px]">
+                    <div 
+                      onClick={() => setShowPoweredBy(!showPoweredBy)} 
+                      className={`w-9 h-5 rounded-full p-0.5 cursor-pointer transition-colors duration-200 ease-in-out ${
+                        showPoweredBy ? 'bg-green-500' : 'bg-gray-200'
+                      }`}
+                    >
+                      <div 
+                        className={`w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform duration-200 ease-in-out ${
+                          showPoweredBy ? 'translate-x-4' : 'translate-x-0'
+                        }`}
+                      />
+                    </div>
+                    <span className="text-[10px] text-gray-605 font-bold">Show "Powered by Receiva"</span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSave}
+                className="w-full py-2.5 px-4 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-md shadow-green-50"
+              >
+                Save Preferences
+              </button>
             </div>
           </div>
         </div>
 
-        <Btn variant="primary" full onClick={handleSave}>
-          <LIcon name="check" size={15}/> Save Preferences
-        </Btn>
-      </div>
+        {/* Right Col: Data Portability & Version Info */}
+        <div className="space-y-8">
+          <div className="bg-white border border-gray-150 rounded-3xl shadow-sm p-6 space-y-4">
+            <h3 className="text-base font-extrabold text-gray-950">Data Portability</h3>
+            <p className="text-xs text-gray-505 leading-relaxed">
+              Export all transactions saved in this account as a clean, standardized CSV file for spreadsheets and tax software.
+            </p>
+            <button
+              type="button"
+              onClick={handleExportCSV}
+              className="w-full py-2.5 px-4 border border-gray-250 hover:bg-gray-50 text-gray-700 text-xs font-bold rounded-xl transition-all cursor-pointer"
+            >
+              Export Data as CSV
+            </button>
+          </div>
 
-      <div style={card({ marginBottom:20 })}>
-        <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:15, color:C.text, marginBottom:14 }}>Data Portability</div>
-        <div style={{ fontSize:12, color:C.muted, marginBottom:14, lineHeight:1.5 }}>
-          Export all transactions saved in this account as a clean, standardized CSV file for spreadsheets and tax software.
+          <div className="text-center text-[10px] text-gray-400 space-y-1 py-4">
+            <div className="font-bold">Receiva Pro App · Version 1.2.0</div>
+            <div>Vercel Sandbox · Supabase Cloud Connected</div>
+          </div>
         </div>
-        <Btn variant="ghost" full onClick={handleExportCSV}>
-          <LIcon name="share" size={15}/> Export Data as CSV
-        </Btn>
-      </div>
-
-      <div style={{ textAlign:"center", fontSize:11, color:C.muted, marginTop:24 }}>
-        <div>Receiva Pro App · Version 1.2.0</div>
-        <div>Vercel Sandbox · Supabase Cloud Connected</div>
       </div>
     </div>
   );
