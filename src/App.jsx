@@ -473,6 +473,40 @@ export default function App() {
   const [voidedReceipts, setVoidedReceipts] = useState(new Set());
   const [deletedTransactions, setDeletedTransactions] = useState([]);
 
+  // ── Global Voice Dictation state (must be before any early returns) ──
+  const [voiceModalOpen, setVoiceModalOpen] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const [interimTranscript, setInterimTranscript] = useState("");
+  const [voiceError, setVoiceError] = useState("");
+  const recognitionRef = useRef(null);
+
+  const startListening = () => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { setVoiceError("Speech recognition not supported in this browser."); return; }
+    setTranscript(""); setInterimTranscript(""); setVoiceError(""); setIsListening(true);
+    try {
+      const rec = new SR();
+      rec.continuous = true; rec.interimResults = true; rec.lang = "en-US";
+      rec.onresult = (e) => {
+        let fin = "", int = "";
+        for (let i = e.resultIndex; i < e.results.length; ++i) {
+          if (e.results[i].isFinal) fin += e.results[i][0].transcript + " ";
+          else int += e.results[i][0].transcript;
+        }
+        if (fin) setTranscript(p => p + fin);
+        setInterimTranscript(int);
+      };
+      rec.onerror = (e) => { setVoiceError(`Error: ${e.error}`); setIsListening(false); };
+      rec.onend = () => setIsListening(false);
+      recognitionRef.current = rec;
+      rec.start();
+    } catch (err) { setVoiceError("Failed to start speech recognition."); setIsListening(false); }
+  };
+  const stopListening = () => { if (recognitionRef.current) recognitionRef.current.stop(); setIsListening(false); };
+
+  useEffect(() => () => { if (recognitionRef.current) recognitionRef.current.abort(); }, []);
+
   // ── Load all user data from Supabase ──
   const loadUserData = async (userId, userEmail = null) => {
     setDataLoading(true);
@@ -810,40 +844,6 @@ export default function App() {
     setWallets(p=>[...p,{ id:data.id, presetId:data.preset_id, name:data.name, number:data.number||"", balance:0 }]);
     setShowAddWallet(false);
   };
-
-  // ── Global Voice Dictation (lifted from Dashboard) ──────────
-  const [voiceModalOpen, setVoiceModalOpen] = useState(false);
-  const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState("");
-  const [interimTranscript, setInterimTranscript] = useState("");
-  const [voiceError, setVoiceError] = useState("");
-  const recognitionRef = useRef(null);
-
-  const startListening = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) { setVoiceError("Speech recognition not supported in this browser."); return; }
-    setTranscript(""); setInterimTranscript(""); setVoiceError(""); setIsListening(true);
-    try {
-      const rec = new SpeechRecognition();
-      rec.continuous = true; rec.interimResults = true; rec.lang = 'en-US';
-      rec.onresult = (event) => {
-        let final = ""; let interim = "";
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) { final += event.results[i][0].transcript + " "; }
-          else { interim += event.results[i][0].transcript; }
-        }
-        if (final) setTranscript(prev => prev + final);
-        setInterimTranscript(interim);
-      };
-      rec.onerror = (event) => { console.error("Speech recognition error", event); setVoiceError(`Error: ${event.error}`); setIsListening(false); };
-      rec.onend = () => setIsListening(false);
-      recognitionRef.current = rec;
-      rec.start();
-    } catch (err) { console.error(err); setVoiceError("Failed to initialize speech recognition."); setIsListening(false); }
-  };
-  const stopListening = () => { if (recognitionRef.current) recognitionRef.current.stop(); setIsListening(false); };
-
-  useEffect(() => { return () => { if (recognitionRef.current) recognitionRef.current.abort(); }; }, []);
 
   const isEnterprise = business?.plan === "enterprise" || isDevEmail(user?.email);
 
