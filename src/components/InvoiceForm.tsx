@@ -245,9 +245,9 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 font-sans text-gray-800">
+    <div className="max-w-6xl mx-auto font-sans text-gray-900">
       {/* Title Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-gray-200 pb-6 mb-8">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-gray-100 pb-4 mb-6">
         <div>
           <div className="flex items-center gap-2">
             <div className="p-2 bg-gray-900 text-white rounded-lg">
@@ -280,7 +280,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
         {/* Form Panel */}
         <form onSubmit={handleSubmit} className="lg:col-span-7 space-y-6">
           {/* Card Container */}
-          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 space-y-6">
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-6">
             <div className="border-b border-gray-100 pb-4">
               <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                 <User className="w-5 h-5 text-gray-400" />
@@ -299,7 +299,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                   placeholder="e.g. John Doe"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all"
                 />
               </div>
 
@@ -312,7 +312,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                   placeholder="e.g. +233 24 000 0000"
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all"
                 />
               </div>
             </div>
@@ -323,7 +323,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
                   Payment Status
                 </label>
-                <div className="grid grid-cols-2 p-1 bg-gray-100 rounded-xl">
+                <div className="grid grid-cols-2 p-1 bg-gray-100 rounded-lg">
                   <button
                     type="button"
                     onClick={() => setPaymentStatus('paid')}
@@ -361,7 +361,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     required
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-rose-200 focus:outline-none focus:ring-2 focus:ring-rose-300 focus:border-transparent bg-rose-50/20 text-rose-900 transition-all"
+                    className="w-full px-4 py-2 rounded-lg border border-rose-200 focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent bg-rose-50/20 text-rose-900 transition-all"
                   />
                 </div>
               ) : (
@@ -374,18 +374,18 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     placeholder="e.g. TXN9827419"
                     value={telcoTransactionId}
                     onChange={(e) => setTelcoTransactionId(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all"
+                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all"
                   />
                 </div>
               )}
             </div>
 
             {/* Expandable/Collapsible Notes Accordion */}
-            <div className="border border-gray-150 rounded-xl overflow-hidden">
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
               <button
                 type="button"
                 onClick={() => setNotesExpanded(!notesExpanded)}
-                className="w-full px-4 py-3 bg-gray-50 flex items-center justify-between text-left text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
+                className="w-full px-4 py-2 bg-gray-50 flex items-center justify-between text-left text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
               >
                 <span>Internal Notes (Private)</span>
                 {notesExpanded ? (
@@ -401,7 +401,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     placeholder="Provide any private details about this billing or client credit terms..."
                     value={extraNotes}
                     onChange={(e) => setExtraNotes(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all text-sm"
+                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all text-sm"
                   />
                 </div>
               )}
@@ -409,7 +409,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
           </div>
 
           {/* Line Items Card */}
-          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 space-y-6">
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-6">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 border-b border-gray-100 pb-4">
               <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                 <Layers className="w-5 h-5 text-gray-400" />
@@ -439,7 +439,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 return (
                   <div 
                     key={index}
-                    className="flex flex-col md:flex-row gap-3 p-4 bg-gray-50 border border-gray-100 rounded-xl relative group transition-all duration-200 hover:border-gray-200"
+                    className="flex flex-col md:flex-row gap-3 p-4 bg-gray-50 border border-gray-100 rounded-lg relative group transition-all duration-200 hover:border-gray-200"
                   >
                     {/* Product Selection */}
                     <div className="flex-1">
@@ -450,7 +450,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                         required
                         value={item.product_id}
                         onChange={(e) => updateLineItem(index, 'product_id', e.target.value)}
-                        className="w-full px-3 py-2 text-sm bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all"
+                        className="w-full px-4 py-2 text-sm bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all"
                       >
                         <option value="" disabled>-- Select a Product --</option>
                         {products.map((prod) => (
@@ -472,7 +472,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                         required
                         value={item.quantity}
                         onChange={(e) => updateLineItem(index, 'quantity', parseInt(e.target.value) || 0)}
-                        className="w-full px-3 py-2 text-sm bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all"
+                        className="w-full px-4 py-2 text-sm bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all"
                       />
                     </div>
 
@@ -488,7 +488,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                         required
                         value={item.unit_price}
                         onChange={(e) => updateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                        className="w-full px-3 py-2 text-sm bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all"
+                        className="w-full px-4 py-2 text-sm bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all"
                       />
                     </div>
 
@@ -542,7 +542,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
         {/* Live Invoice Preview Receipt Panel */}
         <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-8">
           {/* Visual Invoice Mockup */}
-          <div className="bg-white border border-gray-150 rounded-3xl overflow-hidden shadow-md">
+          <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-md">
             {/* Header: Charcoal */}
             <div className="bg-gray-800 text-white p-6 relative">
               <div className="absolute top-0 right-0 p-4 opacity-10">
@@ -663,7 +663,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 type="button"
                 onClick={handleSubmit}
                 disabled={isSaving}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white text-sm font-bold rounded-xl transition-all cursor-pointer shadow-md shadow-green-100"
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#22c55e] hover:bg-[#16a34a] disabled:bg-gray-300 text-white text-sm font-bold rounded-lg transition-all cursor-pointer shadow-md shadow-green-100"
               >
                 {isSaving ? (
                   <>

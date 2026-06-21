@@ -130,17 +130,17 @@ export const ConsolidatedDashboard: React.FC<ConsolidatedDashboardProps> = ({
   }, [branchesData]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 font-sans text-gray-800">
+    <div className="max-w-6xl mx-auto font-sans text-gray-900">
       {/* Upper header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-gray-200 pb-6 mb-8 gap-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-gray-100 pb-4 mb-6 gap-4">
         <div>
           <div className="flex items-center gap-2">
             <div className="p-2 bg-gray-900 text-white rounded-lg">
-              <Building2 className="w-6 h-6 text-green-400" />
+              <Building2 className="w-6 h-6 text-[#22c55e]" />
             </div>
             <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">Enterprise Console</h1>
           </div>
-          <p className="text-gray-500 mt-1">Multi-branch financial metrics, inventory deficits, and attendant scale analytics.</p>
+          <p className="text-gray-500 mt-1 text-sm">Multi-branch financial metrics, inventory deficits, and attendant scale analytics.</p>
         </div>
 
         {/* 1. Global Filter Header Dropdown */}
@@ -152,7 +152,7 @@ export const ConsolidatedDashboard: React.FC<ConsolidatedDashboardProps> = ({
             <select
               value={selectedBranchId}
               onChange={(e) => setSelectedBranchId(e.target.value)}
-              className="appearance-none bg-white border border-gray-250 px-4 py-2.5 pr-10 rounded-xl text-xs font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all cursor-pointer shadow-sm"
+              className="appearance-none bg-white border border-gray-200 px-4 py-2 pr-10 rounded-lg text-xs font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all cursor-pointer shadow-sm"
             >
               <option value="all">All Branches (Consolidated)</option>
               {branchOptions.map(opt => (
@@ -166,10 +166,9 @@ export const ConsolidatedDashboard: React.FC<ConsolidatedDashboardProps> = ({
         </div>
       </div>
 
-      {/* 2. Consolidated Metric Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
         {/* Card 1: Gross Revenue */}
-        <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm space-y-4">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4">
           <div className="flex justify-between items-center">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Gross Revenue</span>
             <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[9px] font-bold bg-green-50 text-green-700 border border-green-200">
@@ -186,7 +185,7 @@ export const ConsolidatedDashboard: React.FC<ConsolidatedDashboardProps> = ({
         </div>
 
         {/* Card 2: Total Net Profit */}
-        <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm space-y-4">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4">
           <div className="flex justify-between items-center">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Net Profit Margin</span>
             <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-green-50 text-green-700 border border-green-200">
@@ -195,7 +194,7 @@ export const ConsolidatedDashboard: React.FC<ConsolidatedDashboardProps> = ({
             </span>
           </div>
           <div>
-            <h3 className="text-2xl font-black text-green-600">
+            <h3 className="text-2xl font-black text-[#22c55e]">
               {baseCurrency} {metrics.netProfit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </h3>
             <p className="text-[10px] text-gray-400 mt-1">Derived from retail minus wholesale pricing.</p>
@@ -203,7 +202,7 @@ export const ConsolidatedDashboard: React.FC<ConsolidatedDashboardProps> = ({
         </div>
 
         {/* Card 3: Outstanding Credit */}
-        <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm space-y-4">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4">
           <div className="flex justify-between items-center">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Credit Receivables</span>
             <AlertTriangle className="w-4 h-4 text-amber-500" />
@@ -217,7 +216,7 @@ export const ConsolidatedDashboard: React.FC<ConsolidatedDashboardProps> = ({
         </div>
 
         {/* Card 4: Low Stock Alert Count */}
-        <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm space-y-4">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4">
           <div className="flex justify-between items-center">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Low Stock Items</span>
             <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-extrabold ${
@@ -234,7 +233,7 @@ export const ConsolidatedDashboard: React.FC<ConsolidatedDashboardProps> = ({
       </div>
 
       {/* 3. Side-by-Side Performance Comparison Table */}
-      <div className="bg-white border border-gray-150 rounded-3xl overflow-hidden shadow-sm">
+      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
         {/* Table header controls */}
         <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50/50">
           <div>
@@ -253,7 +252,7 @@ export const ConsolidatedDashboard: React.FC<ConsolidatedDashboardProps> = ({
               placeholder="Search branch location..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-gray-250 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all"
+              className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all"
             />
           </div>
         </div>
@@ -281,8 +280,8 @@ export const ConsolidatedDashboard: React.FC<ConsolidatedDashboardProps> = ({
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-gray-900 text-sm">{br.name}</span>
                         {isTopPerformer && (
-                          <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-green-100 text-green-800 border border-green-200">
-                            <Sparkles className="w-2.5 h-2.5 text-green-600 animate-spin" />
+                          <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-green-50 text-green-800 border border-green-200">
+                            <Sparkles className="w-2.5 h-2.5 text-[#22c55e] animate-spin" />
                             Top Performer
                           </span>
                         )}
@@ -309,7 +308,7 @@ export const ConsolidatedDashboard: React.FC<ConsolidatedDashboardProps> = ({
 
                     {/* Calculated Net Profit */}
                     <td className="py-4 px-6 text-right">
-                      <span className="font-extrabold text-green-700 bg-green-50 border border-green-100 px-2.5 py-1.5 rounded-xl">
+                      <span className="font-extrabold text-green-700 bg-green-50 border border-green-100 px-2.5 py-1 rounded-lg">
                         {baseCurrency} {br.net_profit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </span>
                     </td>

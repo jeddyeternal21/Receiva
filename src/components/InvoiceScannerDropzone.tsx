@@ -210,7 +210,7 @@ export const InvoiceScannerDropzone: React.FC<InvoiceScannerDropzoneProps> = ({
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 font-sans text-gray-800">
+    <div className="max-w-6xl mx-auto font-sans text-gray-900">
       {/* soundwave/scan animations */}
       <style>{`
         @keyframes scan {
@@ -227,7 +227,7 @@ export const InvoiceScannerDropzone: React.FC<InvoiceScannerDropzoneProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Upload Panel */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-6 space-y-6">
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-6">
             <div>
               <h2 className="text-xl font-extrabold text-gray-900 flex items-center gap-2">
                 <Upload className="w-5 h-5 text-gray-400" />
@@ -243,10 +243,10 @@ export const InvoiceScannerDropzone: React.FC<InvoiceScannerDropzoneProps> = ({
               onDragLeave={handleDrag}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[220px] relative overflow-hidden ${
+              className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[220px] relative overflow-hidden ${
                 dragActive 
-                  ? 'border-green-500 bg-green-50/20' 
-                  : 'border-gray-200 hover:border-green-400 bg-gray-50/50'
+                  ? 'border-[#22c55e] bg-green-50/10' 
+                  : 'border-gray-200 hover:border-[#22c55e] bg-gray-50/50'
               }`}
             >
               {/* File input */}
@@ -260,7 +260,7 @@ export const InvoiceScannerDropzone: React.FC<InvoiceScannerDropzoneProps> = ({
 
               {/* 2. Mocked UI Scanning Progress Line */}
               {isScanning && (
-                <div className="absolute left-0 w-full h-1 bg-green-500 shadow-[0_0_10px_#22c55e] scanner-line z-10" />
+                <div className="absolute left-0 w-full h-1 bg-[#22c55e] shadow-[0_0_10px_#22c55e] scanner-line z-10" />
               )}
 
               {isScanning ? (
@@ -275,7 +275,7 @@ export const InvoiceScannerDropzone: React.FC<InvoiceScannerDropzoneProps> = ({
                   {/* Progress bar */}
                   <div className="w-48 bg-gray-200 h-1.5 rounded-full mx-auto overflow-hidden">
                     <div 
-                      className="bg-green-500 h-full transition-all duration-300" 
+                      className="bg-[#22c55e] h-full transition-all duration-300" 
                       style={{ width: `${scanProgress}%` }}
                     />
                   </div>
@@ -283,7 +283,7 @@ export const InvoiceScannerDropzone: React.FC<InvoiceScannerDropzoneProps> = ({
               ) : file ? (
                 <div className="space-y-4">
                   <div className="p-3 bg-gray-100 text-gray-600 rounded-2xl w-fit mx-auto">
-                    <FileText className="w-8 h-8 text-green-500" />
+                    <FileText className="w-8 h-8 text-[#22c55e]" />
                   </div>
                   <div>
                     <h4 className="text-sm font-bold text-gray-900 truncate max-w-xs">{file.name}</h4>
@@ -304,7 +304,7 @@ export const InvoiceScannerDropzone: React.FC<InvoiceScannerDropzoneProps> = ({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <div className="p-3 bg-gray-100 text-gray-400 rounded-2xl w-fit mx-auto group-hover:text-green-500">
+                  <div className="p-3 bg-gray-100 text-gray-400 rounded-2xl w-fit mx-auto group-hover:text-[#22c55e]">
                     <Upload className="w-6 h-6" />
                   </div>
                   <div>
@@ -323,14 +323,14 @@ export const InvoiceScannerDropzone: React.FC<InvoiceScannerDropzoneProps> = ({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 border border-gray-250 hover:bg-gray-50 text-gray-700 text-sm font-bold rounded-xl transition-all cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-bold rounded-lg transition-all cursor-pointer"
             >
               <Camera className="w-4 h-4 text-gray-400" />
               Take Invoice Picture
             </button>
 
             {error && (
-              <div className="p-3 bg-rose-50 border border-rose-150 rounded-xl text-xs text-rose-600 flex items-center gap-2">
+              <div className="p-3 bg-rose-50 border border-rose-100 rounded-lg text-xs text-rose-600 flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>{error}</span>
               </div>
@@ -341,11 +341,11 @@ export const InvoiceScannerDropzone: React.FC<InvoiceScannerDropzoneProps> = ({
         {/* 4. Review Drawer / Panel (Unlocks when OCR completes) */}
         <div className="lg:col-span-7">
           {ocrResult ? (
-            <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-6 space-y-6 animate-slideDown">
+            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-6 animate-slideDown">
               <div className="flex justify-between items-center border-b border-gray-100 pb-4">
                 <div>
                   <h2 className="text-xl font-extrabold text-gray-900 flex items-center gap-2">
-                    <Database className="w-5 h-5 text-green-500" />
+                    <Database className="w-5 h-5 text-[#22c55e]" />
                     Review & Confirm Intake
                   </h2>
                   <p className="text-xs text-gray-500 mt-1">Review OCR-extracted fields before updating database inventory stock values.</p>
@@ -353,14 +353,13 @@ export const InvoiceScannerDropzone: React.FC<InvoiceScannerDropzoneProps> = ({
                 <button
                   type="button"
                   onClick={handleAddOcrItem}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100/80 px-2.5 py-1.5 rounded-lg border border-green-200 transition-all"
+                  className="inline-flex items-center gap-1 text-xs font-bold text-[#22c55e] hover:text-[#16a34a] bg-green-50 hover:bg-green-100/80 px-2.5 py-1.5 rounded-lg border border-green-200 transition-all"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Add Row
                 </button>
               </div>
 
-              {/* Editable Fields Header details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
@@ -370,7 +369,7 @@ export const InvoiceScannerDropzone: React.FC<InvoiceScannerDropzoneProps> = ({
                     type="text"
                     value={ocrResult.supplier_name}
                     onChange={(e) => handleUpdateOcrResult('supplier_name', e.target.value)}
-                    className="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all"
+                    className="w-full px-4 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all"
                   />
                 </div>
 
@@ -382,7 +381,7 @@ export const InvoiceScannerDropzone: React.FC<InvoiceScannerDropzoneProps> = ({
                     type="number"
                     value={ocrResult.total_amount}
                     onChange={(e) => handleUpdateOcrResult('total_amount', parseFloat(e.target.value) || 0)}
-                    className="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all"
+                    className="w-full px-4 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all"
                   />
                 </div>
               </div>
@@ -395,7 +394,7 @@ export const InvoiceScannerDropzone: React.FC<InvoiceScannerDropzoneProps> = ({
                   {ocrResult.items.map((item, index) => (
                     <div 
                       key={index}
-                      className="flex flex-col md:flex-row gap-3 p-3 bg-gray-50 border border-gray-100 rounded-xl relative group hover:border-gray-200 transition-all"
+                      className="flex flex-col md:flex-row gap-3 p-3 bg-gray-50 border border-gray-100 rounded-lg relative group hover:border-gray-200 transition-all"
                     >
                       {/* Product Name */}
                       <div className="flex-1">
@@ -407,7 +406,7 @@ export const InvoiceScannerDropzone: React.FC<InvoiceScannerDropzoneProps> = ({
                           required
                           value={item.item_name}
                           onChange={(e) => handleUpdateOcrItem(index, 'item_name', e.target.value)}
-                          className="w-full px-3 py-1.5 text-xs bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
+                          className="w-full px-3 py-2 text-xs bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent"
                         />
                       </div>
 
@@ -422,7 +421,7 @@ export const InvoiceScannerDropzone: React.FC<InvoiceScannerDropzoneProps> = ({
                           required
                           value={item.quantity}
                           onChange={(e) => handleUpdateOcrItem(index, 'quantity', parseInt(e.target.value) || 0)}
-                          className="w-full px-3 py-1.5 text-xs bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
+                          className="w-full px-3 py-2 text-xs bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent"
                         />
                       </div>
 
@@ -437,7 +436,7 @@ export const InvoiceScannerDropzone: React.FC<InvoiceScannerDropzoneProps> = ({
                           required
                           value={item.cost_price}
                           onChange={(e) => handleUpdateOcrItem(index, 'cost_price', parseFloat(e.target.value) || 0)}
-                          className="w-full px-3 py-1.5 text-xs bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
+                          className="w-full px-3 py-2 text-xs bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent"
                         />
                       </div>
 
@@ -471,14 +470,14 @@ export const InvoiceScannerDropzone: React.FC<InvoiceScannerDropzoneProps> = ({
                 <button
                   type="button"
                   onClick={() => setOcrResult(null)}
-                  className="px-5 py-2.5 border border-gray-250 hover:bg-gray-50 text-gray-700 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                  className="px-5 py-2 border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold rounded-lg transition-all cursor-pointer"
                 >
                   Discard
                 </button>
                 <button
                   type="button"
                   onClick={handleConfirmIntake}
-                  className="flex items-center gap-1.5 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-md shadow-green-50"
+                  className="flex items-center gap-1.5 px-5 py-2 bg-[#22c55e] hover:bg-[#16a34a] text-white text-xs font-bold rounded-lg transition-all cursor-pointer shadow-md shadow-green-50"
                 >
                   <Check className="w-4 h-4" />
                   Confirm Stock Intake
@@ -487,7 +486,7 @@ export const InvoiceScannerDropzone: React.FC<InvoiceScannerDropzoneProps> = ({
               </div>
             </div>
           ) : (
-            <div className="border border-gray-150 border-dashed rounded-3xl p-16 text-center text-gray-400 bg-gray-50/50 flex flex-col items-center justify-center min-h-[350px]">
+            <div className="border border-gray-200 border-dashed rounded-2xl p-16 text-center text-gray-500 bg-gray-50/50 flex flex-col items-center justify-center min-h-[350px]">
               <FileText className="w-12 h-12 text-gray-300 mb-3" />
               <h3 className="font-bold text-gray-700 text-base">Intake Review Panel</h3>
               <p className="text-xs text-gray-400 max-w-xs mt-1 mx-auto">

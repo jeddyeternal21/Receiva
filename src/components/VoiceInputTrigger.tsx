@@ -112,7 +112,7 @@ export const VoiceInputTrigger: React.FC<VoiceInputTriggerProps> = ({
 
   if (!isSupported) {
     return (
-      <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-400 flex items-center gap-2">
+      <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-400 flex items-center gap-2">
         <AlertCircle className="w-4 h-4 text-gray-300 flex-shrink-0" />
         <span>Voice input unsupported in this browser. Try Chrome or Safari.</span>
       </div>
@@ -140,7 +140,7 @@ export const VoiceInputTrigger: React.FC<VoiceInputTriggerProps> = ({
           onClick={toggleListening}
           className={`flex items-center justify-center w-10 h-10 rounded-full cursor-pointer transition-all border ${
             isListening
-              ? 'bg-green-500 text-white border-green-600 shadow-md shadow-green-150 animate-pulse'
+              ? 'bg-[#22c55e] text-white border-[#16a34a] shadow-md shadow-green-100 animate-pulse'
               : 'bg-gray-50 text-gray-500 hover:text-gray-800 hover:bg-gray-100 border-gray-200'
           }`}
           title={isListening ? 'Stop listening' : 'Start voice input'}
@@ -172,7 +172,7 @@ export const VoiceInputTrigger: React.FC<VoiceInputTriggerProps> = ({
             <button
               type="button"
               onClick={handleStop}
-              className="ml-2 bg-green-600 hover:bg-green-700 text-white text-[9px] font-extrabold uppercase px-2 py-0.5 rounded cursor-pointer transition-colors"
+              className="ml-2 bg-[#22c55e] hover:bg-[#16a34a] text-white text-[9px] font-extrabold uppercase px-2 py-0.5 rounded cursor-pointer transition-colors"
             >
               Done
             </button>
@@ -194,7 +194,7 @@ export const VoiceInputTrigger: React.FC<VoiceInputTriggerProps> = ({
 
       {/* Real-time Streaming Container (Interim transcript results) */}
       {(isListening || finalText || interimText) && (
-        <div className="mt-3 p-3 bg-gray-50 border border-gray-150 rounded-xl max-h-24 overflow-y-auto animate-slideDown shadow-inner">
+        <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg max-h-24 overflow-y-auto animate-slideDown shadow-inner">
           <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">
             Voice Transcript Preview
           </div>

@@ -160,17 +160,17 @@ export const AiAccountantTerminal: React.FC<AiAccountantTerminalProps> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 font-sans text-gray-800">
+    <div className="max-w-4xl mx-auto font-sans text-gray-900">
       {/* Terminal Card */}
-      <div className="bg-white border border-gray-150 rounded-3xl shadow-sm overflow-hidden flex flex-col min-h-[500px]">
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden flex flex-col min-h-[500px]">
         {/* Header Block: Dark Charcoal */}
         <div className="bg-gray-800 text-white p-5 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Terminal className="w-5 h-5 text-green-400" />
+            <Terminal className="w-5 h-5 text-[#22c55e]" />
             <h3 className="text-base font-extrabold tracking-tight">AI Accountant Terminal</h3>
           </div>
-          <div className="flex items-center gap-1 bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded-md text-[10px] text-green-400 font-bold">
-            <Sparkles className="w-3 h-3 text-green-400" />
+          <div className="flex items-center gap-1 bg-[#22c55e]/10 border border-[#22c55e]/20 px-2 py-0.5 rounded-md text-[10px] text-[#22c55e] font-bold">
+            <Sparkles className="w-3 h-3 text-[#22c55e]" />
             AI Online
           </div>
         </div>
@@ -187,19 +187,17 @@ export const AiAccountantTerminal: React.FC<AiAccountantTerminalProps> = ({
                 }`}
               >
                 {/* Avatar */}
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                  isAi ? 'bg-gray-800 text-white' : 'bg-green-100 text-green-700'
-                }`}>
-                  {isAi ? <Terminal className="w-4 h-4 text-green-400" /> : <User className="w-4 h-4" />}
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-gray-800 text-white">
+                  {isAi ? <Terminal className="w-4 h-4 text-[#22c55e]" /> : <User className="w-4 h-4 text-green-700" />}
                 </div>
 
                 {/* Message body */}
                 <div className="space-y-1">
                   {/* 5. Monospace Narrative container for AI responses */}
-                  <div className={`p-4 rounded-2xl text-xs leading-relaxed whitespace-pre-wrap ${
+                  <div className={`p-4 rounded-lg text-xs leading-relaxed whitespace-pre-wrap ${
                     isAi 
-                      ? 'font-mono bg-slate-50 border border-slate-150 text-slate-800 shadow-inner'
-                      : 'bg-white border border-gray-150 text-gray-800 shadow-sm font-semibold'
+                      ? 'font-mono bg-slate-50 border border-gray-200 text-slate-800 shadow-inner'
+                      : 'bg-white border border-gray-200 text-gray-900 shadow-sm font-semibold'
                   }`}>
                     {msg.text}
                   </div>
@@ -214,12 +212,12 @@ export const AiAccountantTerminal: React.FC<AiAccountantTerminalProps> = ({
           {/* 3. Live Loading State typing indicator */}
           {isLoading && (
             <div className="flex gap-3 max-w-[85%] self-start animate-pulse">
-              <div className="w-8 h-8 rounded-xl bg-gray-800 text-white flex items-center justify-center flex-shrink-0">
-                <Loader2 className="w-4 h-4 text-green-400 animate-spin" />
+              <div className="w-8 h-8 rounded-lg bg-gray-800 text-white flex items-center justify-center flex-shrink-0">
+                <Loader2 className="w-4 h-4 text-[#22c55e] animate-spin" />
               </div>
               <div className="space-y-1">
-                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-800 font-bold flex items-center gap-2">
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-600" />
+                <div className="p-4 rounded-lg bg-green-50 border border-green-200 text-xs text-green-800 font-bold flex items-center gap-2">
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-green-600" />
                   <span>The AI Accountant is analyzing branch matrices and compiling your report...</span>
                 </div>
               </div>
@@ -250,13 +248,13 @@ export const AiAccountantTerminal: React.FC<AiAccountantTerminalProps> = ({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask anything about your store branches: e.g., Which location has the highest outstanding debt this week?"
-              className="w-full pl-4 pr-10 py-3 bg-gray-50 border border-gray-250 rounded-2xl text-xs focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all disabled:bg-gray-100"
+              className="w-full pl-4 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all disabled:bg-gray-100"
             />
           </div>
           <button
             type="submit"
             disabled={!input.trim() || isLoading}
-            className="p-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-200 text-white rounded-2xl cursor-pointer transition-colors shadow-sm disabled:cursor-not-allowed"
+            className="p-2.5 bg-[#22c55e] hover:bg-[#16a34a] disabled:bg-gray-200 text-white rounded-lg cursor-pointer transition-colors shadow-sm disabled:cursor-not-allowed"
           >
             <Send className="w-4 h-4" />
           </button>

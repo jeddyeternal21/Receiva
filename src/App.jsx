@@ -1530,10 +1530,10 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
             width: '60px',
             height: '60px',
             borderRadius: '50%',
-            backgroundColor: '#10B981',
+            backgroundColor: '#22c55e',
             color: '#FFFFFF',
             border: 'none',
-            boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)',
+            boxShadow: '0 4px 14px rgba(34, 197, 94, 0.4)',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -1556,7 +1556,7 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            backgroundColor: 'rgba(15, 23, 42, 0.6)',
             backdropFilter: 'blur(4px)',
             display: 'flex',
             alignItems: 'center',
@@ -1567,14 +1567,14 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
         >
           <div
             style={{
-              background: '#18181B',
-              border: '1px solid #27272A',
-              borderRadius: '24px',
+              background: '#FFFFFF',
+              border: '1px solid #E2E8F0',
+              borderRadius: '16px',
               width: '90%',
               maxWidth: '480px',
               padding: '24px',
-              color: '#FFFFFF',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              color: '#1E293B',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
               position: 'relative',
               display: 'flex',
               flexDirection: 'column',
@@ -1593,17 +1593,17 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
                 right: '16px',
                 background: 'transparent',
                 border: 'none',
-                color: '#A1A1AA',
+                color: '#64748B',
                 cursor: 'pointer',
               }}
             >
               <X size={20} />
             </button>
 
-            <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px', color: '#F4F4F5' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px', color: '#0F172A' }}>
               Voice Dictation Terminal
             </h3>
-            <p style={{ fontSize: '12px', color: '#71717A', marginBottom: '24px' }}>
+            <p style={{ fontSize: '12px', color: '#475569', marginBottom: '24px' }}>
               Speak naturally. The speech engine will transcribe your voice in real time.
             </p>
 
@@ -1611,8 +1611,8 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
             <div style={{ position: 'relative', width: '120px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
               {isListening && (
                 <>
-                  <div className="absolute inset-0 rounded-full bg-green-500/10 animate-ping" style={{ animationDuration: '2s' }} />
-                  <div className="absolute inset-2 rounded-full bg-green-500/20 animate-ping" style={{ animationDuration: '1.5s' }} />
+                  <div className="absolute inset-0 rounded-full bg-[#22c55e]/15 animate-ping" style={{ animationDuration: '2s' }} />
+                  <div className="absolute inset-2 rounded-full bg-[#22c55e]/25 animate-ping" style={{ animationDuration: '1.5s' }} />
                 </>
               )}
               <button
@@ -1621,7 +1621,7 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
                   width: '80px',
                   height: '80px',
                   borderRadius: '50%',
-                  backgroundColor: isListening ? '#EF4444' : '#10B981',
+                  backgroundColor: isListening ? '#EF4444' : '#22c55e',
                   color: '#FFFFFF',
                   border: 'none',
                   display: 'flex',
@@ -1629,7 +1629,7 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
                   justifyContent: 'center',
                   cursor: 'pointer',
                   zIndex: 10,
-                  boxShadow: isListening ? '0 0 20px rgba(239, 68, 68, 0.4)' : '0 0 20px rgba(16, 185, 129, 0.4)',
+                  boxShadow: isListening ? '0 0 20px rgba(239, 68, 68, 0.4)' : '0 0 20px rgba(34, 197, 94, 0.4)',
                   transition: 'all 0.3s',
                 }}
               >
@@ -1637,12 +1637,12 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
               </button>
             </div>
 
-            <div style={{ fontSize: '14px', fontWeight: 600, color: isListening ? '#10B981' : '#EF4444', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div style={{ fontSize: '14px', fontWeight: 600, color: isListening ? '#22c55e' : '#EF4444', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               {isListening ? "Listening..." : "Paused"}
             </div>
 
             {voiceError && (
-              <div style={{ color: '#EF4444', fontSize: '12px', background: 'rgba(239, 68, 68, 0.1)', padding: '10px 14px', borderRadius: '10px', width: '100%', marginBottom: '16px' }}>
+              <div style={{ color: '#EF4444', fontSize: '12px', background: 'rgba(239, 68, 68, 0.1)', padding: '10px 14px', borderRadius: '8px', width: '100%', marginBottom: '16px' }}>
                 {voiceError}
               </div>
             )}
@@ -1651,9 +1651,9 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
             <div
               style={{
                 width: '100%',
-                background: '#09090B',
-                border: '1px solid #27272A',
-                borderRadius: '16px',
+                background: '#F8FAFC',
+                border: '1px solid #E2E8F0',
+                borderRadius: '8px',
                 padding: '16px',
                 minHeight: '120px',
                 maxHeight: '180px',
@@ -1661,17 +1661,17 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
                 textAlign: 'left',
                 fontSize: '14px',
                 lineHeight: '1.6',
-                color: '#E4E4E7',
+                color: '#334155',
                 marginBottom: '20px',
               }}
             >
               {transcript || interimTranscript ? (
                 <>
-                  <span style={{ color: '#F4F4F5' }}>{transcript}</span>
-                  <span style={{ color: '#71717A', fontStyle: 'italic' }}>{interimTranscript}</span>
+                  <span style={{ color: '#1E293B' }}>{transcript}</span>
+                  <span style={{ color: '#64748B', fontStyle: 'italic' }}>{interimTranscript}</span>
                 </>
               ) : (
-                <span style={{ color: '#3F3F46', fontStyle: 'italic' }}>Waiting for speech...</span>
+                <span style={{ color: '#94A3B8', fontStyle: 'italic' }}>Waiting for speech...</span>
               )}
             </div>
 
@@ -1685,10 +1685,10 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
                 style={{
                   flex: 1,
                   padding: '12px',
-                  borderRadius: '12px',
-                  background: '#27272A',
+                  borderRadius: '8px',
+                  background: '#E2E8F0',
                   border: 'none',
-                  color: '#F4F4F5',
+                  color: '#334155',
                   fontSize: '13px',
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -1704,8 +1704,8 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
                 style={{
                   flex: 1,
                   padding: '12px',
-                  borderRadius: '12px',
-                  background: '#10B981',
+                  borderRadius: '8px',
+                  background: '#22c55e',
                   border: 'none',
                   color: '#FFFFFF',
                   fontSize: '13px',

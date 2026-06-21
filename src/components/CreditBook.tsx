@@ -203,25 +203,25 @@ export const CreditBook: React.FC<CreditBookProps> = ({
   }, [invoices]);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 font-sans text-gray-800">
+    <div className="max-w-6xl mx-auto font-sans text-gray-900">
       {/* Title Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-gray-200 pb-6 mb-8">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-gray-100 pb-4 mb-6">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 flex items-center gap-2">
-            <Coins className="w-8 h-8 text-amber-500" />
+            <Coins className="w-8 h-8 text-[#22c55e]" />
             Credit Book
           </h1>
-          <p className="text-gray-500 mt-1">Track customer balances, evaluate credit due dates, and dispatch reminders.</p>
+          <p className="text-gray-500 mt-1 text-sm">Track customer balances, evaluate credit due dates, and dispatch reminders.</p>
         </div>
 
         {/* Global Debt Summary Box */}
-        <div className="mt-4 md:mt-0 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-3">
-          <div className="p-2.5 bg-amber-500 text-white rounded-xl">
+        <div className="mt-4 md:mt-0 p-4 bg-white border border-gray-100 rounded-2xl flex items-center gap-3 shadow-sm">
+          <div className="p-2.5 bg-[#22c55e] text-white rounded-lg">
             <Coins className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[10px] font-bold text-amber-800 uppercase tracking-widest">Total Active Debt</span>
-            <h4 className="text-xl font-black text-amber-900 mt-0.5">{baseCurrency} {stats.totalDebt.toFixed(2)}</h4>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Active Debt</span>
+            <h4 className="text-xl font-black text-gray-900 mt-0.5">{baseCurrency} {stats.totalDebt.toFixed(2)}</h4>
           </div>
         </div>
       </div>
@@ -229,18 +229,18 @@ export const CreditBook: React.FC<CreditBookProps> = ({
       {/* Tabs & Search controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         {/* Navigation Tabs */}
-        <div className="flex p-1 bg-gray-150 rounded-xl space-x-1 self-start">
+        <div className="flex p-1 bg-gray-100 rounded-lg space-x-1 self-start">
           <button
             onClick={() => setActiveTab('all')}
             className={`flex items-center gap-2 py-2 px-4 text-xs font-bold rounded-lg transition-all cursor-pointer ${
               activeTab === 'all'
-                ? 'bg-white text-gray-900 shadow-sm'
+                ? 'bg-white text-[#22c55e] shadow-sm border border-gray-100'
                 : 'text-gray-500 hover:text-gray-900'
             }`}
           >
             <Users className="w-3.5 h-3.5" />
             All Debtors
-            <span className={`px-1.5 py-0.5 rounded-full text-[9px] ${activeTab === 'all' ? 'bg-amber-100 text-amber-800' : 'bg-gray-200 text-gray-600'}`}>
+            <span className={`px-1.5 py-0.5 rounded-full text-[9px] ${activeTab === 'all' ? 'bg-green-100 text-[#22c55e]' : 'bg-gray-200 text-gray-600'}`}>
               {stats.debtors}
             </span>
           </button>
@@ -249,13 +249,13 @@ export const CreditBook: React.FC<CreditBookProps> = ({
             onClick={() => setActiveTab('overdue')}
             className={`flex items-center gap-2 py-2 px-4 text-xs font-bold rounded-lg transition-all cursor-pointer ${
               activeTab === 'overdue'
-                ? 'bg-white text-rose-600 shadow-sm'
+                ? 'bg-white text-[#22c55e] shadow-sm border border-gray-100'
                 : 'text-gray-500 hover:text-gray-900'
             }`}
           >
             <AlertTriangle className="w-3.5 h-3.5" />
             Overdue balances
-            <span className={`px-1.5 py-0.5 rounded-full text-[9px] ${activeTab === 'overdue' ? 'bg-rose-100 text-rose-800' : 'bg-gray-200 text-gray-600'}`}>
+            <span className={`px-1.5 py-0.5 rounded-full text-[9px] ${activeTab === 'overdue' ? 'bg-red-100 text-rose-600' : 'bg-gray-200 text-gray-600'}`}>
               {stats.overdue}
             </span>
           </button>
@@ -264,13 +264,13 @@ export const CreditBook: React.FC<CreditBookProps> = ({
             onClick={() => setActiveTab('settled')}
             className={`flex items-center gap-2 py-2 px-4 text-xs font-bold rounded-lg transition-all cursor-pointer ${
               activeTab === 'settled'
-                ? 'bg-white text-green-600 shadow-sm'
+                ? 'bg-white text-[#22c55e] shadow-sm border border-gray-100'
                 : 'text-gray-500 hover:text-gray-900'
             }`}
           >
             <History className="w-3.5 h-3.5" />
             Settled history
-            <span className={`px-1.5 py-0.5 rounded-full text-[9px] ${activeTab === 'settled' ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'}`}>
+            <span className={`px-1.5 py-0.5 rounded-full text-[9px] ${activeTab === 'settled' ? 'bg-green-100 text-[#22c55e]' : 'bg-gray-200 text-gray-600'}`}>
               {stats.settled}
             </span>
           </button>
@@ -284,18 +284,18 @@ export const CreditBook: React.FC<CreditBookProps> = ({
             placeholder="Search by client or phone..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all text-xs"
+            className="w-full pl-10 pr-4 py-2 bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all text-xs"
           />
         </div>
       </div>
 
       {/* Credit Ledger Container */}
-      <div className="bg-white border border-gray-150 rounded-3xl overflow-hidden shadow-sm">
+      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
         {filteredInvoices.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-gray-50/50 border-b border-gray-150 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                <tr className="bg-gray-50/50 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                   <th className="py-4 px-6">Customer Details</th>
                   <th className="py-4 px-6">Invoice Reference</th>
                   <th className="py-4 px-6">Billing & Promise Dates</th>
@@ -390,7 +390,7 @@ export const CreditBook: React.FC<CreditBookProps> = ({
                           <div className="flex items-center justify-center gap-2">
                             <button
                               onClick={() => setCopywriterInvoice(inv)}
-                              className="inline-flex items-center gap-1 px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-xs font-bold rounded-lg cursor-pointer transition-colors"
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 hover:bg-green-100 text-[#22c55e] border border-green-200 text-xs font-bold rounded-lg cursor-pointer transition-colors"
                               title="Compose Tone Reminder Message"
                             >
                               <MessageSquare className="w-3.5 h-3.5" />
