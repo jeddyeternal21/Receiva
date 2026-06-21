@@ -227,9 +227,9 @@ export const CreditBook: React.FC<CreditBookProps> = ({
       </div>
 
       {/* Tabs & Search controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
         {/* Navigation Tabs */}
-        <div className="flex p-1 bg-[var(--c-light)] rounded-lg space-x-1 self-start">
+        <div className="flex flex-wrap p-1 bg-[var(--c-light)] rounded-lg gap-1 self-start">
           <button
             onClick={() => setActiveTab('all')}
             className={`flex items-center gap-2 py-2 px-4 text-xs font-bold rounded-lg transition-all cursor-pointer ${
@@ -277,7 +277,7 @@ export const CreditBook: React.FC<CreditBookProps> = ({
         </div>
 
         {/* Search Bar */}
-        <div className="relative w-full md:w-72">
+        <div className="relative w-full lg:w-72">
           <Search className="w-4 h-4 text-[var(--c-muted)] absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"

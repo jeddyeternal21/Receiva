@@ -439,10 +439,10 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 return (
                   <div 
                     key={index}
-                    className="flex flex-col md:flex-row gap-3 p-4 bg-[var(--c-light)]/50 border border-[var(--c-border)] rounded-lg relative group transition-all duration-200 hover:border-[var(--c-border)]/85"
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 p-5 bg-[var(--c-light)]/50 border border-[var(--c-border)] rounded-xl relative group transition-all duration-200 hover:border-[var(--c-border)]/85"
                   >
                     {/* Product Selection */}
-                    <div className="flex-1">
+                    <div className="col-span-1 sm:col-span-2 lg:col-span-5">
                       <label className="block text-[10px] font-bold text-[var(--c-muted)] uppercase mb-1.5">
                         Product / Item
                       </label>
@@ -462,7 +462,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     </div>
 
                     {/* Quantity field */}
-                    <div className="w-full md:w-24">
+                    <div className="col-span-1 lg:col-span-2">
                       <label className="block text-[10px] font-bold text-[var(--c-muted)] uppercase mb-1.5">
                         Quantity
                       </label>
@@ -477,7 +477,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     </div>
 
                     {/* Unit price field */}
-                    <div className="w-full md:w-32">
+                    <div className="col-span-1 lg:col-span-2">
                       <label className="block text-[10px] font-bold text-[var(--c-muted)] uppercase mb-1.5">
                         Unit Price (GHS)
                       </label>
@@ -493,7 +493,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     </div>
 
                     {/* Row subtotal */}
-                    <div className="w-full md:w-32 flex flex-col justify-between">
+                    <div className="col-span-1 lg:col-span-2 flex flex-col justify-between">
                       <div>
                         <label className="block text-[10px] font-bold text-[var(--c-muted)] uppercase mb-1.5">
                           Subtotal
@@ -505,7 +505,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     </div>
 
                     {/* Delete Row Button */}
-                    <div className="flex items-end justify-end pt-4 md:pt-0">
+                    <div className="col-span-1 lg:col-span-1 flex items-end justify-end pb-1.5">
                       <button
                         type="button"
                         onClick={() => removeLineItem(index)}

@@ -394,10 +394,10 @@ export const InvoiceScannerDropzone: React.FC<InvoiceScannerDropzoneProps> = ({
                   {ocrResult.items.map((item, index) => (
                     <div 
                       key={index}
-                      className="flex flex-col md:flex-row gap-3 p-3 bg-[var(--c-light)]/50 border border-[var(--c-border)] rounded-lg relative group hover:border-[var(--c-border)] transition-all"
+                      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 p-4 bg-[var(--c-light)]/50 border border-[var(--c-border)] rounded-lg relative group hover:border-[var(--c-border)] transition-all"
                     >
                       {/* Product Name */}
-                      <div className="flex-1">
+                      <div className="col-span-1 sm:col-span-2 lg:col-span-5">
                         <label className="block text-[10px] font-bold text-[var(--c-muted)] uppercase mb-1">
                           Product Name
                         </label>
@@ -411,7 +411,7 @@ export const InvoiceScannerDropzone: React.FC<InvoiceScannerDropzoneProps> = ({
                       </div>
 
                       {/* Quantity */}
-                      <div className="w-full md:w-20">
+                      <div className="col-span-1 lg:col-span-2">
                         <label className="block text-[10px] font-bold text-[var(--c-muted)] uppercase mb-1">
                           Quantity
                         </label>
@@ -426,7 +426,7 @@ export const InvoiceScannerDropzone: React.FC<InvoiceScannerDropzoneProps> = ({
                       </div>
 
                       {/* Cost price */}
-                      <div className="w-full md:w-28">
+                      <div className="col-span-1 lg:col-span-2">
                         <label className="block text-[10px] font-bold text-[var(--c-muted)] uppercase mb-1">
                           Cost Price (GHS)
                         </label>
@@ -441,7 +441,7 @@ export const InvoiceScannerDropzone: React.FC<InvoiceScannerDropzoneProps> = ({
                       </div>
 
                       {/* Row Total */}
-                      <div className="w-full md:w-24">
+                      <div className="col-span-1 lg:col-span-2">
                         <label className="block text-[10px] font-bold text-[var(--c-muted)] uppercase mb-1">
                           Total
                         </label>
@@ -451,7 +451,7 @@ export const InvoiceScannerDropzone: React.FC<InvoiceScannerDropzoneProps> = ({
                       </div>
 
                       {/* Delete item row */}
-                      <div className="flex items-end justify-end">
+                      <div className="col-span-1 lg:col-span-1 flex items-end justify-end pb-1.5">
                         <button
                           type="button"
                           onClick={() => handleRemoveOcrItem(index)}

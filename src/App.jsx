@@ -1748,15 +1748,15 @@ function Wallets({ wallets, transactions, onAdd, onSelect, activeWallet }) {
               <div style={{ fontSize:12, color:"#9ca3af", marginBottom:10, fontFamily:"monospace" }}>{w.number}</div>
               <div style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:26, color:preset.color, marginBottom:12 }}>{fmt(wBal)}</div>
               <div style={{ display:"flex", gap:10 }}>
-                <div style={{ flex:1, textAlign:"center", padding:"8px", background:"#f9fafb", borderRadius:8 }}>
+                <div style={{ flex:1, textAlign:"center", padding:"8px", background:C.light, borderRadius:8 }}>
                   <div style={{ fontSize:10, color:C.muted, marginBottom:2 }}>Income</div>
                   <div style={{ fontSize:13, fontWeight:600, color:C.income }}>{fmt(wInc)}</div>
                 </div>
-                <div style={{ flex:1, textAlign:"center", padding:"8px", background:"#f9fafb", borderRadius:8 }}>
+                <div style={{ flex:1, textAlign:"center", padding:"8px", background:C.light, borderRadius:8 }}>
                   <div style={{ fontSize:10, color:C.muted, marginBottom:2 }}>Expense</div>
                   <div style={{ fontSize:13, fontWeight:600, color:C.expense }}>{fmt(wExp)}</div>
                 </div>
-                <div style={{ flex:1, textAlign:"center", padding:"8px", background:"#f9fafb", borderRadius:8 }}>
+                <div style={{ flex:1, textAlign:"center", padding:"8px", background:C.light, borderRadius:8 }}>
                   <div style={{ fontSize:10, color:C.muted, marginBottom:2 }}>Txns</div>
                   <div style={{ fontSize:13, fontWeight:600, color:C.text }}>{wTx.length}</div>
                 </div>
@@ -1783,7 +1783,7 @@ function TxTable({ transactions, wallets, onReceipt, onEdit, showWallet=false })
           const wallet = wallets.find ? wallets.find(w=>w.id===tx.walletId) : null;
           const preset = wallet ? WALLET_PRESETS.find(p=>p.id===wallet?.presetId) : null;
           return (
-            <div key={tx.id} style={{ display:"grid", gridTemplateColumns:"1fr 1fr 90px 110px 120px", padding:"11px 14px", borderBottom:`1px solid #f9fafb`, alignItems:"center", fontSize:13 }}>
+            <div key={tx.id} style={{ display:"grid", gridTemplateColumns:"1fr 1fr 90px 110px 120px", padding:"11px 14px", borderBottom:`1px solid ${C.border}`, alignItems:"center", fontSize:13 }}>
               <div>
                 <div style={{ color:C.text, fontWeight:500 }}>{tx.description}</div>
                 <div style={{ color:C.muted, fontSize:11, marginTop:1 }}>{tx.date}</div>
@@ -2013,7 +2013,7 @@ function RecordPaymentModal({ onClose, onSave, wallets, business }) {
   };
 
   const modeBtn = (id, icon, title, sub) => (
-    <div onClick={()=>{ setMode(id); setStep(1); }} style={{ flex:1, border:`1.5px solid ${mode===id?C.orange:C.border}`, background:mode===id?C.orange+"08":"#f9fafb", borderRadius:14, padding:"20px 14px", cursor:"pointer", textAlign:"center", transition:"all 0.15s" }}>
+    <div onClick={()=>{ setMode(id); setStep(1); }} style={{ flex:1, border:`1.5px solid ${mode===id?C.orange:C.border}`, background:mode===id?C.orange+"08":C.light, borderRadius:14, padding:"20px 14px", cursor:"pointer", textAlign:"center", transition:"all 0.15s" }}>
       <div style={{ fontSize:28, marginBottom:8 }}>{icon}</div>
       <div style={{ fontSize:14, fontWeight:600, color:C.text, marginBottom:3 }}>{title}</div>
       <div style={{ fontSize:12, color:C.muted, lineHeight:1.5 }}>{sub}</div>
@@ -2101,7 +2101,7 @@ function RecordPaymentModal({ onClose, onSave, wallets, business }) {
         <>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10, marginBottom:14 }}>
             {[[items.length,"Found",C.text],[fmt(totalAmt),"Total",C.income],[missingDesc,"Need desc",missingDesc>0?C.orange:"#16a34a"]].map(([v,l,c])=>(
-              <div key={l} style={{ background:"#f9fafb", border:`1px solid ${C.border}`, borderRadius:10, padding:"10px 14px", textAlign:"center" }}>
+              <div key={l} style={{ background:C.light, border:`1px solid ${C.border}`, borderRadius:10, padding:"10px 14px", textAlign:"center" }}>
                 <div style={{ fontSize:11, color:C.muted, marginBottom:2 }}>{l}</div>
                 <div style={{ fontWeight:700, fontSize:18, color:c }}>{v}</div>
               </div>
@@ -2409,7 +2409,7 @@ function ProductList({ products, categories, onAdd, onEdit }) {
             const cat = categories.find(c=>c.id===p.categoryId);
             const mg  = margin(p);
             return (
-              <div key={p.id} style={{ display:"grid", gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr 80px", padding:"12px 16px", borderBottom:`1px solid #f9fafb`, alignItems:"center", fontSize:13 }}>
+              <div key={p.id} style={{ display:"grid", gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr 80px", padding:"12px 16px", borderBottom:`1px solid ${C.border}`, alignItems:"center", fontSize:13 }}>
                 <div>
                   <div style={{ fontWeight:500, color:C.text }}>{p.name}</div>
                   <div style={{ fontSize:11, color:C.muted, marginTop:1 }}>SKU: {p.sku} · <span style={{ color: p.type==="service"?C.orange:C.teal, fontWeight:500 }}>{p.type==="service"?"Service":"Product"}</span></div>

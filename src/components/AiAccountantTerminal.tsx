@@ -176,7 +176,7 @@ export const AiAccountantTerminal: React.FC<AiAccountantTerminalProps> = ({
         </div>
 
         {/* 1. Conversational Chat Shell Feed */}
-        <div className="flex-1 p-6 overflow-y-auto space-y-4 max-h-[350px] bg-[var(--c-light)]/30">
+        <div className="flex-1 p-6 overflow-y-auto space-y-4 max-h-[350px] bg-[var(--c-light)]/30 flex flex-col">
           {messages.map((msg) => {
             const isAi = msg.sender === 'ai';
             return (
