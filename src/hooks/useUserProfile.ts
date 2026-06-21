@@ -22,6 +22,7 @@ export function useUserProfile() {
       }
 
       const DEV_EMAIL = "jeddyeternal21@gmail.com";
+      const isDev = user.email === DEV_EMAIL || user.email === "jedidiah@example.com";
 
       // 2. Fetch the corresponding profile and join with the shop details
       let profileData: any = null;
@@ -50,14 +51,14 @@ export function useUserProfile() {
         profileError = err;
       }
 
-      if (profileError && user.email !== DEV_EMAIL) {
+      if (profileError && !isDev) {
         throw profileError;
       }
 
       let finalProfile: ProfileWithShop | null = null;
       if (profileData) {
         finalProfile = profileData as unknown as ProfileWithShop;
-      } else if (user.email === DEV_EMAIL) {
+      } else if (isDev) {
         // Fallback profile if it doesn't exist in DB yet
         finalProfile = {
           id: user.id,
@@ -69,7 +70,7 @@ export function useUserProfile() {
       }
 
       // Apply developer bypass overrides
-      if (finalProfile && user.email === DEV_EMAIL) {
+      if (finalProfile && isDev) {
         finalProfile.role = 'owner';
         if (!finalProfile.shop) {
           finalProfile.shop = {

@@ -14,13 +14,16 @@ import {
   Smartphone, TabletSmartphone, Satellite, Building2, Banknote, Landmark,
   MessageCircle, Gift, FileText, BarChart2, Shield, ChevronDown,
   Menu, LogOut, Upload, Clipboard, AlertTriangle, PartyPopper,
-  HandCoins, ArrowUpFromLine, Cog, User, TrendingUp, TrendingDown
+  HandCoins, ArrowUpFromLine, Cog, User, TrendingUp, TrendingDown,
+  Mic, MicOff
 } from "lucide-react";
 
 // ─── CONSTANTS ────────────────────────────────────────────────
 const CATEGORIES = ["Sales","Service fee","Rent","Supplies","Transport","Salary","Utilities","MoMo transfer","Other"];
 const FREE_RECEIPT_LIMIT = 5;
 const DEV_EMAIL = "jeddyeternal21@gmail.com";
+const DEV_EMAIL_ALT = "jedidiah@example.com";
+const isDevEmail = (email) => email === DEV_EMAIL || email === DEV_EMAIL_ALT;
 const today = () => new Date().toISOString().split("T")[0];
 const genId  = () => Math.random().toString(36).slice(2,9);
 const genRNo = () => `RCV-${Date.now().toString().slice(-6)}`;
@@ -476,7 +479,7 @@ export default function App() {
         const { data: { session } } = await supabase.auth.getSession();
         userEmail = session?.user?.email;
       }
-      const isDev = userEmail === DEV_EMAIL;
+      const isDev = isDevEmail(userEmail);
 
       let { data: bizData, error: bizErr } = await supabase.from("businesses").select("*").eq("owner_id", userId).single();
       if (bizErr && bizErr.code === "PGRST116") {
@@ -571,7 +574,7 @@ export default function App() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        const isDev = session.user.email === DEV_EMAIL;
+        const isDev = isDevEmail(session.user.email);
         const u = {
           name:  session.user.user_metadata?.full_name || session.user.email.split("@")[0],
           email: session.user.email,
@@ -589,7 +592,7 @@ export default function App() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
-        const isDev = session.user.email === DEV_EMAIL;
+        const isDev = isDevEmail(session.user.email);
         const u = {
           name:  session.user.user_metadata?.full_name || session.user.email.split("@")[0],
           email: session.user.email,
@@ -610,7 +613,7 @@ export default function App() {
   }, []);
 
   const handleLogin = (u) => {
-    const isDev = u.email === DEV_EMAIL;
+    const isDev = isDevEmail(u.email);
     const updatedU = {
       ...u,
       plan: isDev ? "enterprise" : u.plan,
@@ -636,7 +639,7 @@ export default function App() {
   if (authState === "login") return <LoginPage onLogin={handleLogin} onGuest={handleGuest}/>;
 
   const isGuest    = authState === "guest";
-  const isPro      = user?.plan === "pro" || business?.plan === "pro" || business?.plan === "growth" || business?.plan === "business" || business?.plan === "enterprise" || user?.email === DEV_EMAIL;
+  const isPro      = user?.plan === "pro" || business?.plan === "pro" || business?.plan === "growth" || business?.plan === "business" || business?.plan === "enterprise" || isDevEmail(user?.email);
   const txFiltered = activeWallet ? transactions.filter(t=>t.walletId===activeWallet) : transactions;
   const income     = txFiltered.filter(t=>t.type==="income").reduce((s,t)=>s+t.amount,0);
   const expense    = txFiltered.filter(t=>t.type==="expense").reduce((s,t)=>s+t.amount,0);
@@ -806,7 +809,7 @@ export default function App() {
     setShowAddWallet(false);
   };
 
-  const isEnterprise = business?.plan === "enterprise" || user?.email === DEV_EMAIL;
+  const isEnterprise = business?.plan === "enterprise" || isDevEmail(user?.email);
 
   const allNav = [
     { key:"dashboard",    label:"Dashboard",   icon:"home"    },
@@ -1143,6 +1146,82 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
   const { isOnline } = useOfflineSync();
   const recent = transactions.slice(0,5);
   const hasTx = transactions.length > 0;
+  
+  const [voiceModalOpen, setVoiceModalOpen] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const [interimTranscript, setInterimTranscript] = useState("");
+  const [voiceError, setVoiceError] = useState("");
+
+  const recognitionRef = useRef(null);
+
+  const startListening = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setVoiceError("Speech recognition not supported in this browser.");
+      return;
+    }
+    
+    setTranscript("");
+    setInterimTranscript("");
+    setVoiceError("");
+    setIsListening(true);
+
+    try {
+      const rec = new SpeechRecognition();
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.lang = 'en-US';
+
+      rec.onresult = (event) => {
+        let final = "";
+        let interim = "";
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            final += event.results[i][0].transcript + " ";
+          } else {
+            interim += event.results[i][0].transcript;
+          }
+        }
+        if (final) {
+          setTranscript(prev => prev + final);
+        }
+        setInterimTranscript(interim);
+      };
+
+      rec.onerror = (event) => {
+        console.error("Speech recognition error", event);
+        setVoiceError(`Error: ${event.error}`);
+        setIsListening(false);
+      };
+
+      rec.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = rec;
+      rec.start();
+    } catch (err) {
+      console.error(err);
+      setVoiceError("Failed to initialize speech recognition.");
+      setIsListening(false);
+    }
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+    setIsListening(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+      }
+    };
+  }, []);
   const statCards = [
     { label:"Total Income",   value:fmt(income),   color:C.income  },
     { label:"Total Expenses", value:fmt(expense),  color:C.expense },
@@ -1436,6 +1515,210 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
           )}
         </div>
       </div>
+
+      {/* Permanent Developer Admin Bypass Mic FAB */}
+      {isDevEmail(user?.email) && (
+        <button
+          onClick={() => {
+            setVoiceModalOpen(true);
+            startListening();
+          }}
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            backgroundColor: '#10B981',
+            color: '#FFFFFF',
+            border: 'none',
+            boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            transition: 'transform 0.2s, background-color 0.2s',
+          }}
+          title="Developer Voice Dictation Terminal"
+        >
+          <Mic size={28} />
+        </button>
+      )}
+
+      {/* Web Speech Transcription Modal */}
+      {voiceModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            fontFamily: "'Poppins', sans-serif",
+          }}
+        >
+          <div
+            style={{
+              background: '#18181B',
+              border: '1px solid #27272A',
+              borderRadius: '24px',
+              width: '90%',
+              maxWidth: '480px',
+              padding: '24px',
+              color: '#FFFFFF',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              position: 'relative',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+            }}
+          >
+            <button
+              onClick={() => {
+                stopListening();
+                setVoiceModalOpen(false);
+              }}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'transparent',
+                border: 'none',
+                color: '#A1A1AA',
+                cursor: 'pointer',
+              }}
+            >
+              <X size={20} />
+            </button>
+
+            <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px', color: '#F4F4F5' }}>
+              Voice Dictation Terminal
+            </h3>
+            <p style={{ fontSize: '12px', color: '#71717A', marginBottom: '24px' }}>
+              Speak naturally. The speech engine will transcribe your voice in real time.
+            </p>
+
+            {/* Pulsing Mic and Waves */}
+            <div style={{ position: 'relative', width: '120px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
+              {isListening && (
+                <>
+                  <div className="absolute inset-0 rounded-full bg-green-500/10 animate-ping" style={{ animationDuration: '2s' }} />
+                  <div className="absolute inset-2 rounded-full bg-green-500/20 animate-ping" style={{ animationDuration: '1.5s' }} />
+                </>
+              )}
+              <button
+                onClick={isListening ? stopListening : startListening}
+                style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '50%',
+                  backgroundColor: isListening ? '#EF4444' : '#10B981',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  zIndex: 10,
+                  boxShadow: isListening ? '0 0 20px rgba(239, 68, 68, 0.4)' : '0 0 20px rgba(16, 185, 129, 0.4)',
+                  transition: 'all 0.3s',
+                }}
+              >
+                {isListening ? <MicOff size={36} /> : <Mic size={36} />}
+              </button>
+            </div>
+
+            <div style={{ fontSize: '14px', fontWeight: 600, color: isListening ? '#10B981' : '#EF4444', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {isListening ? "Listening..." : "Paused"}
+            </div>
+
+            {voiceError && (
+              <div style={{ color: '#EF4444', fontSize: '12px', background: 'rgba(239, 68, 68, 0.1)', padding: '10px 14px', borderRadius: '10px', width: '100%', marginBottom: '16px' }}>
+                {voiceError}
+              </div>
+            )}
+
+            {/* Live transcription display */}
+            <div
+              style={{
+                width: '100%',
+                background: '#09090B',
+                border: '1px solid #27272A',
+                borderRadius: '16px',
+                padding: '16px',
+                minHeight: '120px',
+                maxHeight: '180px',
+                overflowY: 'auto',
+                textAlign: 'left',
+                fontSize: '14px',
+                lineHeight: '1.6',
+                color: '#E4E4E7',
+                marginBottom: '20px',
+              }}
+            >
+              {transcript || interimTranscript ? (
+                <>
+                  <span style={{ color: '#F4F4F5' }}>{transcript}</span>
+                  <span style={{ color: '#71717A', fontStyle: 'italic' }}>{interimTranscript}</span>
+                </>
+              ) : (
+                <span style={{ color: '#3F3F46', fontStyle: 'italic' }}>Waiting for speech...</span>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+              <button
+                onClick={() => {
+                  setTranscript("");
+                  setInterimTranscript("");
+                }}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '12px',
+                  background: '#27272A',
+                  border: 'none',
+                  color: '#F4F4F5',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Clear
+              </button>
+              <button
+                onClick={() => {
+                  stopListening();
+                  setVoiceModalOpen(false);
+                }}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '12px',
+                  background: '#10B981',
+                  border: 'none',
+                  color: '#FFFFFF',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
