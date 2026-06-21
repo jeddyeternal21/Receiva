@@ -1059,7 +1059,7 @@ export default function App() {
             {dataLoading && <div style={{ textAlign:"center", padding:"40px", color:C.muted, fontSize:14 }}>Loading your data...</div>}
             {dataError   && <div style={{ background:"#fef2f2", border:"1px solid #fca5a5", borderRadius:10, padding:"14px 18px", marginBottom:16, fontSize:13, color:"#b91c1c" }}>{dataError}</div>}
             {page==="dashboard" && <Dashboard transactions={txFiltered} income={income} expense={expense} balance={balance} wallets={wallets} activeWallet={activeWallet} business={business} user={user} onAdd={()=>setShowRecordPayment(true)} onReceipt={tryGenerateReceipt} onEdit={setShowEditTransaction} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount}/>}
-            {page==="sales" && <SalesDeskPage transactions={txFiltered} wallets={wallets} business={business} onAdd={()=>setShowRecordPayment(true)} onReceipt={tryGenerateReceipt} onEdit={setShowEditTransaction} onAddWallet={()=>setShowAddWallet(true)} activeWallet={activeWallet} setActiveWallet={setActiveWallet} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount} voidedReceipts={voidedReceipts} deletedTransactions={deletedTransactions}/>}
+            {page==="sales" && <SalesDeskPage transactions={txFiltered} wallets={wallets} business={business} onAdd={()=>setShowRecordPayment(true)} onReceipt={tryGenerateReceipt} onEdit={setShowEditTransaction} onAddWallet={()=>setShowAddWallet(true)} activeWallet={activeWallet} setActiveWallet={setActiveWallet} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount} voidedReceipts={voidedReceipts} deletedTransactions={deletedTransactions} products={products}/>}
             {page==="invoices" && <InvoicesPage products={products} onSave={handleSaveInvoice} isEnterprise={isEnterprise} onConfirmIntake={handleConfirmIntake} supabaseUrl={import.meta.env.VITE_SUPABASE_URL} invoices={invoices} shopName={business?.name}/>}
             {page==="inventory" && <InventoryPage products={products} setProducts={setProducts} productCategories={productCategories} setProductCategories={setProductCategories} editingProduct={editingProduct} setEditingProduct={setEditingProduct}/>}
             {page==="creditbook" && <CreditBook invoices={invoices} shopName={business?.name} />}
@@ -1121,44 +1121,437 @@ function PageTabs({ tabs, active, onChange }) {
 }
 
 // ─── SALES DESK PAGE ──────────────────────────────────────────
-function SalesDeskPage({ transactions, wallets, business, onAdd, onReceipt, onEdit, onAddWallet, activeWallet, setActiveWallet, isPro, isGuest, guestLeft, voidedReceipts, deletedTransactions }) {
-  const [tab, setTab] = useState("transactions");
+function SalesDeskPage({ transactions, wallets, business, onAdd, onReceipt, onEdit, onAddWallet, activeWallet, setActiveWallet, isPro, isGuest, guestLeft, voidedReceipts, deletedTransactions, products }) {
+  const [tab, setTab] = useState("pos");
   const tabs = [
-    { key:"transactions", label:"Transactions" },
-    { key:"wallets",      label:"Wallets"       },
-    { key:"receipts",     label:"Receipts"      },
+    { key:"pos",          label:"Point of Sale"  },
+    { key:"transactions", label:"Transactions"   },
+    { key:"wallets",      label:"Wallets"         },
+    { key:"receipts",     label:"Receipts"        },
   ];
+
+  /* ── POS Form State ── */
+  const emptyLine = () => ({ id: genId(), productId: "", name: "", unitPrice: "", qty: 1 });
+  const [lines, setLines] = useState([emptyLine()]);
+  const [payMethod, setPayMethod] = useState("cash"); // cash | bank | momo
+  const [telcoRef, setTelcoRef] = useState("");
+  const [notes, setNotes]       = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [posDate, setPosDate]   = useState(today());
+  const [posSubmitting, setPosSubmitting] = useState(false);
+
+  const updateLine = (id, field, val) =>
+    setLines(prev => prev.map(l => l.id === id ? { ...l, [field]: val } : l));
+
+  const addLine = () => setLines(prev => [...prev, emptyLine()]);
+  const removeLine = (id) => setLines(prev => prev.length > 1 ? prev.filter(l => l.id !== id) : prev);
+
+  const lineTotal = (l) => {
+    const p = parseFloat(l.unitPrice) || 0;
+    const q = parseInt(l.qty)        || 0;
+    return p * q;
+  };
+  const grandTotal = lines.reduce((s, l) => s + lineTotal(l), 0);
+
+  const handleProductSelect = (id, productId) => {
+    const found = (products || []).find(p => String(p.id) === String(productId));
+    if (found) {
+      updateLine(id, "productId", productId);
+      updateLine(id, "name", found.item_name || found.name || "");
+      updateLine(id, "unitPrice", found.selling_price ?? found.unit_price ?? "");
+    } else {
+      updateLine(id, "productId", "");
+    }
+  };
+
+  const handlePosSubmit = () => {
+    const validLines = lines.filter(l => l.name.trim() && parseFloat(l.unitPrice) > 0);
+    if (!validLines.length) { alert("Add at least one product line with a price."); return; }
+    if (payMethod === "momo" && !telcoRef.trim()) { alert("Enter the Telco Transaction ID for Mobile Money payments."); return; }
+    if (!wallets.length) { alert("Please add a wallet first from the Wallets tab."); return; }
+
+    const wallet = activeWallet ? wallets.find(w => w.id === activeWallet) : wallets[0];
+    const desc = validLines.map(l => `${l.qty}× ${l.name}`).join(", ");
+    const methodMap = { cash: "Cash", bank: "Bank Transfer", momo: "Mobile Money" };
+
+    setPosSubmitting(true);
+    onAdd({
+      type: "income",
+      amount: grandTotal,
+      category: "Sales",
+      description: `${customerName ? customerName + " — " : ""}${desc}`,
+      method: methodMap[payMethod],
+      date: posDate,
+      walletId: wallet?.id || "",
+      momoRef: payMethod === "momo" ? telcoRef : "",
+    });
+
+    // Reset form
+    setTimeout(() => {
+      setLines([emptyLine()]);
+      setPayMethod("cash");
+      setTelcoRef("");
+      setNotes("");
+      setCustomerName("");
+      setPosDate(today());
+      setPosSubmitting(false);
+    }, 600);
+  };
+
+  const PAY_METHODS = [
+    { key: "cash", label: "Cash",         icon: "💵" },
+    { key: "bank", label: "Bank",         icon: "🏦" },
+    { key: "momo", label: "Mobile Money", icon: "📱" },
+  ];
+
+  const fmtGhs = (n) => `GH₵ ${Number(n).toLocaleString("en-GH", { minimumFractionDigits: 2 })}`;
+
   return (
     <div>
-      {/* Header */}
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20, flexWrap:"wrap", gap:12 }}>
+      {/* ── Page Header ── */}
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <div style={{ fontWeight:700, fontSize:20, color:C.text, marginBottom:4 }}>Sales Desk</div>
-          <div style={{ fontSize:13, color:C.muted }}>Track transactions, manage wallets and view receipts</div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Sales Desk</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Log sales, manage wallets and review receipts</p>
         </div>
-        <div style={{ display:"flex", gap:10, alignItems:"center", flexWrap:"wrap" }}>
+        <div className="flex items-center gap-3 flex-wrap">
           {wallets.length > 1 && (
             <select
-              value={activeWallet||"all"}
-              onChange={e=>setActiveWallet(e.target.value==="all"?null:e.target.value)}
-              style={{ padding:"8px 32px 8px 12px", borderRadius:20, border:`1.5px solid ${C.border}`, background:"var(--c-light)", color:C.text, fontSize:12, fontWeight:500, cursor:"pointer", fontFamily:"'Poppins',sans-serif", outline:"none", appearance:"none", backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat:"no-repeat", backgroundPosition:"right 10px center" }}
+              value={activeWallet || "all"}
+              onChange={e => setActiveWallet(e.target.value === "all" ? null : e.target.value)}
+              className="pl-3 pr-8 py-2 rounded-full border border-gray-200 bg-white text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 appearance-none cursor-pointer"
+              style={{ backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat:"no-repeat", backgroundPosition:"right 10px center" }}
             >
               <option value="all">All wallets</option>
-              {wallets.map(w=>{
-                const preset = WALLET_PRESETS.find(p=>p.id===w.presetId)||WALLET_PRESETS[0];
+              {wallets.map(w => {
+                const preset = WALLET_PRESETS.find(p => p.id === w.presetId) || WALLET_PRESETS[0];
                 return <option key={w.id} value={w.id}>{preset.label} — {w.name}</option>;
               })}
             </select>
           )}
-          <Btn variant="primary" onClick={onAdd}><LIcon name="plus" size={15}/> Record Payment</Btn>
         </div>
       </div>
 
       <PageTabs tabs={tabs} active={tab} onChange={setTab}/>
 
+      {/* ─────────── POINT OF SALE TAB ─────────── */}
+      {tab === "pos" && (
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+          {/* LEFT COLUMN — Main Form */}
+          <div className="xl:col-span-2 flex flex-col gap-5">
+
+            {/* ── Customer & Date ── */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-4">Sale Details</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Customer Name <span className="text-gray-400 font-normal normal-case">(optional)</span></label>
+                  <input
+                    type="text"
+                    value={customerName}
+                    onChange={e => setCustomerName(e.target.value)}
+                    placeholder="e.g. Kofi Mensah"
+                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Sale Date</label>
+                  <input
+                    type="date"
+                    value={posDate}
+                    onChange={e => setPosDate(e.target.value)}
+                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* ── Product Line Items ── */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-widest">Items Sold</h2>
+                <button
+                  onClick={addLine}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition px-3 py-1.5 rounded-lg hover:bg-emerald-50"
+                >
+                  <Plus size={13}/> Add Row
+                </button>
+              </div>
+
+              {/* Column headers */}
+              <div className="hidden sm:grid grid-cols-12 gap-3 mb-2 px-1">
+                <span className="col-span-5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Product</span>
+                <span className="col-span-2 text-xs font-semibold text-gray-400 uppercase tracking-wider text-center">Qty</span>
+                <span className="col-span-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Unit Price</span>
+                <span className="col-span-2 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">Subtotal</span>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                {lines.map((line, idx) => (
+                  <div key={line.id} className="grid grid-cols-12 gap-3 items-center group">
+                    {/* Product selector / name input */}
+                    <div className="col-span-12 sm:col-span-5">
+                      {(products || []).length > 0 ? (
+                        <select
+                          value={line.productId}
+                          onChange={e => {
+                            if (e.target.value === "__custom__") {
+                              handleProductSelect(line.id, "");
+                              updateLine(line.id, "productId", "__custom__");
+                              updateLine(line.id, "name", "");
+                            } else {
+                              handleProductSelect(line.id, e.target.value);
+                            }
+                          }}
+                          className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition appearance-none"
+                          style={{ backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat:"no-repeat", backgroundPosition:"right 10px center", paddingRight:"32px" }}
+                        >
+                          <option value="">— Select product —</option>
+                          {(products || []).map(p => (
+                            <option key={p.id} value={p.id}>{p.item_name || p.name}</option>
+                          ))}
+                          <option value="__custom__">✏️ Enter custom item…</option>
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={line.name}
+                          onChange={e => updateLine(line.id, "name", e.target.value)}
+                          placeholder={`Item ${idx + 1}`}
+                          className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition"
+                        />
+                      )}
+                      {/* Custom name input if custom selected */}
+                      {line.productId === "__custom__" && (
+                        <input
+                          type="text"
+                          value={line.name}
+                          onChange={e => updateLine(line.id, "name", e.target.value)}
+                          placeholder="Enter item name"
+                          className="w-full mt-2 bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition"
+                        />
+                      )}
+                    </div>
+
+                    {/* Quantity */}
+                    <div className="col-span-4 sm:col-span-2">
+                      <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden bg-white">
+                        <button
+                          onClick={() => updateLine(line.id, "qty", Math.max(1, (parseInt(line.qty)||1) - 1))}
+                          className="px-2.5 py-2 text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition text-base font-bold"
+                        >−</button>
+                        <input
+                          type="number"
+                          min="1"
+                          value={line.qty}
+                          onChange={e => updateLine(line.id, "qty", Math.max(1, parseInt(e.target.value)||1))}
+                          className="w-full text-center text-sm font-semibold text-gray-900 bg-transparent focus:outline-none py-2"
+                        />
+                        <button
+                          onClick={() => updateLine(line.id, "qty", (parseInt(line.qty)||1) + 1)}
+                          className="px-2.5 py-2 text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition text-base font-bold"
+                        >+</button>
+                      </div>
+                    </div>
+
+                    {/* Unit price */}
+                    <div className="col-span-5 sm:col-span-3">
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-400 pointer-events-none">GH₵</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={line.unitPrice}
+                          onChange={e => updateLine(line.id, "unitPrice", e.target.value)}
+                          placeholder="0.00"
+                          className="w-full bg-white border border-gray-200 rounded-xl pl-10 pr-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Subtotal + delete */}
+                    <div className="col-span-3 sm:col-span-2 flex items-center justify-end gap-2">
+                      <span className="text-sm font-semibold text-gray-800 text-right whitespace-nowrap">
+                        {lineTotal(line) > 0 ? fmtGhs(lineTotal(line)) : "—"}
+                      </span>
+                      {lines.length > 1 && (
+                        <button
+                          onClick={() => removeLine(line.id)}
+                          className="opacity-0 group-hover:opacity-100 flex-shrink-0 p-1 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition"
+                        >
+                          <X size={14}/>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Add row button (bottom) */}
+              <button
+                onClick={addLine}
+                className="mt-4 w-full py-2.5 border-2 border-dashed border-gray-200 rounded-xl text-xs font-semibold text-gray-400 hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 transition flex items-center justify-center gap-1.5"
+              >
+                <Plus size={13}/> Add another item
+              </button>
+            </div>
+
+            {/* ── Payment Method ── */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-4">Payment Method</h2>
+              <div className="grid grid-cols-3 gap-3">
+                {PAY_METHODS.map(m => (
+                  <button
+                    key={m.key}
+                    onClick={() => { setPayMethod(m.key); setTelcoRef(""); }}
+                    className={`flex flex-col items-center gap-2 py-4 px-3 rounded-xl border-2 font-semibold text-sm transition cursor-pointer ${
+                      payMethod === m.key
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                        : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span className="text-xl">{m.icon}</span>
+                    <span className="text-xs">{m.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* ── Telco Transaction ID — conditional ── */}
+              {payMethod === "momo" && (
+                <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                  <label className="block text-xs font-semibold text-amber-700 uppercase tracking-wider mb-2">
+                    📱 Telco Transaction ID <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={telcoRef}
+                    onChange={e => setTelcoRef(e.target.value)}
+                    placeholder="e.g. 12345678901 (MTN) or TLC00123456 (Telecel)"
+                    className="w-full bg-white border border-amber-300 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition"
+                  />
+                  <p className="text-xs text-amber-600 mt-2">MTN: 11-digit reference · Telecel: 10+ character ID</p>
+                </div>
+              )}
+            </div>
+
+            {/* ── Extra Notes ── */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 rounded-md bg-gray-100 flex items-center justify-center">
+                  <Clipboard size={13} className="text-gray-500"/>
+                </div>
+                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-widest">Private Store Notes</h2>
+              </div>
+              <textarea
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                rows={3}
+                placeholder={`Internal notes about this sale — visible only to you. e.g. 'Bulk order, 5% discount applied' or 'Delivery pending Tuesday'`}
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition resize-none"
+              />
+              <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                <Lock size={10}/> Never printed on receipts or shared with customers
+              </p>
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN — Order Summary */}
+          <div className="xl:col-span-1">
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm sticky top-6">
+              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-4">Order Summary</h2>
+
+              {/* Line item breakdown */}
+              <div className="flex flex-col gap-2 mb-4">
+                {lines.filter(l => l.name || l.unitPrice).length === 0 ? (
+                  <div className="py-6 text-center text-sm text-gray-400">
+                    <ShoppingCart size={28} className="mx-auto mb-2 text-gray-300"/>
+                    No items yet
+                  </div>
+                ) : (
+                  lines.filter(l => l.name || l.unitPrice).map(l => (
+                    <div key={l.id} className="flex justify-between items-start gap-2">
+                      <div className="text-sm text-gray-700 leading-snug flex-1 min-w-0 truncate">
+                        {l.name || <span className="text-gray-400 italic">Unnamed</span>}
+                        <span className="text-xs text-gray-400 ml-1">×{l.qty}</span>
+                      </div>
+                      <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
+                        {lineTotal(l) > 0 ? fmtGhs(lineTotal(l)) : "—"}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="border-t border-gray-100 pt-4 mb-5">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-semibold text-gray-600">Total</span>
+                  <span className="text-xl font-bold text-gray-900">{fmtGhs(grandTotal)}</span>
+                </div>
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                    payMethod === "cash" ? "bg-green-100 text-green-700" :
+                    payMethod === "bank" ? "bg-blue-100 text-blue-700" :
+                    "bg-amber-100 text-amber-700"
+                  }`}>
+                    {payMethod === "cash" ? "💵 Cash" : payMethod === "bank" ? "🏦 Bank" : "📱 Mobile Money"}
+                  </span>
+                  {customerName && (
+                    <span className="text-xs text-gray-500 truncate">· {customerName}</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Wallet picker for summary */}
+              {wallets.length > 0 && (
+                <div className="mb-4">
+                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Record to Wallet</label>
+                  <select
+                    value={activeWallet || (wallets[0]?.id || "")}
+                    onChange={e => setActiveWallet(e.target.value)}
+                    className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition appearance-none"
+                    style={{ backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat:"no-repeat", backgroundPosition:"right 10px center", paddingRight:"32px" }}
+                  >
+                    {wallets.map(w => {
+                      const preset = WALLET_PRESETS.find(p => p.id === w.presetId) || WALLET_PRESETS[0];
+                      return <option key={w.id} value={w.id}>{preset.label} — {w.name}</option>;
+                    })}
+                  </select>
+                </div>
+              )}
+
+              {wallets.length === 0 && (
+                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-xl text-xs text-yellow-700">
+                  ⚠️ No wallets added yet.{" "}
+                  <button onClick={() => setTab("wallets")} className="underline font-semibold">Add one →</button>
+                </div>
+              )}
+
+              <button
+                onClick={handlePosSubmit}
+                disabled={posSubmitting || grandTotal === 0}
+                className="w-full py-3.5 rounded-xl font-semibold text-sm text-white transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ background: posSubmitting || grandTotal === 0 ? "#9ca3af" : "linear-gradient(135deg, #10B981 0%, #059669 100%)", boxShadow: grandTotal > 0 ? "0 4px 14px rgba(16,185,129,0.35)" : "none" }}
+              >
+                {posSubmitting ? (
+                  <><span className="animate-spin text-lg">⟳</span> Saving…</>
+                ) : (
+                  <><Check size={16}/> Record Sale · {fmtGhs(grandTotal)}</>
+                )}
+              </button>
+
+              <p className="text-xs text-center text-gray-400 mt-3">
+                A receipt can be generated from the Transactions tab
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {tab === "transactions" && <Transactions transactions={transactions} wallets={wallets} onAdd={onAdd} onReceipt={onReceipt} onEdit={onEdit}/>}
       {tab === "wallets"      && <Wallets wallets={wallets} transactions={transactions} onAdd={onAddWallet} onSelect={setActiveWallet} activeWallet={activeWallet}/>}
-      {tab === "receipts"     && <Receipts transactions={transactions} wallets={wallets} business={business} onReceipt={onReceipt} isPro={isPro} isGuest={isGuest} guestLeft={guestLeft} voidedReceipts={voidedReceipts} deletedTransactions={deletedTransactions}/>}
+      {tab === "receipts"     && <Receipts transactions={transactions} wallets={wallets} business={business} onReceipt={onReceipt} isPro={isPro} isGuest={isGuest} guestLeft={guestLeft} voidedReceipts={voidedReceipts} deletedTransactions={deletedTransactions} products={products}/>}
     </div>
   );
 }
@@ -3304,4 +3697,6 @@ function Settings({ user, business, setBusiness, isGuest, businessId, transactio
     </div>
   );
 }
+
+
 
