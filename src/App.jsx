@@ -853,7 +853,6 @@ export default function App() {
     { key:"invoices",   label:"Invoices",     icon:"invoices"  },
     { key:"inventory",  label:"Inventory",    icon:"box"       },
     { key:"creditbook", label:"Credit Book",  icon:"creditbook"},
-    { key:"reports",    label:"Reports",      icon:"reports"   },
     { key:"settings",   label:"Settings",     icon:"settings"  },
   ];
 
