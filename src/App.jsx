@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { supabase } from "./supabase";
 import { sanitizeTransaction } from "./security/sanitize.js";
 import { useOfflineSync } from "./providers/OfflineSyncProvider";
@@ -2062,209 +2062,6 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
         </div>
       </div>
 
-      {/* Voice FAB & modal now live globally in App root */}
-      {false && (
-        <button
-          onClick={() => {
-            setVoiceModalOpen(true);
-            startListening();
-          }}
-          style={{
-            position: 'fixed',
-            bottom: '24px',
-            right: '24px',
-            width: '60px',
-            height: '60px',
-            borderRadius: '50%',
-            backgroundColor: '#22c55e',
-            color: '#FFFFFF',
-            border: 'none',
-            boxShadow: '0 4px 14px rgba(34, 197, 94, 0.4)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            transition: 'transform 0.2s, background-color 0.2s',
-          }}
-          title="Developer Voice Dictation Terminal"
-        >
-          <Mic size={28} />
-        </button>
-      )}
-
-      {/* Web Speech Transcription Modal */}
-      {voiceModalOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.6)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 10000,
-            fontFamily: "'Poppins', sans-serif",
-          }}
-        >
-          <div
-            style={{
-              background: 'var(--c-white)',
-              border: '1px solid var(--c-border)',
-              borderRadius: '16px',
-              width: '90%',
-              maxWidth: '480px',
-              padding: '24px',
-              color: 'var(--c-text)',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-              position: 'relative',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              textAlign: 'center',
-            }}
-          >
-            <button
-              onClick={() => {
-                stopListening();
-                setVoiceModalOpen(false);
-              }}
-              style={{
-                position: 'absolute',
-                top: '16px',
-                right: '16px',
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--c-muted)',
-                cursor: 'pointer',
-              }}
-            >
-              <X size={20} />
-            </button>
-
-            <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px', color: 'var(--c-text)' }}>
-              Voice Dictation Terminal
-            </h3>
-            <p style={{ fontSize: '12px', color: 'var(--c-muted)', marginBottom: '24px' }}>
-              Speak naturally. The speech engine will transcribe your voice in real time.
-            </p>
-
-            {/* Pulsing Mic and Waves */}
-            <div style={{ position: 'relative', width: '120px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
-              {isListening && (
-                <>
-                  <div className="absolute inset-0 rounded-full bg-[#22c55e]/15 animate-ping" style={{ animationDuration: '2s' }} />
-                  <div className="absolute inset-2 rounded-full bg-[#22c55e]/25 animate-ping" style={{ animationDuration: '1.5s' }} />
-                </>
-              )}
-              <button
-                onClick={isListening ? stopListening : startListening}
-                style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '50%',
-                  backgroundColor: isListening ? '#EF4444' : '#22c55e',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  zIndex: 10,
-                  boxShadow: isListening ? '0 0 20px rgba(239, 68, 68, 0.4)' : '0 0 20px rgba(34, 197, 94, 0.4)',
-                  transition: 'all 0.3s',
-                }}
-              >
-                {isListening ? <MicOff size={36} /> : <Mic size={36} />}
-              </button>
-            </div>
-
-            <div style={{ fontSize: '14px', fontWeight: 600, color: isListening ? '#22c55e' : '#EF4444', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              {isListening ? "Listening..." : "Paused"}
-            </div>
-
-            {voiceError && (
-              <div style={{ color: '#EF4444', fontSize: '12px', background: 'rgba(239, 68, 68, 0.15)', padding: '10px 14px', borderRadius: '8px', width: '100%', marginBottom: '16px' }}>
-                {voiceError}
-              </div>
-            )}
-
-            {/* Live transcription display */}
-            <div
-              style={{
-                width: '100%',
-                background: 'var(--c-light)',
-                border: '1px solid var(--c-border)',
-                borderRadius: '8px',
-                padding: '16px',
-                minHeight: '120px',
-                maxHeight: '180px',
-                overflowY: 'auto',
-                textAlign: 'left',
-                fontSize: '14px',
-                lineHeight: '1.6',
-                color: 'var(--c-text)',
-                marginBottom: '20px',
-              }}
-            >
-              {transcript || interimTranscript ? (
-                <>
-                  <span style={{ color: 'var(--c-text)' }}>{transcript}</span>
-                  <span style={{ color: 'var(--c-muted)', fontStyle: 'italic' }}>{interimTranscript}</span>
-                </>
-              ) : (
-                <span style={{ color: 'var(--c-muted)', fontStyle: 'italic' }}>Waiting for speech...</span>
-              )}
-            </div>
-
-            {/* Actions */}
-            <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
-              <button
-                onClick={() => {
-                  setTranscript("");
-                  setInterimTranscript("");
-                }}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  borderRadius: '8px',
-                  background: 'var(--c-light)',
-                  border: '1px solid var(--c-border)',
-                  color: 'var(--c-text)',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                Clear
-              </button>
-              <button
-                onClick={() => {
-                  stopListening();
-                  setVoiceModalOpen(false);
-                }}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  borderRadius: '8px',
-                  background: '#22c55e',
-                  border: 'none',
-                  color: '#FFFFFF',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                Done
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
@@ -2679,9 +2476,101 @@ function RecordPaymentModal({ onClose, onSave, wallets, business }) {
   );
 }
 
+// ─── BULK TX CARD (individual review card) ────────────────────
+function BulkTxCard({ item, index, onChange, onToggle }) {
+  const [expanded, setExpanded] = useState(true);
+  const netCol = NET_COLOR[item.network] || C.teal;
+  const hasDesc = item.description.trim().length > 0;
+
+  return (
+    <div style={{
+      border: `1.5px solid ${item._included ? (hasDesc ? C.border : C.orange+"66") : "#e5e7eb88"}`,
+      borderRadius: 12,
+      overflow: "hidden",
+      opacity: item._included ? 1 : 0.5,
+      transition: "all 0.2s",
+    }}>
+      {/* CARD HEADER */}
+      <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", background: item._included ? "#f9fafb" : "#f3f4f6", cursor:"pointer" }} onClick={() => setExpanded(e => !e)}>
+        {/* Checkbox */}
+        <div
+          onClick={e => { e.stopPropagation(); onToggle(); }}
+          style={{ width:18, height:18, borderRadius:4, border:`1.5px solid ${item._included ? C.orange : C.border}`, background: item._included ? C.orange : "transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, cursor:"pointer" }}
+        >
+          {item._included && <span style={{ color:"#fff", fontSize:11, fontWeight:700 }}>✓</span>}
+        </div>
+
+        {/* Network badge */}
+        <span style={{ background: netCol+"18", color: netCol, border:`1px solid ${netCol}33`, borderRadius:20, padding:"2px 9px", fontSize:11, fontWeight:600, whiteSpace:"nowrap" }}>
+          {item.network}
+        </span>
+
+        {/* Amount */}
+        <span style={{ fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:16, color:C.income }}>
+          GH₵ {item.amount || "?"}
+        </span>
+
+        {/* Description preview */}
+        <span style={{ flex:1, fontSize:12, color: hasDesc ? C.text : C.orange, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+          {hasDesc ? item.description : "⚠ Add description"}
+        </span>
+
+        {/* Date */}
+        <span style={{ fontSize:11, color:C.muted, whiteSpace:"nowrap" }}>{item.date}</span>
+
+        {/* Expand toggle */}
+        <span style={{ color:C.muted, fontSize:12 }}>{expanded ? "▲" : "▼"}</span>
+      </div>
+
+      {/* CARD BODY - editable fields */}
+      {expanded && item._included && (
+        <div style={{ padding:"12px 14px", background:C.white, borderTop:`1px solid ${C.border}` }}>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:10 }}>
+            <div>
+              <label style={{ ...label, fontSize:11 }}>Description <span style={{ color:C.expense }}>*</span></label>
+              <input
+                style={{ ...input, fontSize:13, padding:"8px 12px", borderColor: !hasDesc ? C.orange+"88" : C.border }}
+                placeholder="What was this payment for?"
+                value={item.description}
+                onChange={e => onChange("description", e.target.value)}
+              />
+            </div>
+            <div>
+              <label style={{ ...label, fontSize:11 }}>Category</label>
+              <select style={{ ...input, fontSize:13, padding:"8px 12px" }} value={item.category} onChange={e => onChange("category", e.target.value)}>
+                {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+              </select>
+            </div>
+          </div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10 }}>
+            <div>
+              <label style={{ ...label, fontSize:11 }}>Amount (GH₵)</label>
+              <input style={{ ...input, fontSize:13, padding:"8px 12px" }} value={item.amount} onChange={e => onChange("amount", e.target.value)} />
+            </div>
+            <div>
+              <label style={{ ...label, fontSize:11 }}>Sender</label>
+              <input style={{ ...input, fontSize:13, padding:"8px 12px" }} value={item.sender} onChange={e => onChange("sender", e.target.value)} placeholder="Customer name" />
+            </div>
+            <div>
+              <label style={{ ...label, fontSize:11 }}>Tx ID</label>
+              <input style={{ ...input, fontSize:13, padding:"8px 12px", fontFamily:"monospace" }} value={item.txId} onChange={e => onChange("txId", e.target.value)} />
+            </div>
+          </div>
+          {/* Verification badge */}
+          <div style={{ marginTop:8, display:"flex", alignItems:"center", gap:6 }}>
+            <span style={{ fontSize:11, color: item.verification?.valid ? "#16a34a" : C.orange, background: item.verification?.valid ? "#f0fdf4" : "#fff7ed", border:`1px solid ${item.verification?.valid?"#86efac":C.orange+"44"}`, borderRadius:20, padding:"2px 8px" }}>
+              {item.verification?.valid ? "✓" : "⚠"} {item.verification?.reason}
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── RECEIPT MODAL ────────────────────────────────────────────
 function ReceiptModal({ tx, business, isPro, onClose, isVoided }) {
-  const rNo = useRef(genRNo()).current;
+  const rNo = useMemo(() => genRNo(), []);
   const accentColor = isPro ? (business.logoColor||"#1B4332") : "#1B4332";
   const accentBg    = isPro ? (business.logoBg||"rgba(27, 67, 50, 0.08)")   : "rgba(27, 67, 50, 0.08)";
   const waText = `Receipt from ${business.name}\n--------------------------\nReceipt No: ${tx.receiptNo||rNo}\nDate: ${tx.date}\nDescription: ${tx.description}\nAmount: GH₵ ${tx.amount}\nPayment: ${tx.method}${tx.momoRef?`\nMoMo Ref: ${tx.momoRef}`:""}\n--------------------------\nPowered by Receiva`;
@@ -3054,7 +2943,7 @@ function AddEditProduct({ product, categories, onSave, onCancel }) {
           <label style={label}>Product type</label>
           <div style={{ display:"flex", gap:8 }}>
             {["product","service"].map(t=>(
-              <button key={t} style={{ flex:1, padding:"10px", borderRadius:8, border:"none", cursor:"pointer", fontFamily:"'Poppins',sans-serif", fontSize:13, fontWeight:500, background: form.type===t ? C.orange+"18":C.light, color: form.type===t ? C.orange : C.muted, border:`1.5px solid ${form.type===t?C.orange+"44":C.border}` }} onClick={()=>{ set("type",t); if(t==="service") set("trackStock",false); else set("trackStock",true); }}>
+              <button key={t} style={{ flex:1, padding:"10px", borderRadius:8, cursor:"pointer", fontFamily:"'Poppins',sans-serif", fontSize:13, fontWeight:500, background: form.type===t ? C.orange+"18":C.light, color: form.type===t ? C.orange : C.muted, border:`1.5px solid ${form.type===t?C.orange+"44":C.border}` }} onClick={()=>{ set("type",t); if(t==="service") set("trackStock",false); else set("trackStock",true); }}>
                 {t==="product" ? <><Package size={14} style={{marginRight:4}}/> Physical product</> : <><Cog size={14} style={{marginRight:4}}/> Service</>}
               </button>
             ))}
