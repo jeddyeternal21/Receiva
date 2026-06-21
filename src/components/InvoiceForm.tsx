@@ -245,21 +245,21 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   };
 
   return (
-    <div className="max-w-6xl mx-auto font-sans text-gray-900">
+    <div className="max-w-6xl mx-auto font-sans text-[var(--c-text)]">
       {/* Title Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-gray-100 pb-4 mb-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-[var(--c-border)] pb-4 mb-6">
         <div>
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-gray-900 text-white rounded-lg">
-              <Receipt className="w-6 h-6 text-green-400" />
+            <div className="p-2 bg-[var(--c-light)] border border-[var(--c-border)] rounded-lg">
+              <Receipt className="w-6 h-6 text-[#22c55e]" />
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">Billing Desk</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight text-[var(--c-text)]">Billing Desk</h1>
           </div>
-          <p className="text-gray-500 mt-1">Create invoices, manage inventory deductions, and log client credit balances.</p>
+          <p className="text-[var(--c-muted)] mt-1">Create invoices, manage inventory deductions, and log client credit balances.</p>
         </div>
         <div className="mt-4 md:mt-0 flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping"></span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-green-500/10 text-[#22c55e] border border-[#22c55e]/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e] animate-ping"></span>
             Registers Online
           </span>
         </div>
@@ -276,13 +276,13 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
       )}
 
       {/* Grid Layout: Left is Form desk, Right is live receipt preview */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
         {/* Form Panel */}
-        <form onSubmit={handleSubmit} className="lg:col-span-7 space-y-6">
+        <form onSubmit={handleSubmit} className="xl:col-span-7 space-y-6">
           {/* Card Container */}
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-6">
-            <div className="border-b border-gray-100 pb-4">
-              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+          <div className="bg-[var(--c-white)] border border-[var(--c-border)] rounded-2xl shadow-sm p-6 space-y-6">
+            <div className="border-b border-[var(--c-border)] pb-4">
+              <h2 className="text-lg font-bold text-[var(--c-text)] flex items-center gap-2">
                 <User className="w-5 h-5 text-gray-400" />
                 Customer & Payment Header
               </h2>
@@ -290,7 +290,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-bold text-[var(--c-muted)] uppercase tracking-wider mb-2">
                   Customer Name *
                 </label>
                 <input
@@ -299,12 +299,12 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                   placeholder="e.g. John Doe"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all"
+                  className="w-full px-4 py-2 rounded-lg border border-[var(--c-border)] bg-[var(--c-white)] text-[var(--c-text)] focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-bold text-[var(--c-muted)] uppercase tracking-wider mb-2">
                   Customer Phone
                 </label>
                 <input
@@ -312,7 +312,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                   placeholder="e.g. +233 24 000 0000"
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all"
+                  className="w-full px-4 py-2 rounded-lg border border-[var(--c-border)] bg-[var(--c-white)] text-[var(--c-text)] focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all"
                 />
               </div>
             </div>
@@ -320,17 +320,17 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
               {/* Stylized Payment Status Toggle */}
               <div>
-                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-bold text-[var(--c-muted)] uppercase tracking-wider mb-2">
                   Payment Status
                 </label>
-                <div className="grid grid-cols-2 p-1 bg-gray-100 rounded-lg">
+                <div className="grid grid-cols-2 p-1 bg-[var(--c-light)] rounded-lg">
                   <button
                     type="button"
                     onClick={() => setPaymentStatus('paid')}
                     className={`py-2 text-sm font-semibold rounded-lg transition-all ${
                       paymentStatus === 'paid'
-                        ? 'bg-white text-gray-900 shadow-sm border border-gray-100'
-                        : 'text-gray-500 hover:text-gray-900'
+                        ? 'bg-[var(--c-white)] text-[var(--c-text)] shadow-sm border border-[var(--c-border)]'
+                        : 'text-[var(--c-muted)] hover:text-[var(--c-text)]'
                     }`}
                   >
                     Paid
@@ -340,8 +340,8 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     onClick={() => setPaymentStatus('credit')}
                     className={`py-2 text-sm font-semibold rounded-lg transition-all ${
                       paymentStatus === 'credit'
-                        ? 'bg-white text-rose-600 shadow-sm border border-gray-100'
-                        : 'text-gray-500 hover:text-gray-900'
+                        ? 'bg-[var(--c-white)] text-rose-500 shadow-sm border border-[var(--c-border)]'
+                        : 'text-[var(--c-muted)] hover:text-[var(--c-text)]'
                     }`}
                   >
                     Credit / Debt
@@ -352,7 +352,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
               {/* Dynamic Due Date or Momo details */}
               {paymentStatus === 'credit' ? (
                 <div className="animate-fadeIn">
-                  <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2 flex items-center gap-1">
+                  <label className="block text-xs font-bold text-[var(--c-muted)] uppercase tracking-wider mb-2 flex items-center gap-1">
                     <Calendar className="w-3.5 h-3.5 text-rose-500" />
                     Due Date *
                   </label>
@@ -361,12 +361,12 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     required
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg border border-rose-200 focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent bg-rose-50/20 text-rose-900 transition-all"
+                    className="w-full px-4 py-2 rounded-lg border border-[var(--c-border)] bg-[var(--c-white)] text-[var(--c-text)] focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all"
                   />
                 </div>
               ) : (
                 <div className="animate-fadeIn">
-                  <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
+                  <label className="block text-xs font-bold text-[var(--c-muted)] uppercase tracking-wider mb-2">
                     Transaction ID (Momo / Bank)
                   </label>
                   <input
@@ -374,34 +374,34 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     placeholder="e.g. TXN9827419"
                     value={telcoTransactionId}
                     onChange={(e) => setTelcoTransactionId(e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all"
+                    className="w-full px-4 py-2 rounded-lg border border-[var(--c-border)] bg-[var(--c-white)] text-[var(--c-text)] focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all"
                   />
                 </div>
               )}
             </div>
 
             {/* Expandable/Collapsible Notes Accordion */}
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <div className="border border-[var(--c-border)] rounded-lg overflow-hidden">
               <button
                 type="button"
                 onClick={() => setNotesExpanded(!notesExpanded)}
-                className="w-full px-4 py-2 bg-gray-50 flex items-center justify-between text-left text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
+                className="w-full px-4 py-2 bg-[var(--c-light)] flex items-center justify-between text-left text-sm font-semibold text-[var(--c-text)] hover:bg-[var(--c-light)]/80 transition-colors"
               >
                 <span>Internal Notes (Private)</span>
                 {notesExpanded ? (
-                  <ChevronUp className="w-4 h-4 text-gray-500" />
+                  <ChevronUp className="w-4 h-4 text-[var(--c-muted)]" />
                 ) : (
-                  <ChevronDown className="w-4 h-4 text-gray-500" />
+                  <ChevronDown className="w-4 h-4 text-[var(--c-muted)]" />
                 )}
               </button>
               {notesExpanded && (
-                <div className="p-4 border-t border-gray-150 bg-white animate-slideDown">
+                <div className="p-4 border-t border-[var(--c-border)] bg-[var(--c-white)] animate-slideDown">
                   <textarea
                     rows={3}
                     placeholder="Provide any private details about this billing or client credit terms..."
                     value={extraNotes}
                     onChange={(e) => setExtraNotes(e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all text-sm"
+                    className="w-full px-4 py-2 rounded-lg border border-[var(--c-border)] bg-[var(--c-white)] text-[var(--c-text)] focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all text-sm"
                   />
                 </div>
               )}
@@ -409,10 +409,10 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
           </div>
 
           {/* Line Items Card */}
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 border-b border-gray-100 pb-4">
-              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <Layers className="w-5 h-5 text-gray-400" />
+          <div className="bg-[var(--c-white)] border border-[var(--c-border)] rounded-2xl shadow-sm p-6 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 border-b border-[var(--c-border)] pb-4">
+              <h2 className="text-lg font-bold text-[var(--c-text)] flex items-center gap-2">
+                <Layers className="w-5 h-5 text-[var(--c-muted)]" />
                 Dynamic Line Items
               </h2>
               <div className="flex items-center gap-3">
@@ -422,7 +422,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 <button
                   type="button"
                   onClick={addLineItem}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100/80 px-3 py-1.5 rounded-lg border border-green-200 transition-all"
+                  className="inline-flex items-center gap-1 text-xs font-bold text-[#22c55e] hover:text-[#16a34a] bg-green-500/10 hover:bg-green-500/20 px-3 py-1.5 rounded-lg border border-[#22c55e]/20 transition-all"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Add Item
@@ -439,18 +439,18 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 return (
                   <div 
                     key={index}
-                    className="flex flex-col md:flex-row gap-3 p-4 bg-gray-50 border border-gray-100 rounded-lg relative group transition-all duration-200 hover:border-gray-200"
+                    className="flex flex-col md:flex-row gap-3 p-4 bg-[var(--c-light)]/50 border border-[var(--c-border)] rounded-lg relative group transition-all duration-200 hover:border-[var(--c-border)]/85"
                   >
                     {/* Product Selection */}
                     <div className="flex-1">
-                      <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">
+                      <label className="block text-[10px] font-bold text-[var(--c-muted)] uppercase mb-1.5">
                         Product / Item
                       </label>
                       <select
                         required
                         value={item.product_id}
                         onChange={(e) => updateLineItem(index, 'product_id', e.target.value)}
-                        className="w-full px-4 py-2 text-sm bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all"
+                        className="w-full px-4 py-2 text-sm bg-[var(--c-white)] text-[var(--c-text)] rounded-lg border border-[var(--c-border)] focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all"
                       >
                         <option value="" disabled>-- Select a Product --</option>
                         {products.map((prod) => (
@@ -463,7 +463,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
 
                     {/* Quantity field */}
                     <div className="w-full md:w-24">
-                      <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">
+                      <label className="block text-[10px] font-bold text-[var(--c-muted)] uppercase mb-1.5">
                         Quantity
                       </label>
                       <input
@@ -472,13 +472,13 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                         required
                         value={item.quantity}
                         onChange={(e) => updateLineItem(index, 'quantity', parseInt(e.target.value) || 0)}
-                        className="w-full px-4 py-2 text-sm bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all"
+                        className="w-full px-4 py-2 text-sm bg-[var(--c-white)] text-[var(--c-text)] rounded-lg border border-[var(--c-border)] focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all"
                       />
                     </div>
 
                     {/* Unit price field */}
                     <div className="w-full md:w-32">
-                      <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">
+                      <label className="block text-[10px] font-bold text-[var(--c-muted)] uppercase mb-1.5">
                         Unit Price (GHS)
                       </label>
                       <input
@@ -488,17 +488,17 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                         required
                         value={item.unit_price}
                         onChange={(e) => updateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                        className="w-full px-4 py-2 text-sm bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all"
+                        className="w-full px-4 py-2 text-sm bg-[var(--c-white)] text-[var(--c-text)] rounded-lg border border-[var(--c-border)] focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all"
                       />
                     </div>
 
                     {/* Row subtotal */}
                     <div className="w-full md:w-32 flex flex-col justify-between">
                       <div>
-                        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">
+                        <label className="block text-[10px] font-bold text-[var(--c-muted)] uppercase mb-1.5">
                           Subtotal
                         </label>
-                        <div className="text-sm font-bold text-gray-900 pt-2">
+                        <div className="text-sm font-bold text-[var(--c-text)] pt-2">
                           GHS {((item.quantity || 0) * (item.unit_price || 0)).toFixed(2)}
                         </div>
                       </div>
@@ -509,7 +509,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                       <button
                         type="button"
                         onClick={() => removeLineItem(index)}
-                        className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                        className="p-2 text-[var(--c-muted)] hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors"
                         title="Delete Row"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -540,9 +540,9 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
         </form>
 
         {/* Live Invoice Preview Receipt Panel */}
-        <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-8">
+        <div className="xl:col-span-5 space-y-6 xl:sticky xl:top-8">
           {/* Visual Invoice Mockup */}
-          <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-md">
+          <div className="bg-[var(--c-white)] border border-[var(--c-border)] rounded-2xl overflow-hidden shadow-md">
             {/* Header: Charcoal */}
             <div className="bg-gray-800 text-white p-6 relative">
               <div className="absolute top-0 right-0 p-4 opacity-10">
@@ -587,11 +587,11 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
 
             {/* Invoice Line items receipt view */}
             <div className="p-6 space-y-4">
-              <div className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">
+              <div className="text-xs font-bold text-[var(--c-muted)] uppercase tracking-widest border-b border-[var(--c-border)] pb-2">
                 Invoice Summary
               </div>
 
-              <div className="divide-y divide-gray-100 max-h-56 overflow-y-auto pr-1">
+              <div className="divide-y divide-[var(--c-border)] max-h-56 overflow-y-auto pr-1">
                 {lineItems.map((item, index) => {
                   const product = productLookup.get(item.product_id);
                   if (!product) return null;
@@ -599,12 +599,12 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                   return (
                     <div key={index} className="py-2.5 flex justify-between items-center text-xs">
                       <div>
-                        <p className="font-bold text-gray-900">{product.item_name}</p>
-                        <p className="text-gray-400 mt-0.5">
+                        <p className="font-bold text-[var(--c-text)]">{product.item_name}</p>
+                        <p className="text-[var(--c-muted)] mt-0.5">
                           {item.quantity} x GHS {item.unit_price.toFixed(2)}
                         </p>
                       </div>
-                      <div className="font-extrabold text-gray-900">
+                      <div className="font-extrabold text-[var(--c-text)]">
                         GHS {(item.quantity * item.unit_price).toFixed(2)}
                       </div>
                     </div>
@@ -612,44 +612,44 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 })}
 
                 {lineItems.filter(item => item.product_id).length === 0 && (
-                  <div className="py-8 text-center text-xs text-gray-400 italic">
+                  <div className="py-8 text-center text-xs text-[var(--c-muted)] italic">
                     Add line items to generate receipt
                   </div>
                 )}
               </div>
 
               {/* Financial Calculation Block */}
-              <div className="border-t border-gray-100 pt-4 space-y-2.5">
-                <div className="flex justify-between items-center text-xs text-gray-500">
+              <div className="border-t border-[var(--c-border)] pt-4 space-y-2.5">
+                <div className="flex justify-between items-center text-xs text-[var(--c-muted)]">
                   <span>Total Quantity</span>
-                  <span className="font-bold text-gray-900">{calculations.totalItems} Items</span>
+                  <span className="font-bold text-[var(--c-text)]">{calculations.totalItems} Items</span>
                 </div>
-                <div className="flex justify-between items-center text-xs text-gray-500">
+                <div className="flex justify-between items-center text-xs text-[var(--c-muted)]">
                   <span>Gross Subtotal</span>
-                  <span className="font-bold text-gray-900">GHS {calculations.grossTotal.toFixed(2)}</span>
+                  <span className="font-bold text-[var(--c-text)]">GHS {calculations.grossTotal.toFixed(2)}</span>
                 </div>
 
                 {/* Optional Smart Momo transaction trace */}
                 {paymentStatus === 'paid' && telcoTransactionId && (
-                  <div className="flex justify-between items-center text-[10px] bg-slate-50 p-2 rounded-lg border border-slate-100 text-slate-500">
+                  <div className="flex justify-between items-center text-[10px] bg-[var(--c-light)] p-2 rounded-lg border border-[var(--c-border)] text-[var(--c-muted)]">
                     <span className="font-medium">Momo Transaction ID</span>
-                    <span className="font-mono font-bold text-gray-900">{telcoTransactionId}</span>
+                    <span className="font-mono font-bold text-[var(--c-text)]">{telcoTransactionId}</span>
                   </div>
                 )}
 
-                <div className="flex justify-between items-center pt-2.5 border-t border-gray-150 text-base font-extrabold text-gray-900">
+                <div className="flex justify-between items-center pt-2.5 border-t border-[var(--c-border)] text-base font-extrabold text-[var(--c-text)]">
                   <span>Total Amount</span>
-                  <span className="text-green-600">GHS {calculations.grossTotal.toFixed(2)}</span>
+                  <span className="text-[#22c55e]">GHS {calculations.grossTotal.toFixed(2)}</span>
                 </div>
 
                 {/* Estimate Profit Margin Badge for Shop Owners */}
                 {calculations.projectedProfit > 0 && (
-                  <div className="mt-4 p-3 bg-green-50 border border-green-100 rounded-xl flex items-center justify-between text-xs text-green-800">
+                  <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center justify-between text-xs text-green-800 dark:text-green-200">
                     <div className="flex items-center gap-1.5">
-                      <TrendingUp className="w-4 h-4 text-green-600" />
-                      <span className="font-bold">Projected Net Margin</span>
+                      <TrendingUp className="w-4 h-4 text-[#22c55e]" />
+                      <span className="font-bold text-green-700 dark:text-green-300">Projected Net Margin</span>
                     </div>
-                    <span className="font-extrabold text-green-700">
+                    <span className="font-extrabold text-[#22c55e]">
                       GHS {calculations.projectedProfit.toFixed(2)}
                     </span>
                   </div>
@@ -658,12 +658,12 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
             </div>
 
             {/* Submission Block */}
-            <div className="p-6 bg-gray-50 border-t border-gray-150">
+            <div className="p-6 bg-[var(--c-light)] border-t border-[var(--c-border)]">
               <button
                 type="button"
                 onClick={handleSubmit}
                 disabled={isSaving}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#22c55e] hover:bg-[#16a34a] disabled:bg-gray-300 text-white text-sm font-bold rounded-lg transition-all cursor-pointer shadow-md shadow-green-100"
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#22c55e] hover:bg-[#16a34a] disabled:bg-gray-300 text-white text-sm font-bold rounded-lg transition-all cursor-pointer shadow-md shadow-green-500/10"
               >
                 {isSaving ? (
                   <>

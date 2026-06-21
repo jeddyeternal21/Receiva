@@ -112,8 +112,8 @@ export const VoiceInputTrigger: React.FC<VoiceInputTriggerProps> = ({
 
   if (!isSupported) {
     return (
-      <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-400 flex items-center gap-2">
-        <AlertCircle className="w-4 h-4 text-gray-300 flex-shrink-0" />
+      <div className="p-3 bg-[var(--c-light)] border border-[var(--c-border)] rounded-lg text-xs text-[var(--c-muted)] flex items-center gap-2">
+        <AlertCircle className="w-4 h-4 text-[var(--c-muted)] flex-shrink-0" />
         <span>Voice input unsupported in this browser. Try Chrome or Safari.</span>
       </div>
     );
@@ -140,8 +140,8 @@ export const VoiceInputTrigger: React.FC<VoiceInputTriggerProps> = ({
           onClick={toggleListening}
           className={`flex items-center justify-center w-10 h-10 rounded-full cursor-pointer transition-all border ${
             isListening
-              ? 'bg-[#22c55e] text-white border-[#16a34a] shadow-md shadow-green-100 animate-pulse'
-              : 'bg-gray-50 text-gray-500 hover:text-gray-800 hover:bg-gray-100 border-gray-200'
+              ? 'bg-[#22c55e] text-white border-[#16a34a] shadow-md shadow-green-500/10 animate-pulse'
+              : 'bg-[var(--c-light)] text-[var(--c-muted)] hover:text-[var(--c-text)] hover:bg-[var(--c-light)]/85 border-[var(--c-border)]'
           }`}
           title={isListening ? 'Stop listening' : 'Start voice input'}
         >
@@ -154,7 +154,7 @@ export const VoiceInputTrigger: React.FC<VoiceInputTriggerProps> = ({
 
         {/* Listening Soundwave indicators */}
         {isListening ? (
-          <div className="flex items-center gap-2 bg-green-50 border border-green-100 rounded-full px-3 py-1.5 animate-fadeIn">
+          <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/20 rounded-full px-3 py-1.5 animate-fadeIn">
             {/* Active Soundwave Animation bars */}
             <div className="flex items-end gap-0.5 h-4 pt-1">
               <div className="w-0.5 bg-green-600 rounded-full soundwave-bar" style={{ animationDelay: '0.1s', height: '12px' }} />
@@ -163,8 +163,8 @@ export const VoiceInputTrigger: React.FC<VoiceInputTriggerProps> = ({
               <div className="w-0.5 bg-green-600 rounded-full soundwave-bar" style={{ animationDelay: '0.4s', height: '14px' }} />
               <div className="w-0.5 bg-green-600 rounded-full soundwave-bar" style={{ animationDelay: '0.15s', height: '12px' }} />
             </div>
-            <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-green-500 animate-spin" />
+            <span className="text-[10px] font-bold text-green-600 dark:text-green-400 uppercase tracking-wider flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-[#22c55e] animate-spin" />
               Receiva Listening...
             </span>
 
@@ -178,7 +178,7 @@ export const VoiceInputTrigger: React.FC<VoiceInputTriggerProps> = ({
             </button>
           </div>
         ) : (
-          <span className="text-xs text-gray-400 italic">
+          <span className="text-xs text-[var(--c-muted)] italic">
             Click microphone to dictate items (e.g. "Add 3 Jasmine Rice")
           </span>
         )}
@@ -186,7 +186,7 @@ export const VoiceInputTrigger: React.FC<VoiceInputTriggerProps> = ({
 
       {/* Error Alert Display */}
       {error && (
-        <div className="mt-2 p-2 bg-rose-50 border border-rose-100 rounded-lg text-[10px] text-rose-600 flex items-center gap-1.5 animate-fadeIn">
+        <div className="mt-2 p-2 bg-rose-500/10 border border-rose-500/20 rounded-lg text-[10px] text-rose-500 flex items-center gap-1.5 animate-fadeIn">
           <AlertCircle className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />
           <span>{error}</span>
         </div>
@@ -194,15 +194,15 @@ export const VoiceInputTrigger: React.FC<VoiceInputTriggerProps> = ({
 
       {/* Real-time Streaming Container (Interim transcript results) */}
       {(isListening || finalText || interimText) && (
-        <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg max-h-24 overflow-y-auto animate-slideDown shadow-inner">
-          <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+        <div className="mt-3 p-3 bg-[var(--c-light)] border border-[var(--c-border)] rounded-lg max-h-24 overflow-y-auto animate-slideDown shadow-inner">
+          <div className="text-[9px] font-bold text-[var(--c-muted)] uppercase tracking-widest mb-1">
             Voice Transcript Preview
           </div>
           <p className="text-xs leading-relaxed">
-            {finalText && <span className="text-gray-800 font-medium">{finalText}</span>}
-            {interimText && <span className="text-gray-400 italic">{interimText}</span>}
+            {finalText && <span className="text-[var(--c-text)] font-medium">{finalText}</span>}
+            {interimText && <span className="text-[var(--c-muted)] italic">{interimText}</span>}
             {!finalText && !interimText && (
-              <span className="text-gray-300 italic">Say something...</span>
+              <span className="text-[var(--c-muted)]/60 italic">Say something...</span>
             )}
           </p>
         </div>

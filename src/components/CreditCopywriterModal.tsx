@@ -90,12 +90,12 @@ export const CreditCopywriterModal: React.FC<CreditCopywriterModalProps> = ({
       />
 
       {/* Modal Container */}
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 z-10 overflow-hidden border border-gray-200 transform transition-all animate-scaleUp">
+      <div className="bg-[var(--c-white)] rounded-2xl shadow-xl w-full max-w-lg mx-4 z-10 overflow-hidden border border-[var(--c-border)] transform transition-all animate-scaleUp text-[var(--c-text)]">
         {/* Header */}
         <div className="bg-gray-800 text-white p-6 flex justify-between items-center">
           <div>
             <h3 className="text-lg font-extrabold tracking-tight">Credit Reminder Copywriter</h3>
-            <p className="text-xs text-gray-400 mt-1">Draft the perfect reminder tone for {customer_name}</p>
+            <p className="text-xs text-[var(--c-muted)] mt-1">Draft the perfect reminder tone for {customer_name}</p>
           </div>
           <button 
             type="button"
@@ -109,18 +109,18 @@ export const CreditCopywriterModal: React.FC<CreditCopywriterModalProps> = ({
         {/* Tone Selector Tabs */}
         <div className="p-6 space-y-6">
           <div>
-            <span className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">
+            <span className="block text-xs font-bold text-[var(--c-muted)] uppercase tracking-widest mb-3">
               Select Message Tone
             </span>
             {/* 2. Tone selection button group */}
-            <div className="grid grid-cols-3 p-1 bg-gray-100 rounded-lg">
+            <div className="grid grid-cols-3 p-1 bg-[var(--c-light)] rounded-lg">
               <button
                 type="button"
                 onClick={() => setTone('friendly')}
                 className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-all ${
                   tone === 'friendly'
-                    ? 'bg-white text-[#22c55e] shadow-sm border border-gray-200'
-                    : 'text-gray-500 hover:text-gray-900'
+                    ? 'bg-[var(--c-white)] text-[#22c55e] shadow-sm border border-[var(--c-border)]'
+                    : 'text-[var(--c-muted)] hover:text-[var(--c-text)]'
                 }`}
               >
                 <Smile className="w-3.5 h-3.5 text-green-500" />
@@ -132,8 +132,8 @@ export const CreditCopywriterModal: React.FC<CreditCopywriterModalProps> = ({
                 onClick={() => setTone('professional')}
                 className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-all ${
                   tone === 'professional'
-                    ? 'bg-white text-[#22c55e] shadow-sm border border-gray-200'
-                    : 'text-gray-500 hover:text-gray-900'
+                    ? 'bg-[var(--c-white)] text-[#22c55e] shadow-sm border border-[var(--c-border)]'
+                    : 'text-[var(--c-muted)] hover:text-[var(--c-text)]'
                 }`}
               >
                 <Briefcase className="w-3.5 h-3.5 text-blue-500" />
@@ -145,8 +145,8 @@ export const CreditCopywriterModal: React.FC<CreditCopywriterModalProps> = ({
                 onClick={() => setTone('urgent')}
                 className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-all ${
                   tone === 'urgent'
-                    ? 'bg-white text-rose-600 shadow-sm border border-gray-200'
-                    : 'text-gray-500 hover:text-gray-900'
+                    ? 'bg-[var(--c-white)] text-rose-600 shadow-sm border border-[var(--c-border)]'
+                    : 'text-[var(--c-muted)] hover:text-[var(--c-text)]'
                 }`}
               >
                 <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
@@ -157,7 +157,7 @@ export const CreditCopywriterModal: React.FC<CreditCopywriterModalProps> = ({
 
           {/* Message Preview Container */}
           <div>
-            <span className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
+            <span className="block text-xs font-bold text-[var(--c-muted)] uppercase tracking-widest mb-2">
               Message Preview
             </span>
             <div className="relative">
@@ -165,12 +165,12 @@ export const CreditCopywriterModal: React.FC<CreditCopywriterModalProps> = ({
                 readOnly
                 value={generatedMessage}
                 rows={6}
-                className="w-full p-4 pr-12 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:outline-none text-gray-700 leading-relaxed whitespace-pre-wrap select-all font-medium"
+                className="w-full p-4 pr-12 text-xs bg-[var(--c-light)] border border-[var(--c-border)] rounded-lg focus:outline-none text-[var(--c-text)] leading-relaxed whitespace-pre-wrap select-all font-medium"
               />
               <button
                 type="button"
                 onClick={handleCopyText}
-                className="absolute top-3 right-3 p-2 bg-white hover:bg-gray-150 border border-gray-200 text-gray-400 hover:text-gray-700 rounded-lg transition-colors cursor-pointer"
+                className="absolute top-3 right-3 p-2 bg-[var(--c-white)] hover:bg-[var(--c-light)] border border-[var(--c-border)] text-[var(--c-muted)] hover:text-[var(--c-text)] rounded-lg transition-colors cursor-pointer"
                 title="Copy Message Text"
               >
                 {copied ? (
@@ -187,7 +187,7 @@ export const CreditCopywriterModal: React.FC<CreditCopywriterModalProps> = ({
             <button
               type="button"
               onClick={handleWhatsAppSend}
-              className="flex items-center justify-center gap-2 py-2.5 px-4 bg-[#22c55e] hover:bg-[#16a34a] text-white text-xs font-bold rounded-lg transition-all cursor-pointer shadow-md shadow-green-50"
+              className="flex items-center justify-center gap-2 py-2.5 px-4 bg-[#22c55e] hover:bg-[#16a34a] text-white text-xs font-bold rounded-lg transition-all cursor-pointer shadow-md shadow-green-500/10"
             >
               <MessageSquare className="w-4 h-4" />
               Send via WhatsApp
@@ -196,7 +196,7 @@ export const CreditCopywriterModal: React.FC<CreditCopywriterModalProps> = ({
             <button
               type="button"
               onClick={handleCopyText}
-              className="flex items-center justify-center gap-2 py-2.5 px-4 border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold rounded-lg transition-all cursor-pointer"
+              className="flex items-center justify-center gap-2 py-2.5 px-4 border border-[var(--c-border)] bg-[var(--c-white)] hover:bg-[var(--c-light)] text-[var(--c-text)] text-xs font-bold rounded-lg transition-all cursor-pointer"
             >
               {copied ? (
                 <>
@@ -205,7 +205,7 @@ export const CreditCopywriterModal: React.FC<CreditCopywriterModalProps> = ({
                 </>
               ) : (
                 <>
-                  <Copy className="w-4 h-4 text-gray-400" />
+                  <Copy className="w-4 h-4 text-[var(--c-muted)]" />
                   Copy Message text
                 </>
               )}

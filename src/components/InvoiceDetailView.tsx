@@ -117,12 +117,12 @@ export const InvoiceDetailView: React.FC<InvoiceDetailViewProps> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 font-sans text-gray-800">
+    <div className="max-w-4xl mx-auto px-4 py-8 font-sans text-[var(--c-text)]">
       {/* Back button */}
       {onBack && (
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-gray-900 mb-6 group cursor-pointer transition-colors"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--c-muted)] hover:text-[var(--c-text)] mb-6 group cursor-pointer transition-colors"
         >
           <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
           Back to invoices
@@ -130,13 +130,13 @@ export const InvoiceDetailView: React.FC<InvoiceDetailViewProps> = ({
       )}
 
       {/* Main card design */}
-      <div className="bg-white border border-gray-150 rounded-3xl overflow-hidden shadow-sm">
+      <div className="bg-[var(--c-white)] border border-[var(--c-border)] rounded-2xl overflow-hidden shadow-sm">
         {/* Header Block: Charcoal Gray */}
         <div className="bg-gray-800 text-white px-8 py-8 relative">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <Briefcase className="w-5 h-5 text-green-400" />
+                <Briefcase className="w-5 h-5 text-[#22c55e]" />
                 <span className="text-xs font-bold uppercase tracking-widest text-gray-400">{shop.name}</span>
               </div>
               <h2 className="text-2xl font-extrabold tracking-tight mt-1 text-white">
@@ -199,32 +199,32 @@ export const InvoiceDetailView: React.FC<InvoiceDetailViewProps> = ({
 
         {/* Invoice Body Content */}
         <div className="p-8">
-          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Line Items</h3>
+          <h3 className="text-sm font-bold text-[var(--c-muted)] uppercase tracking-widest mb-4">Line Items</h3>
           
           {/* Tailwind HTML Table */}
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <tr className="border-b border-[var(--c-border)] text-xs font-bold text-[var(--c-muted)] uppercase tracking-wider">
                   <th className="py-3 pr-4">Item Description</th>
                   <th className="py-3 px-4 text-center">Qty</th>
                   <th className="py-3 px-4 text-right">Unit Price</th>
                   <th className="py-3 pl-4 text-right">Total Price</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50 text-sm">
+              <tbody className="divide-y divide-[var(--c-border)] text-sm">
                 {invoiceItems.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50/50">
-                    <td className="py-4 pr-4 font-bold text-gray-900">
+                  <tr key={item.id} className="hover:bg-[var(--c-light)]/50">
+                    <td className="py-4 pr-4 font-bold text-[var(--c-text)]">
                       {item.product?.item_name || 'General Inventory Item'}
                     </td>
-                    <td className="py-4 px-4 text-center text-gray-600 font-semibold">
+                    <td className="py-4 px-4 text-center text-[var(--c-text)] font-semibold">
                       {item.quantity}
                     </td>
-                    <td className="py-4 px-4 text-right text-gray-600 font-medium">
+                    <td className="py-4 px-4 text-right text-[var(--c-muted)] font-medium">
                       {shop.base_currency} {Number(item.unit_price).toFixed(2)}
                     </td>
-                    <td className="py-4 pl-4 text-right font-bold text-gray-900">
+                    <td className="py-4 pl-4 text-right font-bold text-[var(--c-text)]">
                       {shop.base_currency} {(item.quantity * Number(item.unit_price)).toFixed(2)}
                     </td>
                   </tr>
@@ -234,37 +234,37 @@ export const InvoiceDetailView: React.FC<InvoiceDetailViewProps> = ({
           </div>
 
           {/* Bottom summaries */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8 pt-8 border-t border-gray-100">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8 pt-8 border-t border-[var(--c-border)]">
             {/* Notes Section */}
             <div>
               {invoice.extra_notes ? (
-                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                  <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                <div className="p-4 bg-[var(--c-light)] rounded-xl border border-[var(--c-border)]">
+                  <span className="block text-[10px] font-bold text-[var(--c-muted)] uppercase tracking-wider mb-1.5 flex items-center gap-1">
                     <FileText className="w-3.5 h-3.5" />
                     Internal Notes (Private)
                   </span>
-                  <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">{invoice.extra_notes}</p>
+                  <p className="text-xs text-[var(--c-text)] leading-relaxed whitespace-pre-wrap">{invoice.extra_notes}</p>
                 </div>
               ) : (
-                <p className="text-xs text-gray-400 italic">No internal remarks left on this register.</p>
+                <p className="text-xs text-[var(--c-muted)] italic">No internal remarks left on this register.</p>
               )}
             </div>
 
             {/* Calculations Breakdown */}
             <div className="space-y-3 text-sm">
-              <div className="flex justify-between text-gray-500">
+              <div className="flex justify-between text-[var(--c-muted)]">
                 <span>Subtotal</span>
-                <span className="font-bold text-gray-900">
+                <span className="font-bold text-[var(--c-text)]">
                   {shop.base_currency} {Number(invoice.total_amount).toFixed(2)}
                 </span>
               </div>
-              <div className="flex justify-between text-gray-500">
+              <div className="flex justify-between text-[var(--c-muted)]">
                 <span>Tax / V.A.T</span>
-                <span className="font-medium text-gray-900">0.00%</span>
+                <span className="font-medium text-[var(--c-text)]">0.00%</span>
               </div>
-              <div className="flex justify-between text-base font-extrabold text-gray-900 pt-3 border-t border-gray-100">
+              <div className="flex justify-between text-base font-extrabold text-[var(--c-text)] pt-3 border-t border-[var(--c-border)]">
                 <span>Total Amount Due</span>
-                <span className="text-green-600">
+                <span className="text-[#22c55e]">
                   {shop.base_currency} {Number(invoice.total_amount).toFixed(2)}
                 </span>
               </div>
@@ -275,7 +275,7 @@ export const InvoiceDetailView: React.FC<InvoiceDetailViewProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-10">
             <button
               onClick={handleWhatsAppShare}
-              className="flex items-center justify-center gap-2 py-3.5 px-6 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-xl transition-all cursor-pointer shadow-md shadow-green-50"
+              className="flex items-center justify-center gap-2 py-3.5 px-6 bg-[#22c55e] hover:bg-[#16a34a] text-white text-sm font-bold rounded-lg transition-all cursor-pointer shadow-md shadow-green-500/10"
             >
               <Share2 className="w-4 h-4" />
               Share via WhatsApp
@@ -283,7 +283,7 @@ export const InvoiceDetailView: React.FC<InvoiceDetailViewProps> = ({
 
             <button
               onClick={handleCopyText}
-              className="flex items-center justify-center gap-2 py-3.5 px-6 border border-gray-250 hover:bg-gray-50 text-gray-700 text-sm font-bold rounded-xl transition-all cursor-pointer"
+              className="flex items-center justify-center gap-2 py-3.5 px-6 border border-[var(--c-border)] bg-[var(--c-white)] hover:bg-[var(--c-light)] text-[var(--c-text)] text-sm font-bold rounded-lg transition-all cursor-pointer"
             >
               {copied ? (
                 <>
@@ -300,7 +300,7 @@ export const InvoiceDetailView: React.FC<InvoiceDetailViewProps> = ({
           </div>
 
           {/* Virality Footnote */}
-          <div className="mt-8 pt-6 border-t border-gray-100 text-center text-xs text-gray-400 font-medium italic">
+          <div className="mt-8 pt-6 border-t border-[var(--c-border)] text-center text-xs text-[var(--c-muted)] font-medium italic">
             Generated via Receiva — Track your shop sales & profits for free.
           </div>
         </div>

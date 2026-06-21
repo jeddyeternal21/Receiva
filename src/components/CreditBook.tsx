@@ -203,25 +203,25 @@ export const CreditBook: React.FC<CreditBookProps> = ({
   }, [invoices]);
 
   return (
-    <div className="max-w-6xl mx-auto font-sans text-gray-900">
+    <div className="max-w-6xl mx-auto font-sans text-[var(--c-text)]">
       {/* Title Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-gray-100 pb-4 mb-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-[var(--c-border)] pb-4 mb-6">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 flex items-center gap-2">
+          <h1 className="text-3xl font-extrabold tracking-tight text-[var(--c-text)] flex items-center gap-2">
             <Coins className="w-8 h-8 text-[#22c55e]" />
             Credit Book
           </h1>
-          <p className="text-gray-500 mt-1 text-sm">Track customer balances, evaluate credit due dates, and dispatch reminders.</p>
+          <p className="text-[var(--c-muted)] mt-1 text-sm">Track customer balances, evaluate credit due dates, and dispatch reminders.</p>
         </div>
 
         {/* Global Debt Summary Box */}
-        <div className="mt-4 md:mt-0 p-4 bg-white border border-gray-100 rounded-2xl flex items-center gap-3 shadow-sm">
+        <div className="mt-4 md:mt-0 p-4 bg-[var(--c-white)] border border-[var(--c-border)] rounded-2xl flex items-center gap-3 shadow-sm">
           <div className="p-2.5 bg-[#22c55e] text-white rounded-lg">
             <Coins className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Active Debt</span>
-            <h4 className="text-xl font-black text-gray-900 mt-0.5">{baseCurrency} {stats.totalDebt.toFixed(2)}</h4>
+            <span className="text-[10px] font-bold text-[var(--c-muted)] uppercase tracking-widest">Total Active Debt</span>
+            <h4 className="text-xl font-black text-[var(--c-text)] mt-0.5">{baseCurrency} {stats.totalDebt.toFixed(2)}</h4>
           </div>
         </div>
       </div>
@@ -229,18 +229,18 @@ export const CreditBook: React.FC<CreditBookProps> = ({
       {/* Tabs & Search controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         {/* Navigation Tabs */}
-        <div className="flex p-1 bg-gray-100 rounded-lg space-x-1 self-start">
+        <div className="flex p-1 bg-[var(--c-light)] rounded-lg space-x-1 self-start">
           <button
             onClick={() => setActiveTab('all')}
             className={`flex items-center gap-2 py-2 px-4 text-xs font-bold rounded-lg transition-all cursor-pointer ${
               activeTab === 'all'
-                ? 'bg-white text-[#22c55e] shadow-sm border border-gray-100'
-                : 'text-gray-500 hover:text-gray-900'
+                ? 'bg-[var(--c-white)] text-[#22c55e] shadow-sm border border-[var(--c-border)]'
+                : 'text-[var(--c-muted)] hover:text-[var(--c-text)]'
             }`}
           >
             <Users className="w-3.5 h-3.5" />
             All Debtors
-            <span className={`px-1.5 py-0.5 rounded-full text-[9px] ${activeTab === 'all' ? 'bg-green-100 text-[#22c55e]' : 'bg-gray-200 text-gray-600'}`}>
+            <span className={`px-1.5 py-0.5 rounded-full text-[9px] ${activeTab === 'all' ? 'bg-green-500/10 text-[#22c55e]' : 'bg-[var(--c-light)] text-[var(--c-muted)]'}`}>
               {stats.debtors}
             </span>
           </button>
@@ -249,13 +249,13 @@ export const CreditBook: React.FC<CreditBookProps> = ({
             onClick={() => setActiveTab('overdue')}
             className={`flex items-center gap-2 py-2 px-4 text-xs font-bold rounded-lg transition-all cursor-pointer ${
               activeTab === 'overdue'
-                ? 'bg-white text-[#22c55e] shadow-sm border border-gray-100'
-                : 'text-gray-500 hover:text-gray-900'
+                ? 'bg-[var(--c-white)] text-[#22c55e] shadow-sm border border-[var(--c-border)]'
+                : 'text-[var(--c-muted)] hover:text-[var(--c-text)]'
             }`}
           >
             <AlertTriangle className="w-3.5 h-3.5" />
             Overdue balances
-            <span className={`px-1.5 py-0.5 rounded-full text-[9px] ${activeTab === 'overdue' ? 'bg-red-100 text-rose-600' : 'bg-gray-200 text-gray-600'}`}>
+            <span className={`px-1.5 py-0.5 rounded-full text-[9px] ${activeTab === 'overdue' ? 'bg-rose-500/10 text-rose-500' : 'bg-[var(--c-light)] text-[var(--c-muted)]'}`}>
               {stats.overdue}
             </span>
           </button>
@@ -264,13 +264,13 @@ export const CreditBook: React.FC<CreditBookProps> = ({
             onClick={() => setActiveTab('settled')}
             className={`flex items-center gap-2 py-2 px-4 text-xs font-bold rounded-lg transition-all cursor-pointer ${
               activeTab === 'settled'
-                ? 'bg-white text-[#22c55e] shadow-sm border border-gray-100'
-                : 'text-gray-500 hover:text-gray-900'
+                ? 'bg-[var(--c-white)] text-[#22c55e] shadow-sm border border-[var(--c-border)]'
+                : 'text-[var(--c-muted)] hover:text-[var(--c-text)]'
             }`}
           >
             <History className="w-3.5 h-3.5" />
             Settled history
-            <span className={`px-1.5 py-0.5 rounded-full text-[9px] ${activeTab === 'settled' ? 'bg-green-100 text-[#22c55e]' : 'bg-gray-200 text-gray-600'}`}>
+            <span className={`px-1.5 py-0.5 rounded-full text-[9px] ${activeTab === 'settled' ? 'bg-green-500/10 text-[#22c55e]' : 'bg-[var(--c-light)] text-[var(--c-muted)]'}`}>
               {stats.settled}
             </span>
           </button>
@@ -278,24 +278,24 @@ export const CreditBook: React.FC<CreditBookProps> = ({
 
         {/* Search Bar */}
         <div className="relative w-full md:w-72">
-          <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[var(--c-muted)] absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Search by client or phone..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all text-xs"
+            className="w-full pl-10 pr-4 py-2 bg-[var(--c-white)] text-[var(--c-text)] rounded-lg border border-[var(--c-border)] focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all text-xs"
           />
         </div>
       </div>
 
       {/* Credit Ledger Container */}
-      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-[var(--c-white)] border border-[var(--c-border)] rounded-2xl overflow-hidden shadow-sm">
         {filteredInvoices.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-gray-50/50 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                <tr className="bg-[var(--c-light)]/50 border-b border-[var(--c-border)] text-[10px] font-bold text-[var(--c-muted)] uppercase tracking-wider">
                   <th className="py-4 px-6">Customer Details</th>
                   <th className="py-4 px-6">Invoice Reference</th>
                   <th className="py-4 px-6">Billing & Promise Dates</th>
@@ -303,7 +303,7 @@ export const CreditBook: React.FC<CreditBookProps> = ({
                   <th className="py-4 px-6 text-center">Follow-Up Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 text-xs">
+              <tbody className="divide-y divide-[var(--c-border)] text-xs">
                 {filteredInvoices.map((inv) => {
                   const daysOverdue = getDaysOverdue(inv.due_date);
                   const isOverdue = inv.payment_status === 'credit' && daysOverdue > 0;
@@ -314,31 +314,31 @@ export const CreditBook: React.FC<CreditBookProps> = ({
                   return (
                     <tr 
                       key={inv.id} 
-                      className={`hover:bg-gray-50/50 transition-colors ${
+                      className={`hover:bg-[var(--c-light)]/50 transition-colors ${
                         onSelectInvoice ? 'cursor-pointer' : ''
                       }`}
                       onClick={() => onSelectInvoice && onSelectInvoice(inv)}
                     >
                       {/* Customer Details */}
                       <td className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
-                        <span className="block font-bold text-gray-900 text-sm">{inv.customer_name}</span>
+                        <span className="block font-bold text-[var(--c-text)] text-sm">{inv.customer_name}</span>
                         {inv.customer_phone ? (
-                          <span className="flex items-center gap-1 text-gray-400 mt-1">
+                          <span className="flex items-center gap-1 text-[var(--c-muted)] mt-1">
                             <Phone className="w-3.5 h-3.5" />
                             {inv.customer_phone}
                           </span>
                         ) : (
-                          <span className="text-gray-300 italic mt-1 block">No number provided</span>
+                          <span className="text-[var(--c-muted)] italic mt-1 block">No number provided</span>
                         )}
                       </td>
 
                       {/* Invoice Reference */}
                       <td className="py-4 px-6">
-                        <span className="font-mono font-bold text-gray-700 bg-gray-100 px-2 py-1 rounded">
+                        <span className="font-mono font-bold text-[var(--c-text)] bg-[var(--c-light)] px-2 py-1 rounded">
                           #{inv.id.substring(0, 8).toUpperCase()}
                         </span>
                         {inv.extra_notes && (
-                          <span className="block text-[10px] text-gray-400 mt-1.5 truncate max-w-xs" title={inv.extra_notes}>
+                          <span className="block text-[10px] text-[var(--c-muted)] mt-1.5 truncate max-w-xs" title={inv.extra_notes}>
                             "{inv.extra_notes}"
                           </span>
                         )}
@@ -347,12 +347,12 @@ export const CreditBook: React.FC<CreditBookProps> = ({
                       {/* Dates details */}
                       <td className="py-4 px-6">
                         <div>
-                          <span className="text-gray-400">Issued:</span>
-                          <span className="font-medium text-gray-700 ml-1">{formattedIssued}</span>
+                          <span className="text-[var(--c-muted)]">Issued:</span>
+                          <span className="font-medium text-[var(--c-text)] ml-1">{formattedIssued}</span>
                         </div>
                         <div className="mt-1 flex items-center gap-1">
-                          <span className="text-gray-400">Due:</span>
-                          <span className={`font-semibold ml-1 ${isOverdue ? 'text-rose-600' : 'text-gray-700'}`}>
+                          <span className="text-[var(--c-muted)]">Due:</span>
+                          <span className={`font-semibold ml-1 ${isOverdue ? 'text-rose-500' : 'text-[var(--c-text)]'}`}>
                             {formattedDue}
                           </span>
                         </div>
@@ -362,10 +362,10 @@ export const CreditBook: React.FC<CreditBookProps> = ({
                       <td className="py-4 px-6 text-right">
                         <span className={`inline-block font-extrabold text-sm px-3 py-1.5 rounded-xl ${
                           isPaid
-                            ? 'text-green-700 bg-green-50 border border-green-100'
+                            ? 'text-green-500 bg-green-500/10 border border-green-500/20'
                             : isOverdue
-                              ? 'text-rose-700 bg-rose-50 border border-rose-100 animate-pulse'
-                              : 'text-amber-700 bg-amber-50 border border-amber-100'
+                              ? 'text-rose-500 bg-rose-500/10 border border-rose-500/20 animate-pulse'
+                              : 'text-amber-500 bg-amber-500/10 border border-amber-500/20'
                         }`}>
                           {baseCurrency} {Number(inv.total_amount).toFixed(2)}
                         </span>
@@ -390,7 +390,7 @@ export const CreditBook: React.FC<CreditBookProps> = ({
                           <div className="flex items-center justify-center gap-2">
                             <button
                               onClick={() => setCopywriterInvoice(inv)}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 hover:bg-green-100 text-[#22c55e] border border-green-200 text-xs font-bold rounded-lg cursor-pointer transition-colors"
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-500/10 hover:bg-green-500/20 text-[#22c55e] border border-green-500/20 text-xs font-bold rounded-lg cursor-pointer transition-colors"
                               title="Compose Tone Reminder Message"
                             >
                               <MessageSquare className="w-3.5 h-3.5" />
@@ -399,7 +399,7 @@ export const CreditBook: React.FC<CreditBookProps> = ({
 
                             <button
                               onClick={() => handleCopyReminder(inv)}
-                              className="inline-flex items-center gap-1 px-3 py-2 border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs font-bold rounded-lg cursor-pointer transition-colors"
+                              className="inline-flex items-center gap-1 px-3 py-2 bg-[var(--c-white)] hover:bg-[var(--c-light)] text-[var(--c-text)] border border-[var(--c-border)] text-xs font-bold rounded-lg cursor-pointer transition-colors"
                               title="Copy Reminder"
                             >
                               {copiedInvoiceId === inv.id ? (
@@ -416,7 +416,7 @@ export const CreditBook: React.FC<CreditBookProps> = ({
                             </button>
                           </div>
                         ) : (
-                          <span className="text-gray-400 italic text-[10px]">No action required</span>
+                          <span className="text-[var(--c-muted)] italic text-[10px]">No action required</span>
                         )}
                       </td>
                     </tr>
@@ -427,9 +427,9 @@ export const CreditBook: React.FC<CreditBookProps> = ({
           </div>
         ) : (
           <div className="py-16 text-center space-y-3">
-            <Users className="w-12 h-12 text-gray-300 mx-auto" />
-            <h3 className="font-bold text-gray-600 text-base">No Records Found</h3>
-            <p className="text-xs text-gray-400 max-w-sm mx-auto">There are no transactions in this category matching your search terms.</p>
+            <Users className="w-12 h-12 text-[var(--c-muted)] mx-auto" />
+            <h3 className="font-bold text-[var(--c-text)] text-base">No Records Found</h3>
+            <p className="text-xs text-[var(--c-muted)] max-w-sm mx-auto">There are no transactions in this category matching your search terms.</p>
           </div>
         )}
       </div>

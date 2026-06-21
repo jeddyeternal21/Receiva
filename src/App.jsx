@@ -1567,13 +1567,13 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
         >
           <div
             style={{
-              background: '#FFFFFF',
-              border: '1px solid #E2E8F0',
+              background: 'var(--c-white)',
+              border: '1px solid var(--c-border)',
               borderRadius: '16px',
               width: '90%',
               maxWidth: '480px',
               padding: '24px',
-              color: '#1E293B',
+              color: 'var(--c-text)',
               boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
               position: 'relative',
               display: 'flex',
@@ -1593,17 +1593,17 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
                 right: '16px',
                 background: 'transparent',
                 border: 'none',
-                color: '#64748B',
+                color: 'var(--c-muted)',
                 cursor: 'pointer',
               }}
             >
               <X size={20} />
             </button>
 
-            <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px', color: '#0F172A' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px', color: 'var(--c-text)' }}>
               Voice Dictation Terminal
             </h3>
-            <p style={{ fontSize: '12px', color: '#475569', marginBottom: '24px' }}>
+            <p style={{ fontSize: '12px', color: 'var(--c-muted)', marginBottom: '24px' }}>
               Speak naturally. The speech engine will transcribe your voice in real time.
             </p>
 
@@ -1642,7 +1642,7 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
             </div>
 
             {voiceError && (
-              <div style={{ color: '#EF4444', fontSize: '12px', background: 'rgba(239, 68, 68, 0.1)', padding: '10px 14px', borderRadius: '8px', width: '100%', marginBottom: '16px' }}>
+              <div style={{ color: '#EF4444', fontSize: '12px', background: 'rgba(239, 68, 68, 0.15)', padding: '10px 14px', borderRadius: '8px', width: '100%', marginBottom: '16px' }}>
                 {voiceError}
               </div>
             )}
@@ -1651,8 +1651,8 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
             <div
               style={{
                 width: '100%',
-                background: '#F8FAFC',
-                border: '1px solid #E2E8F0',
+                background: 'var(--c-light)',
+                border: '1px solid var(--c-border)',
                 borderRadius: '8px',
                 padding: '16px',
                 minHeight: '120px',
@@ -1661,17 +1661,17 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
                 textAlign: 'left',
                 fontSize: '14px',
                 lineHeight: '1.6',
-                color: '#334155',
+                color: 'var(--c-text)',
                 marginBottom: '20px',
               }}
             >
               {transcript || interimTranscript ? (
                 <>
-                  <span style={{ color: '#1E293B' }}>{transcript}</span>
-                  <span style={{ color: '#64748B', fontStyle: 'italic' }}>{interimTranscript}</span>
+                  <span style={{ color: 'var(--c-text)' }}>{transcript}</span>
+                  <span style={{ color: 'var(--c-muted)', fontStyle: 'italic' }}>{interimTranscript}</span>
                 </>
               ) : (
-                <span style={{ color: '#94A3B8', fontStyle: 'italic' }}>Waiting for speech...</span>
+                <span style={{ color: 'var(--c-muted)', fontStyle: 'italic' }}>Waiting for speech...</span>
               )}
             </div>
 
@@ -1686,9 +1686,9 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
                   flex: 1,
                   padding: '12px',
                   borderRadius: '8px',
-                  background: '#E2E8F0',
-                  border: 'none',
-                  color: '#334155',
+                  background: 'var(--c-light)',
+                  border: '1px solid var(--c-border)',
+                  color: 'var(--c-text)',
                   fontSize: '13px',
                   fontWeight: 600,
                   cursor: 'pointer',

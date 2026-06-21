@@ -130,36 +130,36 @@ export const ConsolidatedDashboard: React.FC<ConsolidatedDashboardProps> = ({
   }, [branchesData]);
 
   return (
-    <div className="max-w-6xl mx-auto font-sans text-gray-900">
+    <div className="max-w-6xl mx-auto font-sans text-[var(--c-text)]">
       {/* Upper header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-gray-100 pb-4 mb-6 gap-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-[var(--c-border)] pb-4 mb-6 gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-gray-900 text-white rounded-lg">
+            <div className="p-2 bg-[var(--c-light)] border border-[var(--c-border)] rounded-lg">
               <Building2 className="w-6 h-6 text-[#22c55e]" />
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">Enterprise Console</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight text-[var(--c-text)]">Enterprise Console</h1>
           </div>
-          <p className="text-gray-500 mt-1 text-sm">Multi-branch financial metrics, inventory deficits, and attendant scale analytics.</p>
+          <p className="text-[var(--c-muted)] mt-1 text-sm">Multi-branch financial metrics, inventory deficits, and attendant scale analytics.</p>
         </div>
 
         {/* 1. Global Filter Header Dropdown */}
         <div className="flex items-center gap-3">
-          <label className="text-xs font-bold text-gray-400 uppercase tracking-wider hidden sm:block">
+          <label className="text-xs font-bold text-[var(--c-muted)] uppercase tracking-wider hidden sm:block">
             Filter Location:
           </label>
           <div className="relative">
             <select
               value={selectedBranchId}
               onChange={(e) => setSelectedBranchId(e.target.value)}
-              className="appearance-none bg-white border border-gray-200 px-4 py-2 pr-10 rounded-lg text-xs font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all cursor-pointer shadow-sm"
+              className="appearance-none bg-[var(--c-white)] border border-[var(--c-border)] px-4 py-2 pr-10 rounded-lg text-xs font-bold text-[var(--c-text)] focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all cursor-pointer shadow-sm"
             >
               <option value="all">All Branches (Consolidated)</option>
               {branchOptions.map(opt => (
                 <option key={opt.id} value={opt.id}>{opt.name}</option>
               ))}
             </select>
-            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-[var(--c-muted)]">
               <Building2 className="w-3.5 h-3.5" />
             </div>
           </div>
@@ -168,28 +168,28 @@ export const ConsolidatedDashboard: React.FC<ConsolidatedDashboardProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
         {/* Card 1: Gross Revenue */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4">
+        <div className="bg-[var(--c-white)] border border-[var(--c-border)] rounded-2xl p-6 shadow-sm space-y-4">
           <div className="flex justify-between items-center">
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Gross Revenue</span>
-            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[9px] font-bold bg-green-50 text-green-700 border border-green-200">
+            <span className="text-[10px] font-bold text-[var(--c-muted)] uppercase tracking-widest">Gross Revenue</span>
+            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[9px] font-bold bg-green-500/10 text-green-500 border border-green-500/20">
               <TrendingUp className="w-3 h-3" />
               +14.2% today
             </span>
           </div>
           <div>
-            <h3 className="text-2xl font-black text-gray-900">
+            <h3 className="text-2xl font-black text-[var(--c-text)]">
               {baseCurrency} {metrics.grossRev.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </h3>
-            <p className="text-[10px] text-gray-400 mt-1">Total revenue collected from client invoices.</p>
+            <p className="text-[10px] text-[var(--c-muted)] mt-1">Total revenue collected from client invoices.</p>
           </div>
         </div>
 
         {/* Card 2: Total Net Profit */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4">
+        <div className="bg-[var(--c-white)] border border-[var(--c-border)] rounded-2xl p-6 shadow-sm space-y-4">
           <div className="flex justify-between items-center">
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Net Profit Margin</span>
-            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-green-50 text-green-700 border border-green-200">
-              <Percent className="w-3 h-3 text-green-600" />
+            <span className="text-[10px] font-bold text-[var(--c-muted)] uppercase tracking-widest">Net Profit Margin</span>
+            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-green-500/10 text-green-500 border border-green-500/20">
+              <Percent className="w-3 h-3 text-[#22c55e]" />
               {metrics.profitMargin.toFixed(1)}% margin
             </span>
           </div>
@@ -197,62 +197,62 @@ export const ConsolidatedDashboard: React.FC<ConsolidatedDashboardProps> = ({
             <h3 className="text-2xl font-black text-[#22c55e]">
               {baseCurrency} {metrics.netProfit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </h3>
-            <p className="text-[10px] text-gray-400 mt-1">Derived from retail minus wholesale pricing.</p>
+            <p className="text-[10px] text-[var(--c-muted)] mt-1">Derived from retail minus wholesale pricing.</p>
           </div>
         </div>
 
         {/* Card 3: Outstanding Credit */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4">
+        <div className="bg-[var(--c-white)] border border-[var(--c-border)] rounded-2xl p-6 shadow-sm space-y-4">
           <div className="flex justify-between items-center">
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Credit Receivables</span>
+            <span className="text-[10px] font-bold text-[var(--c-muted)] uppercase tracking-widest">Credit Receivables</span>
             <AlertTriangle className="w-4 h-4 text-amber-500" />
           </div>
           <div>
-            <h3 className="text-2xl font-black text-amber-600">
+            <h3 className="text-2xl font-black text-amber-500">
               {baseCurrency} {metrics.creditOwed.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </h3>
-            <p className="text-[10px] text-gray-400 mt-1">Outstanding debts logged under client profiles.</p>
+            <p className="text-[10px] text-[var(--c-muted)] mt-1">Outstanding debts logged under client profiles.</p>
           </div>
         </div>
 
         {/* Card 4: Low Stock Alert Count */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4">
+        <div className="bg-[var(--c-white)] border border-[var(--c-border)] rounded-2xl p-6 shadow-sm space-y-4">
           <div className="flex justify-between items-center">
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Low Stock Items</span>
+            <span className="text-[10px] font-bold text-[var(--c-muted)] uppercase tracking-widest">Low Stock Items</span>
             <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-extrabold ${
-              metrics.lowStock > 0 ? 'bg-rose-100 text-rose-800' : 'bg-gray-100 text-gray-500'
+              metrics.lowStock > 0 ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' : 'bg-[var(--c-light)] text-[var(--c-muted)] border border-[var(--c-border)]'
             }`}>
               {metrics.lowStock}
             </span>
           </div>
           <div>
-            <h3 className="text-2xl font-black text-gray-900">{metrics.lowStock} Alerts</h3>
-            <p className="text-[10px] text-gray-400 mt-1">Products below safety thresholds across branches.</p>
+            <h3 className="text-2xl font-black text-[var(--c-text)]">{metrics.lowStock} Alerts</h3>
+            <p className="text-[10px] text-[var(--c-muted)] mt-1">Products below safety thresholds across branches.</p>
           </div>
         </div>
       </div>
 
       {/* 3. Side-by-Side Performance Comparison Table */}
-      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-[var(--c-white)] border border-[var(--c-border)] rounded-2xl overflow-hidden shadow-sm">
         {/* Table header controls */}
-        <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50/50">
+        <div className="p-6 border-b border-[var(--c-border)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[var(--c-light)]/50">
           <div>
-            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-gray-400" />
+            <h3 className="text-lg font-bold text-[var(--c-text)] flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-[var(--c-muted)]" />
               Branch Storefront Rankings
             </h3>
-            <p className="text-xs text-gray-500 mt-1">Detailed performance metrics sorted by branch net profitability.</p>
+            <p className="text-xs text-[var(--c-muted)] mt-1">Detailed performance metrics sorted by branch net profitability.</p>
           </div>
 
           {/* Quick search filter */}
           <div className="relative w-full sm:w-64">
-            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-[var(--c-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search branch location..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all"
+              className="w-full pl-9 pr-4 py-2 bg-[var(--c-white)] border border-[var(--c-border)] text-[var(--c-text)] rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#22c55e] focus:border-transparent transition-all"
             />
           </div>
         </div>
@@ -260,7 +260,7 @@ export const ConsolidatedDashboard: React.FC<ConsolidatedDashboardProps> = ({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+              <tr className="border-b border-[var(--c-border)] text-[10px] font-bold text-[var(--c-muted)] uppercase tracking-wider">
                 <th className="py-4 px-6">Branch storefront name</th>
                 <th className="py-4 px-6 text-center">Active Attendants</th>
                 <th className="py-4 px-6 text-right">Today's Sales Volume</th>
@@ -269,18 +269,18 @@ export const ConsolidatedDashboard: React.FC<ConsolidatedDashboardProps> = ({
                 <th className="py-4 px-6 text-center">Location City</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 text-xs text-gray-700">
+            <tbody className="divide-y divide-[var(--c-border)] text-xs text-[var(--c-text)]">
               {sortedBranches.map((br) => {
                 const isTopPerformer = br.id === topPerformerId;
                 
                 return (
-                  <tr key={br.id} className="hover:bg-gray-50/50 transition-colors">
+                  <tr key={br.id} className="hover:bg-[var(--c-light)]/50 transition-colors">
                     {/* Branch Name */}
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-gray-900 text-sm">{br.name}</span>
+                        <span className="font-bold text-[var(--c-text)] text-sm">{br.name}</span>
                         {isTopPerformer && (
-                          <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-green-50 text-green-800 border border-green-200">
+                          <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-green-500/10 text-green-500 border border-green-500/20">
                             <Sparkles className="w-2.5 h-2.5 text-[#22c55e] animate-spin" />
                             Top Performer
                           </span>
@@ -290,32 +290,32 @@ export const ConsolidatedDashboard: React.FC<ConsolidatedDashboardProps> = ({
 
                     {/* Active Attendants */}
                     <td className="py-4 px-6 text-center">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-50 border border-slate-100 text-slate-700 rounded-lg font-bold">
-                        <Users className="w-3.5 h-3.5 text-slate-400" />
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[var(--c-light)] border border-[var(--c-border)] text-[var(--c-text)] rounded-lg font-bold">
+                        <Users className="w-3.5 h-3.5 text-[var(--c-muted)]" />
                         {br.attendants_count} staff
                       </span>
                     </td>
 
                     {/* Today's Sales */}
-                    <td className="py-4 px-6 text-right font-semibold text-gray-900">
+                    <td className="py-4 px-6 text-right font-semibold text-[var(--c-text)]">
                       {baseCurrency} {br.gross_revenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </td>
 
                     {/* Outstanding Credit */}
-                    <td className="py-4 px-6 text-right font-medium text-rose-600">
+                    <td className="py-4 px-6 text-right font-medium text-rose-500">
                       {baseCurrency} {br.outstanding_credit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </td>
 
                     {/* Calculated Net Profit */}
                     <td className="py-4 px-6 text-right">
-                      <span className="font-extrabold text-green-700 bg-green-50 border border-green-100 px-2.5 py-1 rounded-lg">
+                      <span className="font-extrabold text-green-500 bg-green-500/10 border border-green-500/20 px-2.5 py-1 rounded-lg">
                         {baseCurrency} {br.net_profit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </span>
                     </td>
 
                     {/* City location */}
                     <td className="py-4 px-6 text-center">
-                      <span className="text-gray-400 font-bold uppercase tracking-wider text-[10px]">
+                      <span className="text-[var(--c-muted)] font-bold uppercase tracking-wider text-[10px]">
                         {br.city}
                       </span>
                     </td>
@@ -325,7 +325,7 @@ export const ConsolidatedDashboard: React.FC<ConsolidatedDashboardProps> = ({
 
               {sortedBranches.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-16 text-center text-gray-400 italic">
+                  <td colSpan={6} className="py-16 text-center text-[var(--c-muted)] italic">
                     No branch storefront data matches the search criteria.
                   </td>
                 </tr>
