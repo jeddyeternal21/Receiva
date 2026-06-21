@@ -15,7 +15,7 @@ import {
   MessageCircle, Gift, FileText, BarChart2, Shield, ChevronDown,
   Menu, LogOut, Upload, Clipboard, AlertTriangle, PartyPopper,
   HandCoins, ArrowUpFromLine, Cog, User, TrendingUp, TrendingDown,
-  Mic, MicOff
+  Mic, MicOff, ShoppingCart, BookOpen, FileBarChart
 } from "lucide-react";
 
 // ─── CONSTANTS ────────────────────────────────────────────────
@@ -161,6 +161,8 @@ const LI = {
   plus: Plus, share: Share2, check: Check, x: X, report: BarChart3,
   eye: Eye, momo: Clock, box: Package, lock: Lock, star: Star,
   edit: Pencil, trash: Trash2, user: User, settings: Cog,
+  sales: ShoppingCart, creditbook: BookOpen, invoices: FileText,
+  reports: FileBarChart,
 };
 function LIcon({ name, size=18, color, strokeWidth=1.8, style={} }) {
   const Comp = LI[name];
@@ -812,53 +814,33 @@ export default function App() {
   const isEnterprise = business?.plan === "enterprise" || isDevEmail(user?.email);
 
   const allNav = [
-    { key:"dashboard",    label:"Dashboard",   icon:"home"    },
-    { key:"wallets",      label:"Wallets",      icon:"wallet"  },
-    { key:"transactions", label:"Transactions", icon:"tx"      },
-    { key:"receipts",     label:"Receipts",     icon:"receipt" },
-    { key:"reports",      label:"Reports",      icon:"report"  },
-    { key:"products",     label:"Products",     icon:"box", children:[
-      { key:"product-list",    label:"Product List"    },
-      { key:"add-product",     label:"Add New Product" },
-      { key:"categories",      label:"Categories"      },
-    ]},
-    { key:"profile",      label:"Profile",      icon:"user"    },
-    ...(isEnterprise ? [
-      { key:"billing",      label:"Billing Desk", icon:"receipt" },
-      { key:"ledger",       label:"Credit Book",  icon:"wallet" },
-      { key:"intake",       label:"OCR Intake",   icon:"box" },
-      { key:"console",      label:"Enterprise",   icon:"report" },
-      { key:"terminal",     label:"AI Accountant",icon:"settings" }
-    ] : []),
-    { key:"settings",     label:"Settings",     icon:"settings" },
+    { key:"dashboard",  label:"Dashboard",   icon:"home"      },
+    { key:"sales",      label:"Sales Desk",   icon:"sales"     },
+    { key:"invoices",   label:"Invoices",     icon:"invoices"  },
+    { key:"inventory",  label:"Inventory",    icon:"box"       },
+    { key:"creditbook", label:"Credit Book",  icon:"creditbook"},
+    { key:"reports",    label:"Reports",      icon:"reports"   },
+    { key:"settings",   label:"Settings",     icon:"settings"  },
   ];
 
-  const isProductPage = ["products","product-list","add-product","categories"].includes(page);
-
   const NavItem = ({ n, mobile=false, onNavigate }) => {
-    if (n.children) {
-      const childActive = n.children.some(c=>c.key===page);
-      return (
-        <div>
-          <div onClick={()=>setProductsExpanded(e=>!e)} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, padding: mobile?"14px 20px":"11px 20px", cursor:"pointer", fontSize:14, color: childActive ? C.text : C.muted, background: childActive ? C.navActiveBg : "transparent", borderLeft: mobile?"none":`2px solid ${childActive ? C.text : "transparent"}`, transition:"all 0.15s", fontWeight: childActive ? 500 : 400 }}>
-            <div style={{ display:"flex", alignItems:"center", gap:10 }}><LIcon name={n.icon} size={16}/>{n.label}</div>
-            <ChevronDown size={12} style={{ transition:"transform 0.2s", transform: productsExpanded?"rotate(180deg)":"rotate(0)" }}/>
-          </div>
-          {productsExpanded && (
-            <div style={{ background:"var(--c-light)", borderLeft: mobile?"none":"2px solid var(--c-border)", marginLeft: mobile?0:20 }}>
-              {n.children.map(c=>(
-                <div key={c.key} onClick={()=>{ onNavigate(c.key); }} style={{ padding: mobile?"12px 20px 12px 36px":"9px 20px 9px 28px", cursor:"pointer", fontSize:13, color: page===c.key ? C.text : C.muted, background: page===c.key ? C.navActiveBg :"transparent", fontWeight: page===c.key?500:400, transition:"all 0.15s" }}>
-                  {c.label}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      );
-    }
     const active = page===n.key;
     return (
-      <div onClick={()=>onNavigate(n.key)} style={{ display:"flex", alignItems:"center", gap:10, padding: mobile?"14px 20px":"11px 20px", cursor:"pointer", fontSize:14, color: active ? C.text : C.muted, background: active ? C.navActiveBg : "transparent", borderLeft: mobile?"none":`2px solid ${active ? C.text : "transparent"}`, transition:"all 0.15s", fontWeight: active ? 500 : 400 }}>
+      <div
+        onClick={()=>onNavigate(n.key)}
+        style={{
+          display:"flex", alignItems:"center", gap:11,
+          padding: mobile ? "14px 22px" : "12px 20px",
+          cursor:"pointer", fontSize:14,
+          color: active ? C.text : C.muted,
+          background: active ? C.navActiveBg : "transparent",
+          borderLeft: mobile ? "none" : `3px solid ${active ? "#10B981" : "transparent"}`,
+          transition:"all 0.15s",
+          fontWeight: active ? 600 : 400,
+          borderRadius: mobile ? 0 : "0 10px 10px 0",
+          margin: mobile ? 0 : "2px 10px 2px 0",
+        }}
+      >
         <LIcon name={n.icon} size={16}/>{n.label}
       </div>
     );
@@ -867,11 +849,8 @@ export default function App() {
   const navigateTo = (key) => { setPage(key); setMobileMenuOpen(false); };
 
   const currentLabel = () => {
-    for (const n of allNav) {
-      if (n.key===page) return n.label;
-      if (n.children) { const c=n.children.find(c=>c.key===page); if(c) return c.label; }
-    }
-    return "";
+    const found = allNav.find(n => n.key === page);
+    return found ? found.label : "";
   };
 
   return (
@@ -1062,25 +1041,7 @@ export default function App() {
               <div className="mobile-topbar-title" style={{ fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:18, color:C.text }}>{currentLabel()}</div>
             </div>
             <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-              {wallets.length > 0 && (
-                <div className="wallet-pills">
-                  {wallets.length === 1 ? (
-                    <WalletPill wallet={wallets[0]} active={activeWallet===wallets[0].id} onClick={()=>setActiveWallet(activeWallet===wallets[0].id?null:wallets[0].id)}/>
-                  ) : (
-                    <select
-                      value={activeWallet||"all"}
-                      onChange={e=>setActiveWallet(e.target.value==="all"?null:e.target.value)}
-                      style={{ padding:"7px 32px 7px 12px", borderRadius:20, border:`1.5px solid ${C.border}`, background:activeWallet?"var(--c-nav-active-bg)":"var(--c-light)", color:C.text, fontSize:12, fontWeight:500, cursor:"pointer", fontFamily:"'Poppins',sans-serif", outline:"none", appearance:"none", backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat:"no-repeat", backgroundPosition:"right 10px center" }}
-                    >
-                      <option value="all">All wallets</option>
-                      {wallets.map(w=>{
-                        const preset = WALLET_PRESETS.find(p=>p.id===w.presetId)||WALLET_PRESETS[0];
-                        return <option key={w.id} value={w.id}>{preset.label} — {w.name}</option>;
-                      })}
-                    </select>
-                  )}
-                </div>
-              )}
+
               <a href="https://wa.me/233205597508" target="_blank" rel="noreferrer" title="WhatsApp support" style={{ width:32, height:32, borderRadius:"50%", background:"#25D36618", border:"1.5px solid #25D36644", display:"flex", alignItems:"center", justifyContent:"center", textDecoration:"none" }}><MessageCircle size={15} color="#25D366" strokeWidth={1.8}/></a>
               <div style={{ width:32, height:32, borderRadius:"50%", background:"var(--c-nav-active-bg)", border:`1.5px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"center", color:C.text, fontSize:13, fontWeight:700 }}>
                 {isGuest ? <User size={14}/> : (user?.name?.[0]?.toUpperCase() || <User size={14}/>)}
@@ -1097,21 +1058,13 @@ export default function App() {
           <div className="content-pad" style={{ flex:1, padding:"24px 28px", overflowY:"auto" }}>
             {dataLoading && <div style={{ textAlign:"center", padding:"40px", color:C.muted, fontSize:14 }}>Loading your data...</div>}
             {dataError   && <div style={{ background:"#fef2f2", border:"1px solid #fca5a5", borderRadius:10, padding:"14px 18px", marginBottom:16, fontSize:13, color:"#b91c1c" }}>{dataError}</div>}
-             {page==="dashboard"    && <Dashboard transactions={txFiltered} income={income} expense={expense} balance={balance} wallets={wallets} activeWallet={activeWallet} business={business} user={user} onAdd={()=>setShowRecordPayment(true)} onReceipt={tryGenerateReceipt} onEdit={setShowEditTransaction} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount}/>}
-            {page==="wallets"      && <Wallets wallets={wallets} transactions={transactions} onAdd={()=>setShowAddWallet(true)} onSelect={setActiveWallet} activeWallet={activeWallet}/>}
-            {page==="transactions" && <Transactions transactions={txFiltered} wallets={wallets} onAdd={()=>setShowRecordPayment(true)} onReceipt={tryGenerateReceipt} onEdit={setShowEditTransaction}/>}
-            {page==="receipts"     && <Receipts transactions={txFiltered} wallets={wallets} business={business} onReceipt={tryGenerateReceipt} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount} voidedReceipts={voidedReceipts} deletedTransactions={deletedTransactions}/>}
-            {page==="reports"      && <Reports transactions={txFiltered} income={income} expense={expense} balance={balance} isPro={isPro} onUpgrade={()=>setShowUpgrade(true)} business={business} setBusiness={setBusiness} isGuest={isGuest} businessId={businessId}/>}
-            {(page==="products"||page==="product-list") && <ProductList products={products} categories={productCategories} onAdd={()=>navigateTo("add-product")} onEdit={p=>{ setEditingProduct(p); navigateTo("add-product"); }}/>}
-            {page==="add-product"  && <AddEditProduct product={editingProduct} categories={productCategories} onSave={p=>{ if(editingProduct){ setProducts(prev=>prev.map(x=>x.id===p.id?p:x)); } else { setProducts(prev=>[...prev,{...p,id:genId()}]); } setEditingProduct(null); navigateTo("product-list"); }} onCancel={()=>{ setEditingProduct(null); navigateTo("product-list"); }}/>}
-            {page==="categories"   && <ProductCategories categories={productCategories} products={products} onSave={setProductCategories}/>}
-            {page==="profile"      && <Profile user={user} business={business} setBusiness={setBusiness} isGuest={isGuest} businessId={businessId} onSignOut={handleSignOut}/>}
-            {page==="settings"     && <Settings user={user} business={business} setBusiness={setBusiness} isGuest={isGuest} businessId={businessId} transactions={transactions} darkMode={darkMode} setDarkMode={setDarkMode}/>}
-            {page==="billing"      && <InvoiceForm products={products} onSave={handleSaveInvoice} isEnterprise={isEnterprise} />}
-            {page==="ledger"       && <CreditBook invoices={invoices} shopName={business.name} />}
-            {page==="intake"       && <InvoiceScannerDropzone onConfirmIntake={handleConfirmIntake} supabaseUrl={import.meta.env.VITE_SUPABASE_URL} />}
-            {page==="console"      && <ConsolidatedDashboard invoices={invoices} products={products} />}
-            {page==="terminal"     && <AiAccountantTerminal shopName={business.name} supabaseUrl={import.meta.env.VITE_SUPABASE_URL} />}
+            {page==="dashboard" && <Dashboard transactions={txFiltered} income={income} expense={expense} balance={balance} wallets={wallets} activeWallet={activeWallet} business={business} user={user} onAdd={()=>setShowRecordPayment(true)} onReceipt={tryGenerateReceipt} onEdit={setShowEditTransaction} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount}/>}
+            {page==="sales" && <SalesDeskPage transactions={txFiltered} wallets={wallets} business={business} onAdd={()=>setShowRecordPayment(true)} onReceipt={tryGenerateReceipt} onEdit={setShowEditTransaction} onAddWallet={()=>setShowAddWallet(true)} activeWallet={activeWallet} setActiveWallet={setActiveWallet} isPro={isPro} isGuest={isGuest} guestLeft={FREE_RECEIPT_LIMIT-guestCount} voidedReceipts={voidedReceipts} deletedTransactions={deletedTransactions}/>}
+            {page==="invoices" && <InvoicesPage products={products} onSave={handleSaveInvoice} isEnterprise={isEnterprise} onConfirmIntake={handleConfirmIntake} supabaseUrl={import.meta.env.VITE_SUPABASE_URL} invoices={invoices} shopName={business?.name}/>}
+            {page==="inventory" && <InventoryPage products={products} setProducts={setProducts} productCategories={productCategories} setProductCategories={setProductCategories} editingProduct={editingProduct} setEditingProduct={setEditingProduct}/>}
+            {page==="creditbook" && <CreditBook invoices={invoices} shopName={business?.name} />}
+            {page==="reports" && <Reports transactions={txFiltered} income={income} expense={expense} balance={balance} isPro={isPro} onUpgrade={()=>setShowUpgrade(true)} business={business} setBusiness={setBusiness} isGuest={isGuest} businessId={businessId}/>}
+            {page==="settings" && <SettingsPage user={user} business={business} setBusiness={setBusiness} isGuest={isGuest} businessId={businessId} transactions={transactions} darkMode={darkMode} setDarkMode={setDarkMode} onSignOut={handleSignOut}/>}
           </div>
         </div>
       </div>
@@ -1119,10 +1072,11 @@ export default function App() {
       {/* MOBILE BOTTOM NAV */}
       <div className="mobile-bottom-nav">
         {[
-          { key:"dashboard", label:"Dashboard", IconComp:Home },
-          { key:"reports", label:"Reports", IconComp:BarChart3 },
-          { key:"add", label:"Quick-add", IconComp:Plus },
-          { key:"profile", label:"Profile", IconComp:User },
+          { key:"dashboard",  label:"Home",     IconComp:Home },
+          { key:"sales",      label:"Sales",    IconComp:ShoppingCart },
+          { key:"add",        label:"Add",      IconComp:Plus },
+          { key:"invoices",   label:"Invoices", IconComp:FileText },
+          { key:"creditbook", label:"Credits",  IconComp:BookOpen },
         ].map(n=>(
           <div key={n.key} onClick={()=>{ if(n.key==="add"){ setShowRecordPayment(true); } else { navigateTo(n.key); setMobileMenuOpen(false); } }} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:3, cursor:"pointer", padding:"6px 0", flex:1, color: n.key==="add" ? "#10B981" : page===n.key ? C.text : C.muted, transition:"color 0.15s" }}>
             <n.IconComp size={20} strokeWidth={page===n.key || n.key==="add" ? 2 : 1.5}/>
@@ -1138,6 +1092,181 @@ export default function App() {
       {showAddWallet&& <AddWalletModal onClose={()=>setShowAddWallet(false)} onSave={addWallet}/>}
       {showUpgrade  && <UpgradeModal onClose={()=>setShowUpgrade(false)}/>}
     </>
+  );
+}
+
+// ─── PAGE TAB HELPER ──────────────────────────────────────────
+function PageTabs({ tabs, active, onChange }) {
+  return (
+    <div style={{ display:"flex", gap:4, marginBottom:22, borderBottom:`1px solid ${C.border}`, paddingBottom:0 }}>
+      {tabs.map(t => {
+        const isActive = active === t.key;
+        return (
+          <button
+            key={t.key}
+            onClick={() => onChange(t.key)}
+            style={{
+              padding:"10px 18px", fontSize:13, fontWeight: isActive ? 600 : 400,
+              color: isActive ? C.text : C.muted,
+              background:"transparent", border:"none", cursor:"pointer",
+              fontFamily:"'Poppins',sans-serif",
+              borderBottom: isActive ? `2px solid #10B981` : "2px solid transparent",
+              marginBottom:-1, transition:"all 0.15s", whiteSpace:"nowrap",
+            }}
+          >{t.label}</button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── SALES DESK PAGE ──────────────────────────────────────────
+function SalesDeskPage({ transactions, wallets, business, onAdd, onReceipt, onEdit, onAddWallet, activeWallet, setActiveWallet, isPro, isGuest, guestLeft, voidedReceipts, deletedTransactions }) {
+  const [tab, setTab] = useState("transactions");
+  const tabs = [
+    { key:"transactions", label:"Transactions" },
+    { key:"wallets",      label:"Wallets"       },
+    { key:"receipts",     label:"Receipts"      },
+  ];
+  return (
+    <div>
+      {/* Header */}
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20, flexWrap:"wrap", gap:12 }}>
+        <div>
+          <div style={{ fontWeight:700, fontSize:20, color:C.text, marginBottom:4 }}>Sales Desk</div>
+          <div style={{ fontSize:13, color:C.muted }}>Track transactions, manage wallets and view receipts</div>
+        </div>
+        <div style={{ display:"flex", gap:10, alignItems:"center", flexWrap:"wrap" }}>
+          {wallets.length > 1 && (
+            <select
+              value={activeWallet||"all"}
+              onChange={e=>setActiveWallet(e.target.value==="all"?null:e.target.value)}
+              style={{ padding:"8px 32px 8px 12px", borderRadius:20, border:`1.5px solid ${C.border}`, background:"var(--c-light)", color:C.text, fontSize:12, fontWeight:500, cursor:"pointer", fontFamily:"'Poppins',sans-serif", outline:"none", appearance:"none", backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat:"no-repeat", backgroundPosition:"right 10px center" }}
+            >
+              <option value="all">All wallets</option>
+              {wallets.map(w=>{
+                const preset = WALLET_PRESETS.find(p=>p.id===w.presetId)||WALLET_PRESETS[0];
+                return <option key={w.id} value={w.id}>{preset.label} — {w.name}</option>;
+              })}
+            </select>
+          )}
+          <Btn variant="primary" onClick={onAdd}><LIcon name="plus" size={15}/> Record Payment</Btn>
+        </div>
+      </div>
+
+      <PageTabs tabs={tabs} active={tab} onChange={setTab}/>
+
+      {tab === "transactions" && <Transactions transactions={transactions} wallets={wallets} onAdd={onAdd} onReceipt={onReceipt} onEdit={onEdit}/>}
+      {tab === "wallets"      && <Wallets wallets={wallets} transactions={transactions} onAdd={onAddWallet} onSelect={setActiveWallet} activeWallet={activeWallet}/>}
+      {tab === "receipts"     && <Receipts transactions={transactions} wallets={wallets} business={business} onReceipt={onReceipt} isPro={isPro} isGuest={isGuest} guestLeft={guestLeft} voidedReceipts={voidedReceipts} deletedTransactions={deletedTransactions}/>}
+    </div>
+  );
+}
+
+// ─── INVOICES PAGE ────────────────────────────────────────────
+function InvoicesPage({ products, onSave, isEnterprise, onConfirmIntake, supabaseUrl, invoices, shopName }) {
+  const [tab, setTab] = useState("form");
+  const tabs = [
+    { key:"form",     label:"New Invoice"         },
+    { key:"intake",   label:"OCR Intake"           },
+    { key:"console",  label:"Enterprise Console"   },
+    { key:"terminal", label:"AI Accountant"        },
+  ];
+  return (
+    <div>
+      <div style={{ marginBottom:20 }}>
+        <div style={{ fontWeight:700, fontSize:20, color:C.text, marginBottom:4 }}>Invoices</div>
+        <div style={{ fontSize:13, color:C.muted }}>Generate client invoices, scan receipts and analyse with AI</div>
+      </div>
+      <PageTabs tabs={tabs} active={tab} onChange={setTab}/>
+      {tab === "form"     && <InvoiceForm products={products} onSave={onSave} isEnterprise={isEnterprise}/>}
+      {tab === "intake"   && <InvoiceScannerDropzone onConfirmIntake={onConfirmIntake} supabaseUrl={supabaseUrl}/>}
+      {tab === "console"  && <ConsolidatedDashboard invoices={invoices} products={products}/>}
+      {tab === "terminal" && <AiAccountantTerminal shopName={shopName} supabaseUrl={supabaseUrl}/>}
+    </div>
+  );
+}
+
+// ─── INVENTORY PAGE ───────────────────────────────────────────
+function InventoryPage({ products, setProducts, productCategories, setProductCategories, editingProduct, setEditingProduct }) {
+  const [tab, setTab] = useState("list");
+
+  const handleSaveProduct = (p) => {
+    if (editingProduct) {
+      setProducts(prev => prev.map(x => x.id===p.id ? p : x));
+    } else {
+      setProducts(prev => [...prev, { ...p, id: genId() }]);
+    }
+    setEditingProduct(null);
+    setTab("list");
+  };
+
+  const tabs = [
+    { key:"list",       label:"Products"      },
+    { key:"add",        label: editingProduct ? "Edit Product" : "Add Product" },
+    { key:"categories", label:"Categories"    },
+  ];
+
+  return (
+    <div>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20, flexWrap:"wrap", gap:12 }}>
+        <div>
+          <div style={{ fontWeight:700, fontSize:20, color:C.text, marginBottom:4 }}>Inventory</div>
+          <div style={{ fontSize:13, color:C.muted }}>Manage your products, stock levels and categories</div>
+        </div>
+        {tab === "list" && (
+          <Btn variant="primary" onClick={()=>{ setEditingProduct(null); setTab("add"); }}>
+            <LIcon name="plus" size={15}/> Add Product
+          </Btn>
+        )}
+      </div>
+
+      <PageTabs tabs={tabs} active={tab} onChange={(k)=>{ if(k==="list") setEditingProduct(null); setTab(k); }}/>
+
+      {tab === "list" && (
+        <ProductList
+          products={products}
+          categories={productCategories}
+          onAdd={()=>{ setEditingProduct(null); setTab("add"); }}
+          onEdit={p=>{ setEditingProduct(p); setTab("add"); }}
+        />
+      )}
+      {tab === "add" && (
+        <AddEditProduct
+          product={editingProduct}
+          categories={productCategories}
+          onSave={handleSaveProduct}
+          onCancel={()=>{ setEditingProduct(null); setTab("list"); }}
+        />
+      )}
+      {tab === "categories" && (
+        <ProductCategories
+          categories={productCategories}
+          products={products}
+          onSave={setProductCategories}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── SETTINGS PAGE ────────────────────────────────────────────
+function SettingsPage({ user, business, setBusiness, isGuest, businessId, transactions, darkMode, setDarkMode, onSignOut }) {
+  const [tab, setTab] = useState("store");
+  const tabs = [
+    { key:"store",   label:"Store & Billing" },
+    { key:"profile", label:"Profile"          },
+  ];
+  return (
+    <div>
+      <div style={{ marginBottom:20 }}>
+        <div style={{ fontWeight:700, fontSize:20, color:C.text, marginBottom:4 }}>Settings</div>
+        <div style={{ fontSize:13, color:C.muted }}>Configure your store, billing plan and profile</div>
+      </div>
+      <PageTabs tabs={tabs} active={tab} onChange={setTab}/>
+      {tab === "store"   && <Settings user={user} business={business} setBusiness={setBusiness} isGuest={isGuest} businessId={businessId} transactions={transactions} darkMode={darkMode} setDarkMode={setDarkMode}/>}
+      {tab === "profile" && <Profile user={user} business={business} setBusiness={setBusiness} isGuest={isGuest} businessId={businessId} onSignOut={onSignOut}/>}
+    </div>
   );
 }
 
