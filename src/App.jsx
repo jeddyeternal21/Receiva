@@ -811,6 +811,40 @@ export default function App() {
     setShowAddWallet(false);
   };
 
+  // ── Global Voice Dictation (lifted from Dashboard) ──────────
+  const [voiceModalOpen, setVoiceModalOpen] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const [interimTranscript, setInterimTranscript] = useState("");
+  const [voiceError, setVoiceError] = useState("");
+  const recognitionRef = useRef(null);
+
+  const startListening = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) { setVoiceError("Speech recognition not supported in this browser."); return; }
+    setTranscript(""); setInterimTranscript(""); setVoiceError(""); setIsListening(true);
+    try {
+      const rec = new SpeechRecognition();
+      rec.continuous = true; rec.interimResults = true; rec.lang = 'en-US';
+      rec.onresult = (event) => {
+        let final = ""; let interim = "";
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) { final += event.results[i][0].transcript + " "; }
+          else { interim += event.results[i][0].transcript; }
+        }
+        if (final) setTranscript(prev => prev + final);
+        setInterimTranscript(interim);
+      };
+      rec.onerror = (event) => { console.error("Speech recognition error", event); setVoiceError(`Error: ${event.error}`); setIsListening(false); };
+      rec.onend = () => setIsListening(false);
+      recognitionRef.current = rec;
+      rec.start();
+    } catch (err) { console.error(err); setVoiceError("Failed to initialize speech recognition."); setIsListening(false); }
+  };
+  const stopListening = () => { if (recognitionRef.current) recognitionRef.current.stop(); setIsListening(false); };
+
+  useEffect(() => { return () => { if (recognitionRef.current) recognitionRef.current.abort(); }; }, []);
+
   const isEnterprise = business?.plan === "enterprise" || isDevEmail(user?.email);
 
   const allNav = [
@@ -1091,6 +1125,72 @@ export default function App() {
       
       {showAddWallet&& <AddWalletModal onClose={()=>setShowAddWallet(false)} onSave={addWallet}/>}
       {showUpgrade  && <UpgradeModal onClose={()=>setShowUpgrade(false)}/>}
+
+      {/* ── GLOBAL VOICE DICTATION FAB ── */}
+      <button
+        onClick={() => { setVoiceModalOpen(true); startListening(); }}
+        className="fixed bottom-6 right-6 z-[9998] w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-4 focus:ring-green-300"
+        style={{ background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)", boxShadow: "0 4px 20px rgba(34,197,94,0.45), 0 2px 8px rgba(0,0,0,0.15)" }}
+        title="Voice Dictation"
+        aria-label="Open voice dictation"
+      >
+        <Mic size={24} color="#fff" strokeWidth={2}/>
+      </button>
+
+      {/* ── GLOBAL VOICE MODAL ── */}
+      {voiceModalOpen && (
+        <div
+          style={{ position:'fixed', inset:0, backgroundColor:'rgba(15,23,42,0.65)', backdropFilter:'blur(6px)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:10000, fontFamily:"'Poppins',sans-serif" }}
+          onClick={(e) => { if (e.target === e.currentTarget) { stopListening(); setVoiceModalOpen(false); } }}
+        >
+          <div style={{ background:'var(--c-white)', border:'1px solid var(--c-border)', borderRadius:20, width:'90%', maxWidth:480, padding:'28px 24px', color:'var(--c-text)', boxShadow:'0 25px 50px rgba(0,0,0,0.2)', position:'relative', display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center' }}>
+            {/* Close */}
+            <button onClick={() => { stopListening(); setVoiceModalOpen(false); }} style={{ position:'absolute', top:16, right:16, background:'transparent', border:'none', color:'var(--c-muted)', cursor:'pointer' }}><X size={20}/></button>
+
+            <div style={{ width:48, height:48, borderRadius:'50%', background:'linear-gradient(135deg,#22c55e,#16a34a)', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:14, boxShadow:'0 4px 14px rgba(34,197,94,0.35)' }}>
+              <Mic size={22} color="#fff" strokeWidth={2}/>
+            </div>
+            <h3 style={{ fontSize:18, fontWeight:700, marginBottom:6, color:'var(--c-text)' }}>Voice Dictation</h3>
+            <p style={{ fontSize:12, color:'var(--c-muted)', marginBottom:24, maxWidth:320 }}>Speak naturally — describe your sale, expense, or note. The engine transcribes in real time.</p>
+
+            {/* Pulse ring + mic toggle */}
+            <div style={{ position:'relative', width:120, height:120, display:'flex', alignItems:'center', justifyContent:'center', marginBottom:20 }}>
+              {isListening && (
+                <>
+                  <div className="absolute inset-0 rounded-full bg-green-400/20 animate-ping" style={{ animationDuration:'2s' }}/>
+                  <div className="absolute inset-3 rounded-full bg-green-400/30 animate-ping" style={{ animationDuration:'1.4s' }}/>
+                </>
+              )}
+              <button
+                onClick={isListening ? stopListening : startListening}
+                style={{ width:80, height:80, borderRadius:'50%', backgroundColor: isListening ? '#ef4444' : '#22c55e', color:'#fff', border:'none', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', zIndex:10, boxShadow: isListening ? '0 0 24px rgba(239,68,68,0.45)' : '0 0 24px rgba(34,197,94,0.45)', transition:'all 0.25s' }}
+              >
+                {isListening ? <MicOff size={34}/> : <Mic size={34}/>}
+              </button>
+            </div>
+
+            <div style={{ fontSize:13, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:16, color: isListening ? '#22c55e' : '#ef4444' }}>
+              {isListening ? 'Listening…' : 'Paused'}
+            </div>
+
+            {voiceError && <div style={{ color:'#ef4444', fontSize:12, background:'rgba(239,68,68,0.1)', padding:'10px 14px', borderRadius:8, width:'100%', marginBottom:14 }}>{voiceError}</div>}
+
+            {/* Transcript box */}
+            <div style={{ width:'100%', background:'var(--c-light)', border:'1px solid var(--c-border)', borderRadius:10, padding:16, minHeight:110, maxHeight:180, overflowY:'auto', textAlign:'left', fontSize:14, lineHeight:1.7, color:'var(--c-text)', marginBottom:18 }}>
+              {transcript || interimTranscript ? (
+                <><span>{transcript}</span><span style={{ color:'var(--c-muted)', fontStyle:'italic' }}>{interimTranscript}</span></>
+              ) : (
+                <span style={{ color:'var(--c-muted)', fontStyle:'italic' }}>Waiting for speech…</span>
+              )}
+            </div>
+
+            <div style={{ display:'flex', gap:10, width:'100%' }}>
+              <button onClick={() => { setTranscript(""); setInterimTranscript(""); }} style={{ flex:1, padding:'11px', borderRadius:9, background:'var(--c-light)', border:'1px solid var(--c-border)', color:'var(--c-text)', fontSize:13, fontWeight:600, cursor:'pointer' }}>Clear</button>
+              <button onClick={() => { stopListening(); setVoiceModalOpen(false); }} style={{ flex:1, padding:'11px', borderRadius:9, background:'#22c55e', border:'none', color:'#fff', fontSize:13, fontWeight:600, cursor:'pointer' }}>Done</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -1669,81 +1769,6 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
   const recent = transactions.slice(0,5);
   const hasTx = transactions.length > 0;
   
-  const [voiceModalOpen, setVoiceModalOpen] = useState(false);
-  const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState("");
-  const [interimTranscript, setInterimTranscript] = useState("");
-  const [voiceError, setVoiceError] = useState("");
-
-  const recognitionRef = useRef(null);
-
-  const startListening = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setVoiceError("Speech recognition not supported in this browser.");
-      return;
-    }
-    
-    setTranscript("");
-    setInterimTranscript("");
-    setVoiceError("");
-    setIsListening(true);
-
-    try {
-      const rec = new SpeechRecognition();
-      rec.continuous = true;
-      rec.interimResults = true;
-      rec.lang = 'en-US';
-
-      rec.onresult = (event) => {
-        let final = "";
-        let interim = "";
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            final += event.results[i][0].transcript + " ";
-          } else {
-            interim += event.results[i][0].transcript;
-          }
-        }
-        if (final) {
-          setTranscript(prev => prev + final);
-        }
-        setInterimTranscript(interim);
-      };
-
-      rec.onerror = (event) => {
-        console.error("Speech recognition error", event);
-        setVoiceError(`Error: ${event.error}`);
-        setIsListening(false);
-      };
-
-      rec.onend = () => {
-        setIsListening(false);
-      };
-
-      recognitionRef.current = rec;
-      rec.start();
-    } catch (err) {
-      console.error(err);
-      setVoiceError("Failed to initialize speech recognition.");
-      setIsListening(false);
-    }
-  };
-
-  const stopListening = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
-    setIsListening(false);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.abort();
-      }
-    };
-  }, []);
   const statCards = [
     { label:"Total Income",   value:fmt(income),   color:C.income  },
     { label:"Total Expenses", value:fmt(expense),  color:C.expense },
@@ -2038,8 +2063,8 @@ function Dashboard({ transactions, income, expense, balance, wallets, business, 
         </div>
       </div>
 
-      {/* Permanent Developer Admin Bypass Mic FAB */}
-      {isDevEmail(user?.email) && (
+      {/* Voice FAB & modal now live globally in App root */}
+      {false && (
         <button
           onClick={() => {
             setVoiceModalOpen(true);
